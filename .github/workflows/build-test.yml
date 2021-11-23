@@ -1,0 +1,27 @@
+name: Build and test
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [12.17]
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install, build and test
+        timeout-minutes: 5
+        run: |
+          npm ci --no-color --no-progress
+          npm run build
+          npm run test
+        env:
+          CI: true
