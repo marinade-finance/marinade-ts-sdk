@@ -1,4 +1,4 @@
-# <p align="center"><a href="https://marinade.finance/"><img src="" height="100" alt="Marinade"></a>
+# <p align="center"><a href="https://marinade.finance/"><img src="https://raw.githubusercontent.com/marinade-finance/liquid-staking-program/main/Docs/img/MNDE.png" height="100" alt="Marinade"></a>
 
 # marinade-ts-sdk
 

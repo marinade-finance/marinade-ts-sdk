@@ -1,5 +1,5 @@
 {
-  "name": "marinade-ts-sdk",
+  "name": "@marinade.finance/marinade-ts-sdk",
   "version": "0.0.0",
   "description": "Marinade SDK for Typescript",
   "main": "dist/index.js",
