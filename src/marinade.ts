@@ -1,5 +1,5 @@
 import { MarinadeConfig } from './modules/marinade-config'
-import { BN, Idl, Program, Provider, web3 } from '@project-serum/anchor'
+import { BN, Idl, Program, Provider, Wallet, web3 } from '@project-serum/anchor'
 import * as marinadeIdl from './marinade-idl.json'
 import { MarinadeState } from './marinade-state/marinade-state'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
@@ -10,7 +10,11 @@ import { MarinadeResult } from './marinade.types'
 export class Marinade {
   constructor (public readonly config: MarinadeConfig = new MarinadeConfig()) { }
 
-  readonly anchorProvider = Provider.local(this.config.anchorProviderUrl)
+  readonly anchorProvider = new Provider(
+    new web3.Connection(this.config.anchorProviderUrl),
+    new Wallet(this.config.wallet),
+    { commitment: 'confirmed' },
+  )
 
   get marinadeProgram (): Program {
     return new Program(
@@ -199,6 +203,10 @@ export class Marinade {
     const stakeAccountInfo = await getParsedStakeAccountInfo(this.anchorProvider, stakeAccountAddress)
 
     const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown } = stakeAccountInfo
+
+    if (!authorizedWithdrawerAddress) {
+      throw new Error('Withdrawer address is not available!')
+    }
 
     if (!activationEpoch || !voterAddress) {
       throw new Error('The stake account is not delegated!')
