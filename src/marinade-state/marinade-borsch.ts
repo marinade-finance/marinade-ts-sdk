@@ -6,13 +6,24 @@ function deserializePublicKey ({ publicKey }: { publicKey: Buffer }) {
 }
 
 export class ValidatorRecord {
-  validatorAccount!:  web3.PublicKey
+  validatorAccount!: web3.PublicKey
   activeBalance!: BN
   score!: number
   lastStakeDeltaEpoch!: BN
   duplicationFlagBumpSeed!: number
 
   constructor (args: ValidatorRecord) {
+    Object.assign(this, args)
+  }
+}
+
+export class StakeRecord {
+  stakeAccount!: web3.PublicKey
+  lastUpdateDelegatedLamports!: number
+  lastUpdateEpoch!: number
+  isEmergencyUnstaking!: number
+
+  constructor (args: StakeRecord) {
     Object.assign(this, args)
   }
 }
@@ -33,5 +44,14 @@ export const MARINADE_BORSH_SCHEMA = new Map<Function, any>([
       ['lastStakeDeltaEpoch', 'u64'],
       ['duplicationFlagBumpSeed', 'u8'],
     ],
-  }]
+  }],
+  [StakeRecord, {
+    kind: 'struct',
+    fields: [
+      ['stakeAccount', deserializePublicKey],
+      ['lastUpdateDelegatedLamports', 'u64'],
+      ['lastUpdateEpoch', 'u64'],
+      ['isEmergencyUnstaking', 'u8'],
+    ],
+  }],
 ])

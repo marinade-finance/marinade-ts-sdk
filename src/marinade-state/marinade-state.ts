@@ -2,8 +2,9 @@ import { BN, Provider, web3 } from '@project-serum/anchor'
 import { deserializeUnchecked } from 'borsh'
 import { Marinade } from '../marinade'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
+import { bounds } from '../util'
 import * as StateHelper from '../util/state-helpers'
-import { MARINADE_BORSH_SCHEMA, ValidatorRecord } from './marinade-borsch'
+import { MARINADE_BORSH_SCHEMA, StakeRecord, ValidatorRecord } from './marinade-borsch'
 import { ProgramDerivedAddressSeed, MarinadeStateResponse } from './marinade-state.types'
 
 export class MarinadeState {
@@ -58,23 +59,45 @@ export class MarinadeState {
     )
   }
 
-  async getValidators (): Promise<ValidatorRecord[]> {
-    const validatorListItemSize = this.state.validatorSystem.validatorList.itemSize
-    const validatorRecordBounds = (validatorIndex: number) => [8 + validatorIndex * validatorListItemSize, 8 + (validatorIndex + 1) * validatorListItemSize]
+  async getValidatorRecords (): Promise<ValidatorRecord[]> {
+    const { validatorList } = this.state.validatorSystem
+    const recordBounds = (index: number) => bounds(index, validatorList.itemSize, 8)
 
-    const validators = await this.anchorProvider.connection.getAccountInfo(this.state.validatorSystem.validatorList.account)
+    const validators = await this.anchorProvider.connection.getAccountInfo(validatorList.account)
 
     if (!validators) {
       throw new Error(`Failed to fetch validators' details!`)
     }
 
     return Array.from(
-      { length: this.state.validatorSystem.validatorList.count },
+      { length: validatorList.count },
       (_, index) => {
         return deserializeUnchecked(
           MARINADE_BORSH_SCHEMA,
           ValidatorRecord,
-          validators.data.slice(...validatorRecordBounds(index))
+          validators.data.slice(...recordBounds(index))
+        )
+      }
+    )
+  }
+
+  async getStakeRecords (): Promise<StakeRecord[]> {
+    const { stakeList } = this.state.stakeSystem
+    const recordBounds = (index: number) => bounds(index, stakeList.itemSize, 8)
+
+    const stakes = await this.anchorProvider.connection.getAccountInfo(stakeList.account)
+
+    if (!stakes) {
+      throw new Error(`Failed to fetch stakes' details!`)
+    }
+
+    return Array.from(
+      { length: stakeList.count },
+      (_, index) => {
+        return deserializeUnchecked(
+          MARINADE_BORSH_SCHEMA,
+          StakeRecord,
+          stakes.data.slice(...recordBounds(index))
         )
       }
     )
