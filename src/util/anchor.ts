@@ -1,6 +1,6 @@
 import { BN, Provider, web3 } from '@project-serum/anchor'
 import * as anchor from '@project-serum/anchor'
-import { AccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID, u64 } from '@solana/spl-token'
+import { AccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { ParsedStakeAccountInfo } from './anchor.types'
 
 export const SYSTEM_PROGRAM_ID = new web3.PublicKey('11111111111111111111111111111111')

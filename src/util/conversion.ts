@@ -1,4 +1,4 @@
-import { BN } from '@project-serum/anchor';
+import { BN } from '@project-serum/anchor'
 
 const SOL_DECIMALS = 9
 

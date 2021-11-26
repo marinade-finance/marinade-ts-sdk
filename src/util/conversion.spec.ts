@@ -61,7 +61,7 @@ describe('conversion', () => {
       { amountSol: 0, expectedResult: new BN(0) },
       { amountSol: 0.1, expectedResult: new BN(1e8) },
       { amountSol: 1000.123456789, expectedResult: new BN('1000123456789') },
-      { amountSol: 10.1234567890123456789, expectedResult: new BN('10123456789') },
+      { amountSol: 10.123456789012, expectedResult: new BN('10123456789') },
     ].forEach(({ amountSol, expectedResult }) =>
       it(`converts ${amountSol} to ${expectedResult.toString()} lamports`, () => {
         const actualResult = solToLamports(amountSol)

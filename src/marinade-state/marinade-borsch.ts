@@ -28,12 +28,13 @@ export class StakeRecord {
   }
 }
 
-export const MARINADE_BORSH_SCHEMA = new Map<Function, any>([
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const MARINADE_BORSH_SCHEMA = new Map<Function, unknown>([
   [deserializePublicKey, {
     kind: 'struct',
     fields: [
       ['publicKey', [32]],
-    ]
+    ],
   }],
   [ValidatorRecord, {
     kind: 'struct',

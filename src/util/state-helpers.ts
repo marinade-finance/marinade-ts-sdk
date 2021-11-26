@@ -16,7 +16,7 @@ export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints
     return lpMaxFeeBasisPoints
   }
   // result after operation
-  let lamportsAfter = lamportsAvailable.sub(lamportsToObtain)
+  const lamportsAfter = lamportsAvailable.sub(lamportsToObtain)
   // if GTE target => min fee
   if (lamportsAfter.gte(lpLiquidityTarget)) {
     return lpMinFeeBasisPoints
