@@ -1,6 +1,15 @@
 import { BN } from '@project-serum/anchor'
 
-///compute a linear fee based on liquidity amount, it goes from fee(0)=max -> fee(x>=target)=min
+/**
+ * Compute a linear fee base on liquidity amount.
+ * fee(0) = max fee -> fee(x >= target) = min fee
+ *
+ * @param {number} lpMinFeeBasisPoints
+ * @param {number} lpMaxFeeBasisPoints
+ * @param {BN} lpLiquidityTarget
+ * @param {BN} lamportsAvailable
+ * @param {BN} lamportsToObtain
+ */
 export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints: number, lpLiquidityTarget: BN, lamportsAvailable: BN, lamportsToObtain: BN): number {
   // if trying to get more than existing
   if (lamportsToObtain.gte(lamportsAvailable)) {
@@ -19,6 +28,14 @@ export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints
   }
 }
 
+/**
+ * Returns `amount` * `numerator` / `denominator`.
+ * BN library we use does not handle fractions, so the value is `floored`
+ *
+ * @param {BN} amount
+ * @param {BN} numerator
+ * @param {BN} denominator
+ */
 export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
   if (denominator.isZero()) {
     return amount

@@ -16,6 +16,9 @@ export class Marinade {
     { commitment: 'confirmed' },
   )
 
+  /**
+   * The main Marinade Program
+   */
   get marinadeProgram (): Program {
     return new Program(
       marinadeIdl as Idl,
@@ -24,10 +27,18 @@ export class Marinade {
     )
   }
 
+  /**
+   * Fetch the Marinade's internal state
+   */
   async getMarinadeState (): Promise<MarinadeState> {
     return MarinadeState.fetch(this)
   }
 
+  /**
+   * Add liquidity to the liquidity pool and receive LP tokens
+   *
+   * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
+   */
   async addLiquidity (amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
@@ -68,6 +79,11 @@ export class Marinade {
     }
   }
 
+  /**
+   * Burn LP tokens and get SOL and mSOL back from the liquidity pool
+   *
+   * @param {BN} amountLamports - The amount of LP tokens burned
+   */
   async removeLiquidity (amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
@@ -112,6 +128,11 @@ export class Marinade {
     }
   }
 
+  /**
+   * Stake SOL in exchange for mSOL
+   *
+   * @param {BN} amountLamports - The amount lamports staked
+   */
   async deposit (amountLamports: BN): Promise<MarinadeResult.Deposit> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
@@ -154,6 +175,11 @@ export class Marinade {
     }
   }
 
+  /**
+   * Swap your mSOL to get back SOL immediately using the liquidity pool
+   *
+   * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
+   */
   async liquidUnstake (amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
@@ -195,6 +221,12 @@ export class Marinade {
     }
   }
 
+  /**
+   * Deposit delegated stake account.
+   * Note that the stake must be fully activated and the validator must be known to Marinade
+   *
+   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   */
   async depositStakeAccount (stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()

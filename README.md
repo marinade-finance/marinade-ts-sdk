@@ -8,6 +8,14 @@ This SDK wraps the staking protocol and allows you to start marinading from your
 
 ![Build](https://github.com/marinade-finance/marinade-ts-sdk/actions/workflows/build-test.yml/badge.svg)
 
+Contents:
+- [Installation](#installation)
+- [Examples](#examples)
+   - [Initialize the library](#initialize-the-library)
+   - [Staking](#staking)
+   - [Liquidity pool](#liquidity-pool)
+- [Learn more](#learn-more)
+
 ## Installation
 ```bash
 $ npm run install @marinade.finance/marinade-ts-sdk
@@ -17,14 +25,14 @@ $ npm run install @marinade.finance/marinade-ts-sdk
 
 ### Initialize the library
 
-Use the default configuration (with Solana devnet):
+1) Use the default configuration (with Solana devnet):
 ```ts
 import { Marinade } from '@marinade.finance/marinade-ts-sdk'
 
 const marinade = new Marinade()
 ```
 
-Extend your configuration with other options:
+2) Extend your configuration with other options:
 ```ts
 import { Marinade, MarinadeConfig, Wallet } from '@marinade.finance/marinade-ts-sdk'
 
@@ -34,6 +42,14 @@ const config = new MarinadeConfig({
 })
 const marinade = new Marinade()
 ```
+
+3) Use environment variables to set the configuration values:
+
+| Environment variable     | Default value                                    |
+| ------------------------ | ------------------------------------------------ |
+| `MARINADE_PROGRAM_ID`    | `'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'`  |
+| `MARINADE_STATE_ADDRESS` | `'8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'` |
+| `ANCHOR_PROVIDER_URL`    | `'https://api.devnet.solana.com'`                |
 
 ### Staking
 
