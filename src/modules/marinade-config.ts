@@ -9,7 +9,7 @@ export class MarinadeConfig {
   anchorProviderUrl = loadEnvVariable('ANCHOR_PROVIDER_URL', 'https://api.devnet.solana.com')
   wallet = web3.Keypair.generate()
 
-  constructor (configOverrides: Partial<MarinadeConfig> = {}) {
+  constructor(configOverrides: Partial<MarinadeConfig> = {}) {
     Object.assign(this, configOverrides)
   }
 }

@@ -1,7 +1,7 @@
 import { web3 } from '@project-serum/anchor'
 import BN from 'bn.js'
 
-function deserializePublicKey ({ publicKey }: { publicKey: Buffer }) {
+function deserializePublicKey({ publicKey }: { publicKey: Buffer }) {
   return new web3.PublicKey(publicKey)
 }
 
@@ -12,7 +12,7 @@ export class ValidatorRecord {
   lastStakeDeltaEpoch!: BN
   duplicationFlagBumpSeed!: number
 
-  constructor (args: ValidatorRecord) {
+  constructor(args: ValidatorRecord) {
     Object.assign(this, args)
   }
 }
@@ -23,7 +23,7 @@ export class StakeRecord {
   lastUpdateEpoch!: number
   isEmergencyUnstaking!: number
 
-  constructor (args: StakeRecord) {
+  constructor(args: StakeRecord) {
     Object.assign(this, args)
   }
 }

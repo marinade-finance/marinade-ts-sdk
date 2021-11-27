@@ -7,27 +7,27 @@ export const SYSTEM_PROGRAM_ID = new web3.PublicKey('111111111111111111111111111
 export const STAKE_PROGRAM_ID = new web3.PublicKey('Stake11111111111111111111111111111111111111')
 export const U64_MAX = new BN('ffffffffffffffff', 16)
 
-export function web3PubKeyOrNull (value: ConstructorParameters<typeof web3.PublicKey>[0] | null): web3.PublicKey | null {
+export function web3PubKeyOrNull(value: ConstructorParameters<typeof web3.PublicKey>[0] | null): web3.PublicKey | null {
   return value === null ? null : new web3.PublicKey(value)
 }
 
-export function BNOrNull (value: ConstructorParameters<typeof BN>[0] | null): BN | null {
+export function BNOrNull(value: ConstructorParameters<typeof BN>[0] | null): BN | null {
   return value === null ? null : new BN(value)
 }
 
-export function getMintClient (anchorProvider: Provider, mintAddress: web3.PublicKey): Token {
+export function getMintClient(anchorProvider: Provider, mintAddress: web3.PublicKey): Token {
   return new Token(anchorProvider.connection, mintAddress, TOKEN_PROGRAM_ID, web3.Keypair.generate())
 }
 
-export async function getAssociatedTokenAccountAddress (mint: web3.PublicKey, owner: web3.PublicKey): Promise<web3.PublicKey> {
+export async function getAssociatedTokenAccountAddress(mint: web3.PublicKey, owner: web3.PublicKey): Promise<web3.PublicKey> {
   return anchor.utils.token.associatedAddress({ mint, owner })
 }
 
-export async function getTokenAccountInfo (mintClient: Token, publicKey: web3.PublicKey): Promise<AccountInfo> {
+export async function getTokenAccountInfo(mintClient: Token, publicKey: web3.PublicKey): Promise<AccountInfo> {
   return mintClient.getAccountInfo(publicKey)
 }
 
-export async function getOrCreateAssociatedTokenAccount (anchorProvider: anchor.Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey): Promise<{
+export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey): Promise<{
   associatedTokenAccountAddress: web3.PublicKey
   createAssociateTokenInstruction: web3.TransactionInstruction | null
 }> {
@@ -59,7 +59,7 @@ export async function getOrCreateAssociatedTokenAccount (anchorProvider: anchor.
   }
 }
 
-export async function getParsedStakeAccountInfo (anchorProvider: anchor.Provider, stakeAccountAddress: web3.PublicKey): Promise<ParsedStakeAccountInfo> {
+export async function getParsedStakeAccountInfo(anchorProvider: anchor.Provider, stakeAccountAddress: web3.PublicKey): Promise<ParsedStakeAccountInfo> {
   const { value: stakeAccountInfo } = await anchorProvider.connection.getParsedAccountInfo(stakeAccountAddress)
 
   if (!stakeAccountInfo) {

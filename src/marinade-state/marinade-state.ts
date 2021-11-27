@@ -21,21 +21,21 @@ export class MarinadeState {
     return new MarinadeState(marinade, marinade.anchorProvider, state)
   }
 
-  reserveAddress = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)
+  reserveAddress = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)
 
   mSolPrice: number = this.state.msolPrice.toNumber() / 0x1_0000_0000
 
   mSolMintAddress: web3.PublicKey = this.state.msolMint
   mSolMint = MarinadeMint.build(this.anchorProvider, this.mSolMintAddress)
-  mSolMintAuthority = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_MSOL_MINT_AUTHORITY)
-  mSolLegAuthority = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_MSOL_AUTHORITY)
+  mSolMintAuthority = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_MSOL_MINT_AUTHORITY)
+  mSolLegAuthority = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_MSOL_AUTHORITY)
   mSolLeg = this.state.liqPool.msolLeg
 
   lpMintAddress: web3.PublicKey = this.state.liqPool.lpMint
   lpMint = MarinadeMint.build(this.anchorProvider, this.lpMintAddress)
-  lpMintAuthority = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_MINT_AUTHORITY)
+  lpMintAuthority = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_MINT_AUTHORITY)
 
-  solLeg = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_SOL_ACCOUNT)
+  solLeg = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.LIQ_POOL_SOL_ACCOUNT)
 
   private async findProgramDerivedAddress(seed: ProgramDerivedAddressSeed, extraSeeds: Buffer[] = []): Promise<web3.PublicKey> {
     const seeds = [this.marinade.config.marinadeStateAddress.toBuffer(), Buffer.from(seed), ...extraSeeds]
@@ -43,7 +43,7 @@ export class MarinadeState {
     return result
   }
 
-  validatorDuplicationFlag = async (validatorAddress: web3.PublicKey) => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [validatorAddress.toBuffer()])
+  validatorDuplicationFlag = async(validatorAddress: web3.PublicKey) => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [validatorAddress.toBuffer()])
 
   async unstakeNowFeeBp(lamportsToObtain: BN): Promise<number> {
     const mSolMintClient = this.mSolMint.mintClient()
