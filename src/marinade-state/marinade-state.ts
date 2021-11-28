@@ -9,6 +9,8 @@ import { StakeRecord } from './borsh/stake-record'
 import { StakeState } from './borsh/stake-state'
 import { ValidatorRecord } from './borsh/validator-record'
 import { ProgramDerivedAddressSeed, MarinadeStateResponse } from './marinade-state.types'
+import {StakeInfo} from "./borsh/stake-info"
+import {AccountInfo} from "@solana/web3.js"
 
 export class MarinadeState {
   // @todo rework args
@@ -47,6 +49,7 @@ export class MarinadeState {
   }
 
   validatorDuplicationFlag = async(validatorAddress: web3.PublicKey) => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [validatorAddress.toBuffer()])
+  epochInfo = async () => this.anchorProvider.connection.getEpochInfo()
 
   async unstakeNowFeeBp(lamportsToObtain: BN): Promise<number> {
     const mSolMintClient = this.mSolMint.mintClient()
@@ -163,6 +166,45 @@ export class MarinadeState {
         adjustedData,
       )
     })
+  }
+
+  async getStakeInfos() {
+    const stakeRecords = await this.getStakeRecords()
+    let stakeInfos = new Array<StakeInfo>()
+
+    const to_process = stakeRecords.length
+    let processed = 0
+    // rpc.get_multiple_accounts() has a max of 100 accounts
+    const BATCH_SIZE = 100
+    while (processed < to_process) {
+
+      const accountInfos: AccountInfo<Buffer>[] = await this.anchorProvider.connection.getMultipleAccountsInfo(
+        stakeRecords
+          .slice(processed, processed + BATCH_SIZE)
+          .map(stakeRecord => stakeRecord.stakeAccount)
+      ) as AccountInfo<Buffer>[]
+
+      stakeInfos.push(...accountInfos.map((accountInfo, index) => {
+
+        const adjustedData = Buffer.concat([
+          accountInfo?.data.slice(0, 1), // the first byte indexing the enum
+          accountInfo?.data.slice(4, accountInfo?.data.length), // the first byte indexing the enum
+        ])
+
+        return {
+          index: processed + index,
+          record: stakeRecords[processed + index],
+          stake: deserializeUnchecked(
+            MARINADE_BORSH_SCHEMA,
+            StakeState,
+            adjustedData,
+          ),
+          balance: new BN(accountInfo.lamports)
+        } as StakeInfo
+      }))
+      processed += BATCH_SIZE
+    }
+    return stakeInfos
   }
 
   treasuryMsolAccount: web3.PublicKey = this.state.treasuryMsolAccount
