@@ -38,7 +38,7 @@ import { Marinade, MarinadeConfig, Wallet } from '@marinade.finance/marinade-ts-
 
 const config = new MarinadeConfig({
   anchorProviderUrl: 'https://api.mainnet-beta.solana.com',
-  wallet: Wallet.local().payer,
+  wallet: Wallet.local().payer, // `Wallet.local() needs ANCHOR_WALLET env var with path to you private key`
 })
 const marinade = new Marinade()
 ```
