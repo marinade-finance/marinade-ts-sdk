@@ -1,6 +1,5 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "display": "Node 12+es2020",
   "compilerOptions": {
     "lib": ["es2021"],
     "target": "es2021",
