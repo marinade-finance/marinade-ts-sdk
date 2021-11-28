@@ -49,7 +49,7 @@ export class MarinadeState {
   }
 
   validatorDuplicationFlag = async(validatorAddress: web3.PublicKey) => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [validatorAddress.toBuffer()])
-  epochInfo = async () => this.anchorProvider.connection.getEpochInfo()
+  epochInfo = async() => this.anchorProvider.connection.getEpochInfo()
 
   async unstakeNowFeeBp(lamportsToObtain: BN): Promise<number> {
     const mSolMintClient = this.mSolMint.mintClient()
@@ -139,7 +139,7 @@ export class MarinadeState {
     )
   }
 
-  async getStakeStates() {
+  async getStakeStates(): Promise<StakeState[]> {
     const stakeAccountInfos = await this.anchorProvider.connection.getProgramAccounts(STAKE_PROGRAM_ID, {
       filters: [
         { dataSize: 200 },
@@ -168,9 +168,9 @@ export class MarinadeState {
     })
   }
 
-  async getStakeInfos() {
+  async getStakeInfos(): Promise<StakeInfo[]> {
     const stakeRecords = await this.getStakeRecords()
-    let stakeInfos = new Array<StakeInfo>()
+    const stakeInfos = new Array<StakeInfo>()
 
     const to_process = stakeRecords.length
     let processed = 0
@@ -199,7 +199,7 @@ export class MarinadeState {
             StakeState,
             adjustedData,
           ),
-          balance: new BN(accountInfo.lamports)
+          balance: new BN(accountInfo.lamports),
         } as StakeInfo
       }))
       processed += BATCH_SIZE

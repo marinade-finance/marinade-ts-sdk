@@ -1,6 +1,6 @@
 import BN from 'bn.js'
-import {StakeRecord} from "./stake-record";
-import {StakeState} from "./stake-state";
+import {StakeRecord} from "./stake-record"
+import {StakeState} from "./stake-state"
 
 export class StakeInfo {
   index!: number
