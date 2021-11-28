@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MarinadeState getStakeStates 1`] = `
+Array [
+  StakeState {
+    "Stake": StakeState {
+      "meta": Meta {
+        "authorized": Authorized {
+          "staker": PublicKey {
+            "_bn": "356d1a8fa2c128f6c943fc135934a8420338a5659c8b6e7a61ed9342397c155b",
+          },
+          "withdrawer": PublicKey {
+            "_bn": "80690b4b1a46e8ae761e7a3258c379314586da6fc2e6628dd7e22aea68bd6aec",
+          },
+        },
+        "lockup": Lockup {
+          "custodian": PublicKey {
+            "_bn": "00",
+          },
+          "epoch": "00",
+          "unixTimestamp": "00",
+        },
+        "rentExemptReserve": "22d580",
+      },
+      "stake": Stake {
+        "creditsObserved": "041013d8",
+        "delegation": Delegation {
+          "activationEpoch": "93",
+          "deactivationEpoch": "ffffffffffffffff",
+          "stake": "8272040b",
+          "voterPubkey": PublicKey {
+            "_bn": "40a5335342622c5827f179d75c74d375398c00791d673eeaf181516038588493",
+          },
+          "warmupCooldownRate": Object {
+            "value": 0.25,
+          },
+        },
+      },
+    },
+  },
+]
+`;

@@ -38,18 +38,19 @@ import { Marinade, MarinadeConfig, Wallet } from '@marinade.finance/marinade-ts-
 
 const config = new MarinadeConfig({
   anchorProviderUrl: 'https://api.mainnet-beta.solana.com',
-  wallet: Wallet.local().payer,
+  wallet: Wallet.local().payer, // `Wallet.local() needs ANCHOR_WALLET env var with path to you private key`
 })
 const marinade = new Marinade()
 ```
 
 3) Use environment variables to set the configuration values:
 
-| Environment variable     | Default value                                    |
-| ------------------------ | ------------------------------------------------ |
-| `MARINADE_PROGRAM_ID`    | `'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'`  |
-| `MARINADE_STATE_ADDRESS` | `'8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'` |
-| `ANCHOR_PROVIDER_URL`    | `'https://api.devnet.solana.com'`                |
+| Environment variable      | Default value                                    |
+| ------------------------- | ------------------------------------------------ |
+| `MARINADE_PROGRAM_ID`     | `'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'`  |
+| `MARINADE_STATE_ADDRESS`  | `'8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'` |
+| `STAKE_WITHDRAW_AUTH_PDA` | `'9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'` |
+| `ANCHOR_PROVIDER_URL`     | `'https://api.devnet.solana.com'`                |
 
 ### Staking
 

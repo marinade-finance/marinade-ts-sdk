@@ -2,10 +2,15 @@ import { BN, Provider, web3 } from '@project-serum/anchor'
 import { deserializeUnchecked } from 'borsh'
 import { Marinade } from '../marinade'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
-import { bounds } from '../util'
+import { bounds, STAKE_PROGRAM_ID } from '../util'
 import * as StateHelper from '../util/state-helpers'
-import { MARINADE_BORSH_SCHEMA, StakeRecord, ValidatorRecord } from './marinade-borsch'
+import { MARINADE_BORSH_SCHEMA } from './borsh/marinade-borsh'
+import { StakeRecord } from './borsh/stake-record'
+import { StakeState } from './borsh/stake-state'
+import { ValidatorRecord } from './borsh/validator-record'
 import { ProgramDerivedAddressSeed, MarinadeStateResponse } from './marinade-state.types'
+import {StakeInfo} from "./borsh/stake-info"
+import {AccountInfo} from "@solana/web3.js"
 
 export class MarinadeState {
   // @todo rework args
@@ -44,6 +49,7 @@ export class MarinadeState {
   }
 
   validatorDuplicationFlag = async(validatorAddress: web3.PublicKey) => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [validatorAddress.toBuffer()])
+  epochInfo = async() => this.anchorProvider.connection.getEpochInfo()
 
   async unstakeNowFeeBp(lamportsToObtain: BN): Promise<number> {
     const mSolMintClient = this.mSolMint.mintClient()
@@ -63,7 +69,7 @@ export class MarinadeState {
   // before the end of the epoch, the bot will perform staking, if stakeDelta is positive,
   // or unstaking, if stakeDelta is negative.
   stakeDelta(): BN {
-    // Source: Rust main code: pub fn stake_delta(&self, reserve_balance: u64) -> i128 
+    // Source: Rust main code: pub fn stake_delta(&self, reserve_balance: u64) -> i128
     // Never try to stake lamports from emergency_cooling_down
     // (we must wait for update-deactivated first to keep SOLs for claiming on reserve)
     // But if we need to unstake without counting emergency_cooling_down and we have emergency cooling down
@@ -131,6 +137,74 @@ export class MarinadeState {
         )
       }
     )
+  }
+
+  async getStakeStates(): Promise<StakeState[]> {
+    const stakeAccountInfos = await this.anchorProvider.connection.getProgramAccounts(STAKE_PROGRAM_ID, {
+      filters: [
+        { dataSize: 200 },
+        {
+          memcmp: {
+            offset: 44,
+            bytes: this.marinade.config.stakeWithdrawAuthPDA.toString(),
+          },
+        },
+      ],
+    })
+
+    return stakeAccountInfos.map((stakeAccountInfo) => {
+      const { data } = stakeAccountInfo.account
+      // The data's first 4 bytes are: u8 0x0 0x0 0x0 but borsh uses only the first byte to find the enum's value index.
+      // The next 3 bytes are unused and we need to get rid of them (or somehow fix the BORSH schema?)
+      const adjustedData = Buffer.concat([
+        data.slice(0, 1), // the first byte indexing the enum
+        data.slice(4, data.length), // the first byte indexing the enum
+      ])
+      return deserializeUnchecked(
+        MARINADE_BORSH_SCHEMA,
+        StakeState,
+        adjustedData,
+      )
+    })
+  }
+
+  async getStakeInfos(): Promise<StakeInfo[]> {
+    const stakeRecords = await this.getStakeRecords()
+    const stakeInfos = new Array<StakeInfo>()
+
+    const to_process = stakeRecords.length
+    let processed = 0
+    // rpc.get_multiple_accounts() has a max of 100 accounts
+    const BATCH_SIZE = 100
+    while (processed < to_process) {
+
+      const accountInfos: AccountInfo<Buffer>[] = await this.anchorProvider.connection.getMultipleAccountsInfo(
+        stakeRecords
+          .slice(processed, processed + BATCH_SIZE)
+          .map(stakeRecord => stakeRecord.stakeAccount)
+      ) as AccountInfo<Buffer>[]
+
+      stakeInfos.push(...accountInfos.map((accountInfo, index) => {
+
+        const adjustedData = Buffer.concat([
+          accountInfo?.data.slice(0, 1), // the first byte indexing the enum
+          accountInfo?.data.slice(4, accountInfo?.data.length), // the first byte indexing the enum
+        ])
+
+        return new StakeInfo({
+          index: processed + index,
+          record: stakeRecords[processed + index],
+          stake: deserializeUnchecked(
+            MARINADE_BORSH_SCHEMA,
+            StakeState,
+            adjustedData,
+          ),
+          balance: new BN(accountInfo.lamports),
+        })
+      }))
+      processed += BATCH_SIZE
+    }
+    return stakeInfos
   }
 
   treasuryMsolAccount: web3.PublicKey = this.state.treasuryMsolAccount
