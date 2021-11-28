@@ -2,9 +2,12 @@ import { BN, Provider, web3 } from '@project-serum/anchor'
 import { deserializeUnchecked } from 'borsh'
 import { Marinade } from '../marinade'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
-import { bounds } from '../util'
+import { bounds, STAKE_PROGRAM_ID } from '../util'
 import * as StateHelper from '../util/state-helpers'
-import { MARINADE_BORSH_SCHEMA, StakeRecord, ValidatorRecord } from './marinade-borsch'
+import { MARINADE_BORSH_SCHEMA } from './borsh/marinade-borsh'
+import { StakeRecord } from './borsh/stake-record'
+import { StakeState } from './borsh/stake-state'
+import { ValidatorRecord } from './borsh/validator-record'
 import { ProgramDerivedAddressSeed, MarinadeStateResponse } from './marinade-state.types'
 
 export class MarinadeState {
@@ -63,7 +66,7 @@ export class MarinadeState {
   // before the end of the epoch, the bot will perform staking, if stakeDelta is positive,
   // or unstaking, if stakeDelta is negative.
   stakeDelta(): BN {
-    // Source: Rust main code: pub fn stake_delta(&self, reserve_balance: u64) -> i128 
+    // Source: Rust main code: pub fn stake_delta(&self, reserve_balance: u64) -> i128
     // Never try to stake lamports from emergency_cooling_down
     // (we must wait for update-deactivated first to keep SOLs for claiming on reserve)
     // But if we need to unstake without counting emergency_cooling_down and we have emergency cooling down
@@ -131,6 +134,35 @@ export class MarinadeState {
         )
       }
     )
+  }
+
+  async getStakeStates() {
+    const stakeAccountInfos = await this.anchorProvider.connection.getProgramAccounts(STAKE_PROGRAM_ID, {
+      filters: [
+        { dataSize: 200 },
+        {
+          memcmp: {
+            offset: 44,
+            bytes: this.marinade.config.stakeWithdrawAuthPDA.toString(),
+          },
+        },
+      ],
+    })
+
+    return stakeAccountInfos.map((stakeAccountInfo) => {
+      const { data } = stakeAccountInfo.account
+      // The data's first 4 bytes are: u8 0x0 0x0 0x0 but borsh uses only the first byte to find the enum's value index.
+      // The next 3 bytes are unused and we need to get rid of them (or somehow fix the BORSH schema?)
+      const adjustedData = Buffer.concat([
+        data.slice(0, 1), // the first byte indexing the enum
+        data.slice(4, data.length), // the first byte indexing the enum
+      ])
+      return deserializeUnchecked(
+        MARINADE_BORSH_SCHEMA,
+        StakeState,
+        adjustedData,
+      )
+    })
   }
 
   treasuryMsolAccount: web3.PublicKey = this.state.treasuryMsolAccount
