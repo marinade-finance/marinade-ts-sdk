@@ -191,7 +191,7 @@ export class MarinadeState {
           accountInfo?.data.slice(4, accountInfo?.data.length), // the first byte indexing the enum
         ])
 
-        return {
+        return new StakeInfo({
           index: processed + index,
           record: stakeRecords[processed + index],
           stake: deserializeUnchecked(
@@ -200,7 +200,7 @@ export class MarinadeState {
             adjustedData,
           ),
           balance: new BN(accountInfo.lamports),
-        } as StakeInfo
+        })
       }))
       processed += BATCH_SIZE
     }
