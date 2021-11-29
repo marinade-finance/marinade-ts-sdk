@@ -1,5 +1,6 @@
 export { Marinade } from './marinade'
 export { MarinadeConfig } from './modules/marinade-config'
+export * as MarinadeBorsh from './marinade-state/borsh/index'
 export { MarinadeState } from './marinade-state/marinade-state'
 export { MarinadeMint } from './marinade-mint/marinade-mint'
 export * as MarinadeUtils from './util/index'
