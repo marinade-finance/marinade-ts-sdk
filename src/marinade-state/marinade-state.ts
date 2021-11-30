@@ -94,8 +94,10 @@ export class MarinadeState {
     }
   }
 
-
-  async getValidatorRecords(): Promise<ValidatorRecord[]> {
+  /**
+   * return validatorRecords with capacity
+   */
+  async getValidatorRecords(): Promise<[ValidatorRecord[], number]> {
     const { validatorList } = this.state.validatorSystem
     const recordBounds = (index: number) => bounds(index, validatorList.itemSize, 8)
 
@@ -105,7 +107,7 @@ export class MarinadeState {
       throw new Error(`Failed to fetch validators' details!`)
     }
 
-    return Array.from(
+    return [Array.from(
       { length: validatorList.count },
       (_, index) => {
         return deserializeUnchecked(
@@ -114,10 +116,13 @@ export class MarinadeState {
           validators.data.slice(...recordBounds(index))
         )
       }
-    )
+    ), (validators.data.length - 8)/validatorList.itemSize]
   }
 
-  async getStakeRecords(): Promise<StakeRecord[]> {
+  /**
+   * return stakeRecords with capacity
+   */
+  async getStakeRecords(): Promise<[StakeRecord[], number]> {
     const { stakeList } = this.state.stakeSystem
     const recordBounds = (index: number) => bounds(index, stakeList.itemSize, 8)
 
@@ -127,7 +132,7 @@ export class MarinadeState {
       throw new Error(`Failed to fetch stakes' details!`)
     }
 
-    return Array.from(
+    return [Array.from(
       { length: stakeList.count },
       (_, index) => {
         return deserializeUnchecked(
@@ -136,7 +141,7 @@ export class MarinadeState {
           stakes.data.slice(...recordBounds(index))
         )
       }
-    )
+    ), (stakes.data.length - 8)/stakeList.itemSize]
   }
 
   async getStakeStates(): Promise<StakeState[]> {
@@ -168,18 +173,21 @@ export class MarinadeState {
     })
   }
 
-  async getStakeInfos(): Promise<StakeInfo[]> {
+  /**
+   * return listStakeInfos with capacity
+   */
+  async getStakeInfos(): Promise<[StakeInfo[], number]> {
     const stakeRecords = await this.getStakeRecords()
     const stakeInfos = new Array<StakeInfo>()
 
-    const to_process = stakeRecords.length
+    const to_process = stakeRecords[0].length
     let processed = 0
     // rpc.get_multiple_accounts() has a max of 100 accounts
     const BATCH_SIZE = 100
     while (processed < to_process) {
 
       const accountInfos: AccountInfo<Buffer>[] = await this.anchorProvider.connection.getMultipleAccountsInfo(
-        stakeRecords
+        stakeRecords[0]
           .slice(processed, processed + BATCH_SIZE)
           .map(stakeRecord => stakeRecord.stakeAccount)
       ) as AccountInfo<Buffer>[]
@@ -193,7 +201,7 @@ export class MarinadeState {
 
         return new StakeInfo({
           index: processed + index,
-          record: stakeRecords[processed + index],
+          record: stakeRecords[0][processed + index],
           stake: deserializeUnchecked(
             MARINADE_BORSH_SCHEMA,
             StakeState,
@@ -204,7 +212,7 @@ export class MarinadeState {
       }))
       processed += BATCH_SIZE
     }
-    return stakeInfos
+    return [stakeInfos, stakeRecords[1]]
   }
 
   treasuryMsolAccount: web3.PublicKey = this.state.treasuryMsolAccount
