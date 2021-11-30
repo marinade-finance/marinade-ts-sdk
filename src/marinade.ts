@@ -254,7 +254,7 @@ export class Marinade {
       throw new Error(`Deposited stake ${stakeAccountAddress} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
     }
 
-    const validatorRecords = await marinadeState.getValidatorRecords()
+    const {validatorRecords} = await marinadeState.getValidatorRecords()
     const validatorLookupIndex = validatorRecords.findIndex(({ validatorAccount }) => validatorAccount.equals(voterAddress))
     const validatorIndex = validatorLookupIndex === -1 ? marinadeState.state.validatorSystem.validatorList.count : validatorLookupIndex
 
