@@ -255,7 +255,7 @@ export class Marinade {
     }
 
     const validatorRecords = await marinadeState.getValidatorRecords()
-    const validatorLookupIndex = validatorRecords[0].findIndex(({ validatorAccount }) => validatorAccount.equals(voterAddress))
+    const validatorLookupIndex = validatorRecords.validatorRecords.findIndex(({ validatorAccount }) => validatorAccount.equals(voterAddress))
     const validatorIndex = validatorLookupIndex === -1 ? marinadeState.state.validatorSystem.validatorList.count : validatorLookupIndex
 
     const duplicationFlag = await marinadeState.validatorDuplicationFlag(voterAddress)
