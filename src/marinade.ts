@@ -1,6 +1,6 @@
 import { MarinadeConfig } from './modules/marinade-config'
 import { BN, Idl, Program, Provider, Wallet, web3 } from '@project-serum/anchor'
-import * as marinadeIdl from './marinade-idl.json'
+import * as marinadeIdl from './idl/marinade-idl.json'
 import { MarinadeState } from './marinade-state/marinade-state'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
@@ -20,6 +20,17 @@ export class Marinade {
    * The main Marinade Program
    */
   get marinadeProgram(): Program {
+    return new Program(
+      marinadeIdl as Idl,
+      this.config.marinadeProgramId,
+      this.anchorProvider,
+    )
+  }
+
+  /**
+   * The main Marinade Program
+   */
+  get marinadeReferralProgram(): Program {
     return new Program(
       marinadeIdl as Idl,
       this.config.marinadeProgramId,

@@ -1,0 +1,561 @@
+{
+  "version": "0.0.0",
+  "name": "marinade_referral",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "adminAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "createReferralPda",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "partnerAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "beneficiaryAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "bump",
+          "type": "u8"
+        },
+        {
+          "name": "partnerName",
+          "type": {
+            "array": [
+              "u8",
+              10
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "updateReferral",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "transferDuration",
+          "type": "u32"
+        },
+        {
+          "name": "pause",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "changeAuthority",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "newAdminAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "deposit",
+      "accounts": [
+        {
+          "name": "state",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolSolLegPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolMsolLeg",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolMsolLegAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reservePda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "transferFrom",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "mintTo",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "msolMintAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marinadeFinanceProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "depositStakeAccount",
+      "accounts": [
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "rentPayer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "validatorList",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeList",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "duplicationFlag",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintTo",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "msolMintAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marinadeFinanceState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marinadeFinanceProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "validatorIndex",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "liquidUnstake",
+      "accounts": [
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "getMsolFromAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "getMsolFrom",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolSolLegPda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolMsolLeg",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryMsolAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "transferSolTo",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marinadeFinanceState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "marinadeFinanceProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "msolAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transferLiqShares",
+      "accounts": [
+        {
+          "name": "msolMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryMsolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "beneficiaryAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "adminAccount",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReferralState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "partnerName",
+            "type": {
+              "array": [
+                "u8",
+                10
+              ]
+            }
+          },
+          {
+            "name": "beneficiaryAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "transferDuration",
+            "type": "u32"
+          },
+          {
+            "name": "lastTransferTime",
+            "type": "i64"
+          },
+          {
+            "name": "depositSolAmount",
+            "type": "u64"
+          },
+          {
+            "name": "depositSolOperations",
+            "type": "u64"
+          },
+          {
+            "name": "depositStakeAccountAmount",
+            "type": "u64"
+          },
+          {
+            "name": "depositStakeAccountOperations",
+            "type": "u64"
+          },
+          {
+            "name": "liqUnstakeAmount",
+            "type": "u64"
+          },
+          {
+            "name": "liqUnstakeOperations",
+            "type": "u64"
+          },
+          {
+            "name": "delUnstakeAmount",
+            "type": "u64"
+          },
+          {
+            "name": "delUnstakeOperations",
+            "type": "u64"
+          },
+          {
+            "name": "baseFee",
+            "type": {
+              "defined": "Fee"
+            }
+          },
+          {
+            "name": "maxFee",
+            "type": {
+              "defined": "Fee"
+            }
+          },
+          {
+            "name": "maxNetStake",
+            "type": "u64"
+          },
+          {
+            "name": "pause",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "Fee",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "basisPoints",
+            "type": "u32"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 300,
+      "name": "AccessDenied",
+      "msg": "Access denied"
+    },
+    {
+      "code": 301,
+      "name": "Paused",
+      "msg": "Paused"
+    },
+    {
+      "code": 302,
+      "name": "TransferNotAvailable",
+      "msg": "Transfer is not available"
+    },
+    {
+      "code": 303,
+      "name": "InvalidMintAuthority",
+      "msg": "Invalid mSOL mint authority"
+    }
+  ],
+  "metadata": {
+    "address": "EA9feoG2kywCZjfqinYFdyM7PbHs2BnxxJnDULX8JReW"
+  }
+}
