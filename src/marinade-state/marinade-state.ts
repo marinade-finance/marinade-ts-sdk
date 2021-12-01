@@ -18,12 +18,13 @@ export class MarinadeState {
     private readonly marinade: Marinade,
     private readonly anchorProvider: Provider,
     public readonly state: MarinadeStateResponse,
+    public readonly address: web3.PublicKey,
   ) { }
 
   static async fetch (marinade: Marinade) { // @todo rework args
-    const { marinadeProgram, config } = marinade
-    const state = await marinadeProgram.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
-    return new MarinadeState(marinade, marinade.anchorProvider, state)
+    const { marinadeFinanceProgram, config } = marinade
+    const state = await marinadeFinanceProgram.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
+    return new MarinadeState(marinade, marinade.anchorProvider, state, config.marinadeStateAddress)
   }
 
   reserveAddress = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)
@@ -44,7 +45,7 @@ export class MarinadeState {
 
   private async findProgramDerivedAddress (seed: ProgramDerivedAddressSeed, extraSeeds: Buffer[] = []): Promise<web3.PublicKey> {
     const seeds = [this.marinade.config.marinadeStateAddress.toBuffer(), Buffer.from(seed), ...extraSeeds]
-    const [result] = await web3.PublicKey.findProgramAddress(seeds, this.marinade.config.marinadeProgramId)
+    const [result] = await web3.PublicKey.findProgramAddress(seeds, this.marinade.config.marinadeFinanceProgramId)
     return result
   }
 

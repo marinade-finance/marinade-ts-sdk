@@ -1,14 +1,15 @@
 import { MarinadeConfig } from './modules/marinade-config'
 import { BN, Idl, Program, Provider, Wallet, web3 } from '@project-serum/anchor'
-import * as marinadeIdl from './idl/marinade-idl.json'
+import * as marinadeFinanceIdl from './idl/marinade-finance-idl.json'
+import * as marinadeReferralIdl from './idl/marinade-referral-idl.json'
 import { MarinadeState } from './marinade-state/marinade-state'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
-import { getAssociatedTokenAccountAddress, getOrCreateAssociatedTokenAccount, getParsedStakeAccountInfo, STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from './util/anchor'
+import { getAssociatedTokenAccountAddress, getOrCreateAssociatedTokenAccount, getParsedStakeAccountInfo } from './util/anchor'
 import { MarinadeResult } from './marinade.types'
+import * as MarinadeFinanceAccounts from './idl/marinade-finance-accounts'
+import * as MarinadeInstructions from './idl/marinade-instructions'
 
 export class Marinade {
-  constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
+  constructor (public readonly config: MarinadeConfig = new MarinadeConfig()) { }
 
   readonly anchorProvider = new Provider(
     new web3.Connection(this.config.anchorProviderUrl),
@@ -19,21 +20,21 @@ export class Marinade {
   /**
    * The main Marinade Program
    */
-  get marinadeProgram(): Program {
+  get marinadeFinanceProgram (): Program {
     return new Program(
-      marinadeIdl as Idl,
-      this.config.marinadeProgramId,
+      marinadeFinanceIdl as Idl,
+      this.config.marinadeFinanceProgramId,
       this.anchorProvider,
     )
   }
 
   /**
-   * The main Marinade Program
+   * The Marinade Program for referral partners
    */
-  get marinadeReferralProgram(): Program {
+  get marinadeReferralProgram (): Program {
     return new Program(
-      marinadeIdl as Idl,
-      this.config.marinadeProgramId,
+      marinadeReferralIdl as Idl,
+      this.config.marinadeReferralProgramId,
       this.anchorProvider,
     )
   }
@@ -41,7 +42,7 @@ export class Marinade {
   /**
    * Fetch the Marinade's internal state
    */
-  async getMarinadeState(): Promise<MarinadeState> {
+  async getMarinadeState (): Promise<MarinadeState> {
     return MarinadeState.fetch(this)
   }
 
@@ -50,7 +51,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
    */
-  async addLiquidity(amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
+  async addLiquidity (amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -64,22 +65,15 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const addLiquidityInstruction = await this.marinadeProgram.instruction.addLiquidity(
+    const addLiquidityInstruction = MarinadeInstructions.addLiquidityInstruction({
+      program: this.marinadeFinanceProgram,
       amountLamports,
-      {
-        accounts: {
-          state: this.config.marinadeStateAddress,
-          lpMint: marinadeState.lpMintAddress,
-          lpMintAuthority: await marinadeState.lpMintAuthority(),
-          liqPoolMsolLeg: marinadeState.mSolLeg,
-          liqPoolSolLegPda: await marinadeState.solLeg(),
-          transferFrom: ownerAddress,
-          mintTo: associatedLPTokenAccountAddress,
-          systemProgram: SYSTEM_PROGRAM_ID,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      }
-    )
+      accounts: await MarinadeFinanceAccounts.addLiquidityAccounts({
+        marinadeState,
+        associatedLPTokenAccountAddress,
+        ownerAddress,
+      }),
+    })
 
     transaction.add(addLiquidityInstruction)
     const transactionSignature = await this.anchorProvider.send(transaction)
@@ -95,7 +89,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of LP tokens burned
    */
-  async removeLiquidity(amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
+  async removeLiquidity (amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -110,24 +104,17 @@ export class Marinade {
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
     }
-    const removeLiquidityInstruction = await this.marinadeProgram.instruction.removeLiquidity(
+
+    const removeLiquidityInstruction = MarinadeInstructions.removeLiquidityInstruction({
+      program: this.marinadeFinanceProgram,
       amountLamports,
-      {
-        accounts: {
-          state: this.config.marinadeStateAddress,
-          lpMint: marinadeState.lpMintAddress,
-          burnFrom: associatedLPTokenAccountAddress,
-          burnFromAuthority: this.config.wallet.publicKey,
-          liqPoolSolLegPda: await marinadeState.solLeg(),
-          transferSolTo: ownerAddress,
-          transferMsolTo: associatedMSolTokenAccountAddress,
-          liqPoolMsolLeg: marinadeState.mSolLeg,
-          liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
-          systemProgram: SYSTEM_PROGRAM_ID,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      }
-    )
+      accounts: await MarinadeFinanceAccounts.removeLiquidityAccounts({
+        marinadeState,
+        ownerAddress,
+        associatedLPTokenAccountAddress,
+        associatedMSolTokenAccountAddress,
+      }),
+    })
 
     transaction.add(removeLiquidityInstruction)
     const transactionSignature = await this.anchorProvider.send(transaction)
@@ -144,7 +131,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount lamports staked
    */
-  async deposit(amountLamports: BN): Promise<MarinadeResult.Deposit> {
+  async deposit (amountLamports: BN): Promise<MarinadeResult.Deposit> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -158,24 +145,15 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const depositInstruction = await this.marinadeProgram.instruction.deposit(
+    const depositInstruction = MarinadeInstructions.depositInstruction({
+      program: this.marinadeFinanceProgram,
       amountLamports,
-      {
-        accounts: {
-          reservePda: await marinadeState.reserveAddress(),
-          state: this.config.marinadeStateAddress,
-          msolMint: marinadeState.mSolMintAddress,
-          msolMintAuthority: await marinadeState.mSolMintAuthority(),
-          liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
-          liqPoolMsolLeg: marinadeState.mSolLeg,
-          liqPoolSolLegPda: await marinadeState.solLeg(),
-          mintTo: associatedMSolTokenAccountAddress,
-          transferFrom: ownerAddress,
-          systemProgram: SYSTEM_PROGRAM_ID,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      }
-    )
+      accounts: await MarinadeFinanceAccounts.depositAccounts({
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+      }),
+    })
 
     transaction.add(depositInstruction)
     const transactionSignature = await this.anchorProvider.send(transaction)
@@ -191,7 +169,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
    */
-  async liquidUnstake(amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
+  async liquidUnstake (amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -205,23 +183,15 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const liquidUnstakeInstruction = await this.marinadeProgram.instruction.liquidUnstake(
+    const liquidUnstakeInstruction = MarinadeInstructions.liquidUnstakeInstruction({
+      program: this.marinadeFinanceProgram,
       amountLamports,
-      {
-        accounts: {
-          state: this.config.marinadeStateAddress,
-          msolMint: marinadeState.mSolMintAddress,
-          liqPoolMsolLeg: marinadeState.mSolLeg,
-          liqPoolSolLegPda: await marinadeState.solLeg(),
-          getMsolFrom: associatedMSolTokenAccountAddress,
-          getMsolFromAuthority: ownerAddress,
-          transferSolTo: ownerAddress,
-          treasuryMsolAccount: marinadeState.treasuryMsolAccount,
-          systemProgram: SYSTEM_PROGRAM_ID,
-          tokenProgram: TOKEN_PROGRAM_ID,
-        },
-      }
-    )
+      accounts: await MarinadeFinanceAccounts.liquidUnstakeAccounts({
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+      }),
+    })
 
     transaction.add(liquidUnstakeInstruction)
     const transactionSignature = await this.anchorProvider.send(transaction)
@@ -238,7 +208,7 @@ export class Marinade {
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    */
-  async depositStakeAccount(stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
+  async depositStakeAccount (stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -265,7 +235,7 @@ export class Marinade {
       throw new Error(`Deposited stake ${stakeAccountAddress} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
     }
 
-    const {validatorRecords} = await marinadeState.getValidatorRecords()
+    const { validatorRecords } = await marinadeState.getValidatorRecords()
     const validatorLookupIndex = validatorRecords.findIndex(({ validatorAccount }) => validatorAccount.equals(voterAddress))
     const validatorIndex = validatorLookupIndex === -1 ? marinadeState.state.validatorSystem.validatorList.count : validatorLookupIndex
 
@@ -280,28 +250,19 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const depositStakeAccountInstruction = await this.marinadeProgram.instruction.depositStakeAccount(
+    const depositStakeAccountInstruction = MarinadeInstructions.depositStakeAccountInstruction({
+      program: this.marinadeFinanceProgram,
       validatorIndex,
-      {
-        accounts: {
-          duplicationFlag,
-          stakeAuthority: authorizedWithdrawerAddress,
-          state: this.config.marinadeStateAddress,
-          stakeList: marinadeState.state.stakeSystem.stakeList.account,
-          stakeAccount: stakeAccountAddress,
-          validatorList: marinadeState.state.validatorSystem.validatorList.account,
-          msolMint: marinadeState.mSolMintAddress,
-          msolMintAuthority: await marinadeState.mSolMintAuthority(),
-          mintTo: associatedMSolTokenAccountAddress,
-          rentPayer: ownerAddress,
-          clock: SYSVAR_CLOCK_PUBKEY,
-          rent: SYSVAR_RENT_PUBKEY,
-          systemProgram: SYSTEM_PROGRAM_ID,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          stakeProgram: STAKE_PROGRAM_ID,
-        },
-      }
-    )
+      accounts: await MarinadeFinanceAccounts.depositStakeAccountAccounts({
+        marinadeState,
+        duplicationFlag,
+        authorizedWithdrawerAddress,
+        associatedMSolTokenAccountAddress,
+        ownerAddress,
+        stakeAccountAddress,
+      }),
+    })
+
     transaction.add(depositStakeAccountInstruction)
 
     const transactionSignature = await this.anchorProvider.send(transaction)
