@@ -8,7 +8,7 @@ export class MarinadeConfig {
   marinadeReferralProgramId = new web3.PublicKey(loadEnvVariable('MARINADE_REFERRAL_PROGRAM_ID', 'FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR'))
 
   marinadeStateAddress = new web3.PublicKey(loadEnvVariable('MARINADE_STATE_ADDRESS', '8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'))
-  marinadeReferralStateAddress = new web3.PublicKey(loadEnvVariable('MARINADE_REFERRAL_STATE_ADDRESS', '8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'))
+  // marinadeReferralStateAddress = new web3.PublicKey(loadEnvVariable('MARINADE_REFERRAL_STATE_ADDRESS', '8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'))
 
   stakeWithdrawAuthPDA = new web3.PublicKey(loadEnvVariable('STAKE_WITHDRAW_AUTH_PDA', '9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'))
   // anchorProviderUrl = loadEnvVariable('ANCHOR_PROVIDER_URL', 'https://api.mainnet-beta.solana.com')
