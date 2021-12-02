@@ -6,6 +6,7 @@ export const enum ProgramDerivedAddressSeed {
   LIQ_POOL_MSOL_AUTHORITY = 'liq_st_sol_authority',
   LIQ_POOL_MSOL_MINT_AUTHORITY = 'st_mint',
   LIQ_POOL_SOL_ACCOUNT = 'liq_sol',
+  REFERRAL_STATE = 'mrp_create_referral',
   RESERVE_ACCOUNT = 'reserve',
   UNIQUE_VALIDATOR = 'unique_validator',
 }

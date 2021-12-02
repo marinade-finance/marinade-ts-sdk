@@ -21,8 +21,8 @@
     "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
     "lint": "npx eslint . --ext .ts",
     "lint:fix": "npx eslint . --ext .ts --fix",
-    "gen:idl:marinade-finance": "./scripts/idl2ts.js < ./src/idl/marinade-finance-idl.json > ./src/idl/marinade-finance-idl.ts",
-    "gen:idl:marinade-referral": "./scripts/idl2ts.js < ./src/idl/marinade-referral-idl.json > ./src/idl/marinade-referral-idl.ts",
+    "gen:idl:marinade-finance": "./scripts/idl2ts.js < ./src/programs/idl/marinade-finance-idl.json > ./src/programs/idl/marinade-finance-idl.ts",
+    "gen:idl:marinade-referral": "./scripts/idl2ts.js < ./src/programs/idl/marinade-referral-idl.json > ./src/programs/idl/marinade-referral-idl.ts",
     "gen:idl": "npm run gen:idl:marinade-finance && npm run gen:idl:marinade-referral",
     "prepack": "npm run test && npm run build"
   },

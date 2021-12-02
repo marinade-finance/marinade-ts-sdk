@@ -18,13 +18,14 @@ export class MarinadeState {
     private readonly marinade: Marinade,
     private readonly anchorProvider: Provider,
     public readonly state: MarinadeStateResponse,
-    public readonly address: web3.PublicKey,
+    public readonly marinadeStateAddress: web3.PublicKey,
+    public readonly marinadeFinanceProgramId: web3.PublicKey,
   ) { }
 
   static async fetch (marinade: Marinade) { // @todo rework args
     const { marinadeFinanceProgram, config } = marinade
-    const state = await marinadeFinanceProgram.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
-    return new MarinadeState(marinade, marinade.anchorProvider, state, config.marinadeStateAddress)
+    const state = await marinadeFinanceProgram.program.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
+    return new MarinadeState(marinade, marinade.anchorProvider, state, config.marinadeStateAddress, config.marinadeFinanceProgramId)
   }
 
   reserveAddress = async () => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)

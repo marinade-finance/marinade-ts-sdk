@@ -15,7 +15,7 @@ export class MarinadeConfig {
   anchorProviderUrl = loadEnvVariable('ANCHOR_PROVIDER_URL', 'https://api.devnet.solana.com')
   wallet = web3.Keypair.generate()
 
-  partnerAccount: web3.PublicKey | null = web3PubKeyOrNull(process.env['MARINADE_PARTNER_ACCOUNT'] ?? null)
+  referralCode: web3.PublicKey | null = web3PubKeyOrNull(process.env['MARINADE_REFERRAL_CODE'] ?? null)
 
   constructor(configOverrides: Partial<MarinadeConfig> = {}) {
     Object.assign(this, configOverrides)

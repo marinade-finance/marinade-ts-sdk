@@ -1,12 +1,10 @@
 import { MarinadeConfig } from './modules/marinade-config'
-import { BN, Idl, Program, Provider, Wallet, web3 } from '@project-serum/anchor'
-import * as marinadeFinanceIdl from './idl/marinade-finance-idl.json'
-import * as marinadeReferralIdl from './idl/marinade-referral-idl.json'
+import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import { getAssociatedTokenAccountAddress, getOrCreateAssociatedTokenAccount, getParsedStakeAccountInfo } from './util/anchor'
 import { MarinadeResult } from './marinade.types'
-import * as MarinadeFinanceAccounts from './idl/marinade-finance-accounts'
-import * as MarinadeInstructions from './idl/marinade-instructions'
+import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
+import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 
 export class Marinade {
   constructor (public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -20,24 +18,21 @@ export class Marinade {
   /**
    * The main Marinade Program
    */
-  get marinadeFinanceProgram (): Program {
-    return new Program(
-      marinadeFinanceIdl as Idl,
-      this.config.marinadeFinanceProgramId,
-      this.anchorProvider,
-    )
-  }
+  readonly marinadeFinanceProgram = new MarinadeFinanceProgram(
+    this.config.marinadeFinanceProgramId,
+    this.anchorProvider,
+  )
 
   /**
    * The Marinade Program for referral partners
    */
-  get marinadeReferralProgram (): Program {
-    return new Program(
-      marinadeReferralIdl as Idl,
+  readonly marinadeReferralProgram = this.config.referralCode
+    ? new MarinadeReferralProgram(
       this.config.marinadeReferralProgramId,
       this.anchorProvider,
+      this.config.referralCode,
     )
-  }
+    : null
 
   /**
    * Fetch the Marinade's internal state
@@ -65,10 +60,9 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const addLiquidityInstruction = MarinadeInstructions.addLiquidityInstruction({
-      program: this.marinadeFinanceProgram,
+    const addLiquidityInstruction = this.marinadeFinanceProgram.addLiquidityInstruction({
       amountLamports,
-      accounts: await MarinadeFinanceAccounts.addLiquidityAccounts({
+      accounts: await this.marinadeFinanceProgram.addLiquidityInstructionAccounts({
         marinadeState,
         associatedLPTokenAccountAddress,
         ownerAddress,
@@ -105,10 +99,9 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const removeLiquidityInstruction = MarinadeInstructions.removeLiquidityInstruction({
-      program: this.marinadeFinanceProgram,
+    const removeLiquidityInstruction = this.marinadeFinanceProgram.removeLiquidityInstruction({
       amountLamports,
-      accounts: await MarinadeFinanceAccounts.removeLiquidityAccounts({
+      accounts: await this.marinadeFinanceProgram.removeLiquidityInstructionAccounts({
         marinadeState,
         ownerAddress,
         associatedLPTokenAccountAddress,
@@ -145,14 +138,12 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const depositInstruction = MarinadeInstructions.depositInstruction({
-      program: this.marinadeFinanceProgram,
+    const program = this.marinadeReferralProgram ?? this.marinadeFinanceProgram
+    const depositInstruction = await program.depositInstructionBuilder({
       amountLamports,
-      accounts: await MarinadeFinanceAccounts.depositAccounts({
-        marinadeState,
-        ownerAddress,
-        associatedMSolTokenAccountAddress,
-      }),
+      marinadeState,
+      ownerAddress,
+      associatedMSolTokenAccountAddress,
     })
 
     transaction.add(depositInstruction)
@@ -183,14 +174,12 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const liquidUnstakeInstruction = MarinadeInstructions.liquidUnstakeInstruction({
-      program: this.marinadeFinanceProgram,
+    const program = this.marinadeReferralProgram ?? this.marinadeFinanceProgram
+    const liquidUnstakeInstruction = await program.liquidUnstakeInstructionBuilder({
       amountLamports,
-      accounts: await MarinadeFinanceAccounts.liquidUnstakeAccounts({
-        marinadeState,
-        ownerAddress,
-        associatedMSolTokenAccountAddress,
-      }),
+      marinadeState,
+      ownerAddress,
+      associatedMSolTokenAccountAddress,
     })
 
     transaction.add(liquidUnstakeInstruction)
@@ -250,17 +239,15 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const depositStakeAccountInstruction = MarinadeInstructions.depositStakeAccountInstruction({
-      program: this.marinadeFinanceProgram,
+    const program = this.marinadeReferralProgram ?? this.marinadeFinanceProgram
+    const depositStakeAccountInstruction = await program.depositStakeAccountInstructionBuilder({
       validatorIndex,
-      accounts: await MarinadeFinanceAccounts.depositStakeAccountAccounts({
-        marinadeState,
-        duplicationFlag,
-        authorizedWithdrawerAddress,
-        associatedMSolTokenAccountAddress,
-        ownerAddress,
-        stakeAccountAddress,
-      }),
+      marinadeState,
+      duplicationFlag,
+      authorizedWithdrawerAddress,
+      associatedMSolTokenAccountAddress,
+      ownerAddress,
+      stakeAccountAddress,
     })
 
     transaction.add(depositStakeAccountInstruction)
