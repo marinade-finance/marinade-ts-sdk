@@ -7,7 +7,7 @@ import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 
 export class Marinade {
-  constructor (public readonly config: MarinadeConfig = new MarinadeConfig()) { }
+  constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
 
   readonly anchorProvider = new Provider(
     new web3.Connection(this.config.anchorProviderUrl),
@@ -37,7 +37,7 @@ export class Marinade {
   /**
    * Fetch the Marinade's internal state
    */
-  async getMarinadeState (): Promise<MarinadeState> {
+  async getMarinadeState(): Promise<MarinadeState> {
     return MarinadeState.fetch(this)
   }
 
@@ -46,7 +46,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
    */
-  async addLiquidity (amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
+  async addLiquidity(amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -83,7 +83,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of LP tokens burned
    */
-  async removeLiquidity (amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
+  async removeLiquidity(amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -124,7 +124,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount lamports staked
    */
-  async deposit (amountLamports: BN): Promise<MarinadeResult.Deposit> {
+  async deposit(amountLamports: BN): Promise<MarinadeResult.Deposit> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -160,7 +160,7 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
    */
-  async liquidUnstake (amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
+  async liquidUnstake(amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -197,7 +197,7 @@ export class Marinade {
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    */
-  async depositStakeAccount (stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
+  async depositStakeAccount(stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
     const ownerAddress = this.config.wallet.publicKey
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()

@@ -7,13 +7,13 @@ import { MarinadeReferralIdl } from './idl/marinade-referral-idl'
 import * as marinadeReferralIdlSchema from './idl/marinade-referral-idl.json'
 
 export class MarinadeReferralProgram {
-  constructor (
+  constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider,
     public readonly referralState: web3.PublicKey,
   ) { }
 
-  get program (): Program {
+  get program(): Program {
     return new Program(
       marinadeReferralIdlSchema as Idl,
       this.programAddress,
@@ -21,7 +21,7 @@ export class MarinadeReferralProgram {
     )
   }
 
-  liquidUnstakeInstructionAccounts = async ({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
+  liquidUnstakeInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
@@ -48,13 +48,13 @@ export class MarinadeReferralProgram {
     { accounts }
   )
 
-  liquidUnstakeInstructionBuilder = async ({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['liquidUnstakeInstructionAccounts']>[0]) =>
+  liquidUnstakeInstructionBuilder = async({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['liquidUnstakeInstructionAccounts']>[0]) =>
     this.liquidUnstakeInstruction({
       amountLamports,
       accounts: await this.liquidUnstakeInstructionAccounts(accountsArgs),
     })
 
-  depositInstructionAccounts = async ({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
+  depositInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
@@ -82,13 +82,13 @@ export class MarinadeReferralProgram {
     { accounts }
   )
 
-  depositInstructionBuilder = async ({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['depositInstructionAccounts']>[0]) =>
+  depositInstructionBuilder = async({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['depositInstructionAccounts']>[0]) =>
     this.depositInstruction({
       amountLamports,
       accounts: await this.depositInstructionAccounts(accountsArgs),
     })
 
-  depositStakeAccountInstructionAccounts = async ({
+  depositStakeAccountInstructionAccounts = async({
     marinadeState,
     duplicationFlag,
     ownerAddress,
@@ -130,7 +130,7 @@ export class MarinadeReferralProgram {
     { accounts },
   )
 
-  depositStakeAccountInstructionBuilder = async ({ validatorIndex, ...accountsArgs }: { validatorIndex: number } & Parameters<this['depositStakeAccountInstructionAccounts']>[0]) =>
+  depositStakeAccountInstructionBuilder = async({ validatorIndex, ...accountsArgs }: { validatorIndex: number } & Parameters<this['depositStakeAccountInstructionAccounts']>[0]) =>
     this.depositStakeAccountInstruction({
       validatorIndex,
       accounts: await this.depositStakeAccountInstructionAccounts(accountsArgs),

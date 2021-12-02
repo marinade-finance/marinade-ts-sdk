@@ -7,12 +7,12 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
 
 export class MarinadeFinanceProgram {
-  constructor (
+  constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider,
   ) { }
 
-  get program (): Program {
+  get program(): Program {
     return new Program(
       marinadeFinanceIdlSchema as Idl,
       this.programAddress,
@@ -20,7 +20,7 @@ export class MarinadeFinanceProgram {
     )
   }
 
-  addLiquidityInstructionAccounts = async ({ marinadeState, ownerAddress, associatedLPTokenAccountAddress }: {
+  addLiquidityInstructionAccounts = async({ marinadeState, ownerAddress, associatedLPTokenAccountAddress }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedLPTokenAccountAddress: web3.PublicKey,
@@ -44,7 +44,7 @@ export class MarinadeFinanceProgram {
     { accounts }
   )
 
-  removeLiquidityInstructionAccounts = async ({ marinadeState, ownerAddress, associatedLPTokenAccountAddress, associatedMSolTokenAccountAddress }: {
+  removeLiquidityInstructionAccounts = async({ marinadeState, ownerAddress, associatedLPTokenAccountAddress, associatedMSolTokenAccountAddress }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedLPTokenAccountAddress: web3.PublicKey,
@@ -71,7 +71,7 @@ export class MarinadeFinanceProgram {
     { accounts }
   )
 
-  liquidUnstakeInstructionAccounts = async ({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
+  liquidUnstakeInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
@@ -96,13 +96,13 @@ export class MarinadeFinanceProgram {
     { accounts }
   )
 
-  liquidUnstakeInstructionBuilder = async ({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['liquidUnstakeInstructionAccounts']>[0]) =>
+  liquidUnstakeInstructionBuilder = async({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['liquidUnstakeInstructionAccounts']>[0]) =>
     this.liquidUnstakeInstruction({
       amountLamports,
       accounts: await this.liquidUnstakeInstructionAccounts(accountsArgs),
     })
 
-  depositInstructionAccounts = async ({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
+  depositInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
@@ -128,13 +128,13 @@ export class MarinadeFinanceProgram {
     { accounts }
   )
 
-  depositInstructionBuilder = async ({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['depositInstructionAccounts']>[0]) =>
+  depositInstructionBuilder = async({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['depositInstructionAccounts']>[0]) =>
     this.depositInstruction({
       amountLamports,
       accounts: await this.depositInstructionAccounts(accountsArgs),
     })
 
-  depositStakeAccountInstructionAccounts = async ({
+  depositStakeAccountInstructionAccounts = async({
     marinadeState,
     duplicationFlag,
     ownerAddress,
@@ -174,7 +174,7 @@ export class MarinadeFinanceProgram {
     { accounts },
   )
 
-  depositStakeAccountInstructionBuilder = async ({ validatorIndex, ...accountsArgs }: { validatorIndex: number } & Parameters<this['depositStakeAccountInstructionAccounts']>[0]) =>
+  depositStakeAccountInstructionBuilder = async({ validatorIndex, ...accountsArgs }: { validatorIndex: number } & Parameters<this['depositStakeAccountInstructionAccounts']>[0]) =>
     this.depositStakeAccountInstruction({
       validatorIndex,
       accounts: await this.depositStakeAccountInstructionAccounts(accountsArgs),
