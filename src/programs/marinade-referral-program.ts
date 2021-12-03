@@ -27,7 +27,7 @@ export class MarinadeReferralProgram {
     associatedMSolTokenAccountAddress: web3.PublicKey,
   }): Promise<MarinadeReferralIdl.Instruction.LiquidUnstake.Accounts> => ({
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
-    marinadeFinanceState: marinadeState.marinadeStateAddress,
+    state: marinadeState.marinadeStateAddress,
     referralState: this.referralState,
     msolMint: marinadeState.mSolMintAddress,
     liqPoolMsolLeg: marinadeState.mSolLeg,
@@ -105,7 +105,7 @@ export class MarinadeReferralProgram {
   }): Promise<MarinadeReferralIdl.Instruction.DepositStakeAccount.Accounts> => ({
     duplicationFlag,
     stakeAuthority: authorizedWithdrawerAddress,
-    marinadeFinanceState: marinadeState.marinadeStateAddress,
+    state: marinadeState.marinadeStateAddress,
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
     referralState: this.referralState,
     stakeList: marinadeState.state.stakeSystem.stakeList.account,

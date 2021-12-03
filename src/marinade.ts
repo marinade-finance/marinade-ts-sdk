@@ -147,7 +147,7 @@ export class Marinade {
     })
 
     transaction.add(depositInstruction)
-    const transactionSignature = await this.anchorProvider.send(transaction)
+    const transactionSignature = await this.anchorProvider.send(transaction, undefined, {skipPreflight: true})
 
     return {
       associatedMSolTokenAccountAddress,
@@ -182,8 +182,9 @@ export class Marinade {
       associatedMSolTokenAccountAddress,
     })
 
+    console.log(liquidUnstakeInstruction.data, liquidUnstakeInstruction.keys.map((key) => key.pubkey.toBase58()))
     transaction.add(liquidUnstakeInstruction)
-    const transactionSignature = await this.anchorProvider.send(transaction)
+    const transactionSignature = await this.anchorProvider.send(transaction, undefined, {skipPreflight: true})
 
     return {
       associatedMSolTokenAccountAddress,
@@ -218,11 +219,11 @@ export class Marinade {
       throw new Error('The stake is cooling down!')
     }
 
-    const waitEpochs = 2
-    const earliestDepositEpoch = activationEpoch.addn(waitEpochs)
-    if (earliestDepositEpoch.gtn(currentEpoch.epoch)) {
-      throw new Error(`Deposited stake ${stakeAccountAddress} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
-    }
+    // const waitEpochs = 2
+    // const earliestDepositEpoch = activationEpoch.addn(waitEpochs)
+    // if (earliestDepositEpoch.gtn(currentEpoch.epoch)) {
+    //   throw new Error(`Deposited stake ${stakeAccountAddress} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
+    // }
 
     const { validatorRecords } = await marinadeState.getValidatorRecords()
     const validatorLookupIndex = validatorRecords.findIndex(({ validatorAccount }) => validatorAccount.equals(voterAddress))
@@ -252,7 +253,7 @@ export class Marinade {
 
     transaction.add(depositStakeAccountInstruction)
 
-    const transactionSignature = await this.anchorProvider.send(transaction)
+    const transactionSignature = await this.anchorProvider.send(transaction, undefined, {skipPreflight: true})
     return {
       associatedMSolTokenAccountAddress,
       voterAddress,

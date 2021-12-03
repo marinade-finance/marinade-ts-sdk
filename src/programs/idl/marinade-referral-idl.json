@@ -154,22 +154,22 @@
       "accounts": [
         {
           "name": "state",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "msolMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "liqPoolSolLegPda",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "liqPoolMsolLeg",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -179,17 +179,17 @@
         },
         {
           "name": "reservePda",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "transferFrom",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
           "name": "mintTo",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -229,7 +229,22 @@
       "name": "depositStakeAccount",
       "accounts": [
         {
-          "name": "referralState",
+          "name": "state",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "validatorList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -239,47 +254,27 @@
           "isSigner": true
         },
         {
+          "name": "duplicationFlag",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "rentPayer",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
-          "name": "validatorList",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "stakeList",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "stakeAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "duplicationFlag",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "msolMint",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "mintTo",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "msolMintAuthority",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marinadeFinanceState",
           "isMut": false,
           "isSigner": false
         },
@@ -312,6 +307,11 @@
           "name": "marinadeFinanceProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -325,7 +325,32 @@
       "name": "liquidUnstake",
       "accounts": [
         {
-          "name": "referralState",
+          "name": "state",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "msolMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolSolLegPda",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "liqPoolMsolLeg",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryMsolAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "getMsolFrom",
           "isMut": true,
           "isSigner": false
         },
@@ -335,38 +360,8 @@
           "isSigner": true
         },
         {
-          "name": "msolMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "getMsolFrom",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "liqPoolSolLegPda",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "liqPoolMsolLeg",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryMsolAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "transferSolTo",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "marinadeFinanceState",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -383,6 +378,11 @@
           "name": "marinadeFinanceProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -393,7 +393,7 @@
       ]
     },
     {
-      "name": "transferLiqShares",
+      "name": "transferLiqUnstakeShares",
       "accounts": [
         {
           "name": "msolMint",
@@ -401,12 +401,12 @@
           "isSigner": false
         },
         {
-          "name": "treasuryMsolAccount",
+          "name": "beneficiaryAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "beneficiaryAccount",
+          "name": "treasuryMsolAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -418,6 +418,11 @@
         {
           "name": "referralState",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
           "isSigner": false
         }
       ],
@@ -480,6 +485,10 @@
             "type": "u64"
           },
           {
+            "name": "liqUnstakeMsolFees",
+            "type": "u64"
+          },
+          {
             "name": "liqUnstakeAmount",
             "type": "u64"
           },
@@ -488,7 +497,7 @@
             "type": "u64"
           },
           {
-            "name": "delUnstakeAmount",
+            "name": "delayedUnstakeAmount",
             "type": "u64"
           },
           {
@@ -551,11 +560,8 @@
     },
     {
       "code": 303,
-      "name": "InvalidMintAuthority",
-      "msg": "Invalid mSOL mint authority"
+      "name": "InvalidBeneficiaryAccount",
+      "msg": "Invalid beneficiary account"
     }
-  ],
-  "metadata": {
-    "address": "EA9feoG2kywCZjfqinYFdyM7PbHs2BnxxJnDULX8JReW"
-  }
+  ]
 }
