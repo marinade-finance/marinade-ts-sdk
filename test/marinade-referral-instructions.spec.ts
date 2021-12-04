@@ -4,9 +4,7 @@ import * as TestWorld from './test-world'
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2)
 
 describe('Marinade Referral', () => {
-  console.log('SDK User', TestWorld.SDK_USER.publicKey.toBase58())
-
-  beforeAll(async () => {
+  beforeAll(async() => {
     await TestWorld.provideMinimumLamportsBalance(TestWorld.SDK_USER.publicKey, MINIMUM_LAMPORTS_BEFORE_TEST)
   })
 
@@ -17,13 +15,10 @@ describe('Marinade Referral', () => {
   // instead of sending `anchorProviderUrl` and `USER_KEYPAIR` ?
 
   describe('deposit', () => {
-    it('deposits SOL', async () => {
-      console.log('ReferralCode:', TestWorld.REFERRAL_CODE.toBase58())
-
+    it('deposits SOL', async() => {
       const config = new MarinadeConfig({
-        anchorProviderUrl: TestWorld.PROVIDER_URL,
+        provider: TestWorld.PROVIDER,
         referralCode: TestWorld.REFERRAL_CODE,
-        wallet: TestWorld.SDK_USER,
       })
       const marinade = new Marinade(config)
 
@@ -33,13 +28,10 @@ describe('Marinade Referral', () => {
   })
 
   describe('liquidUnstake', () => {
-    it('unstakes SOL', async () => {
-      console.log('ReferralCode:', TestWorld.REFERRAL_CODE.toBase58())
-
+    it('unstakes SOL', async() => {
       const config = new MarinadeConfig({
-        anchorProviderUrl: TestWorld.PROVIDER_URL,
+        provider: TestWorld.PROVIDER,
         referralCode: TestWorld.REFERRAL_CODE,
-        wallet: TestWorld.SDK_USER,
       })
       const marinade = new Marinade(config)
 

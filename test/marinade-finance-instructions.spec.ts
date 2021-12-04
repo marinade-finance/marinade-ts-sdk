@@ -4,20 +4,15 @@ import * as TestWorld from './test-world'
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(1.5)
 
 describe('Marinade Finance', () => {
-  console.log('SDK User', TestWorld.SDK_USER.publicKey.toBase58())
-
-  beforeAll(async () => {
+  beforeAll(async() => {
     await TestWorld.provideMinimumLamportsBalance(TestWorld.SDK_USER.publicKey, MINIMUM_LAMPORTS_BEFORE_TEST)
   })
 
   describe('deposit', () => {
-    it('deposits SOL', async () => {
-      console.log('ReferralCode:', TestWorld.REFERRAL_CODE.toBase58())
-
+    it('deposits SOL', async() => {
       const config = new MarinadeConfig({
-        anchorProviderUrl: TestWorld.PROVIDER_URL,
+        provider: TestWorld.PROVIDER,
         referralCode: TestWorld.REFERRAL_CODE,
-        wallet: TestWorld.SDK_USER,
       })
       const marinade = new Marinade(config)
 
@@ -27,13 +22,10 @@ describe('Marinade Finance', () => {
   })
 
   describe('liquidUnstake', () => {
-    it('unstakes SOL', async () => {
-      console.log('ReferralCode:', TestWorld.REFERRAL_CODE.toBase58())
-
+    it('unstakes SOL', async() => {
       const config = new MarinadeConfig({
-        anchorProviderUrl: TestWorld.PROVIDER_URL,
+        provider: TestWorld.PROVIDER,
         referralCode: TestWorld.REFERRAL_CODE,
-        wallet: TestWorld.SDK_USER,
       })
       const marinade = new Marinade(config)
 
@@ -41,4 +33,20 @@ describe('Marinade Finance', () => {
       console.log('Liquid unstake tx:', transactionSignature)
     })
   })
+
+  // describe('depositStakeAccount', () => {
+  //   it.only('deposits stake account', async () => {
+  //     console.log('ReferralCode:', TestWorld.REFERRAL_CODE.toBase58())
+
+  //     const config = new MarinadeConfig({
+  //       anchorProviderUrl: TestWorld.PROVIDER_URL,
+  //       // referralCode: TestWorld.REFERRAL_CODE,
+  //       wallet: Wallet.local().payer,
+  //     })
+  //     const marinade = new Marinade(config)
+
+  //     const { transactionSignature } = await marinade.depositStakeAccount(new web3.PublicKey('FYPHkZ3SVZscHpzaYhLHWKzfe9LcGc5WKbUdb2gTuUrV'))
+  //     console.log('Deposit stake account tx:', transactionSignature)
+  //   })
+  // })
 })

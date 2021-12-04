@@ -3,6 +3,7 @@ import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
 import { MarinadeState } from '../marinade-state/marinade-state'
 import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
+import { assertNotNullAndReturn } from '../util/assert'
 import { MarinadeReferralIdl } from './idl/marinade-referral-idl'
 import * as marinadeReferralIdlSchema from './idl/marinade-referral-idl.json'
 
@@ -10,7 +11,7 @@ export class MarinadeReferralProgram {
   constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider,
-    public readonly referralState: web3.PublicKey,
+    public readonly referralState: web3.PublicKey | null,
   ) { }
 
   get program(): Program {
@@ -28,7 +29,7 @@ export class MarinadeReferralProgram {
   }): Promise<MarinadeReferralIdl.Instruction.LiquidUnstake.Accounts> => ({
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
     state: marinadeState.marinadeStateAddress,
-    referralState: this.referralState,
+    referralState: assertNotNullAndReturn(this.referralState, 'The referral code must be provided!'),
     msolMint: marinadeState.mSolMintAddress,
     liqPoolMsolLeg: marinadeState.mSolLeg,
     liqPoolSolLegPda: await marinadeState.solLeg(),
@@ -61,7 +62,7 @@ export class MarinadeReferralProgram {
   }): Promise<MarinadeReferralIdl.Instruction.Deposit.Accounts> => ({
     reservePda: await marinadeState.reserveAddress(),
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
-    referralState: this.referralState,
+    referralState: assertNotNullAndReturn(this.referralState, 'The referral code must be provided!'),
     state: marinadeState.marinadeStateAddress,
     msolMint: marinadeState.mSolMintAddress,
     msolMintAuthority: await marinadeState.mSolMintAuthority(),
@@ -107,7 +108,7 @@ export class MarinadeReferralProgram {
     stakeAuthority: authorizedWithdrawerAddress,
     state: marinadeState.marinadeStateAddress,
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
-    referralState: this.referralState,
+    referralState: assertNotNullAndReturn(this.referralState, 'The referral code must be provided!'),
     stakeList: marinadeState.state.stakeSystem.stakeList.account,
     stakeAccount: stakeAccountAddress,
     validatorList: marinadeState.state.validatorSystem.validatorList.account,
