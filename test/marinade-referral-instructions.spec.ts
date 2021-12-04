@@ -8,12 +8,6 @@ describe('Marinade Referral', () => {
     await TestWorld.provideMinimumLamportsBalance(TestWorld.SDK_USER.publicKey, MINIMUM_LAMPORTS_BEFORE_TEST)
   })
 
-  // LJ: if we work with a keypair (meaning we have the priv key) that will be incompatible if we try to use this lib
-  // from a FE project that connects with wallets.
-  //
-  // Can you please analyze if we can send a `@project-serum/anchor::Provider` object to `new MarinadeConfig`
-  // instead of sending `anchorProviderUrl` and `USER_KEYPAIR` ?
-
   describe('deposit', () => {
     it('deposits SOL', async() => {
       const config = new MarinadeConfig({
