@@ -19,7 +19,7 @@
     "pretest": "npm run lint",
     "test": "npm run test:unit",
     "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
-    "test:integration": "jest --preset ts-jest --testTimeout 30000 --roots '<rootDir>/test'",
+    "test:integration": "jest --preset ts-jest --testTimeout 30000 --runInBand --roots '<rootDir>/test'",
     "lint": "npx eslint . --ext .ts",
     "lint:fix": "npx eslint . --ext .ts --fix",
     "gen:idl:marinade-finance": "./scripts/idl2ts.js < ./src/programs/idl/marinade-finance-idl.json > ./src/programs/idl/marinade-finance-idl.ts",

@@ -4,7 +4,7 @@
     "lib": ["es2021"],
     "target": "es2021",
     "module": "CommonJS",
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "moduleResolution": "node",
     "declaration": true,
