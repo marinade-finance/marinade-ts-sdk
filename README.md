@@ -34,24 +34,21 @@ const marinade = new Marinade()
 
 2) Extend your configuration with other options:
 ```ts
-import { Marinade, MarinadeConfig, Wallet } from '@marinade.finance/marinade-ts-sdk'
+import { Marinade, MarinadeConfig, Wallet, Provider } from '@marinade.finance/marinade-ts-sdk'
 
-const config = new MarinadeConfig({
-  anchorProviderUrl: 'https://api.mainnet-beta.solana.com',
-  wallet: Wallet.local().payer, // `Wallet.local() needs ANCHOR_WALLET env var with path to you private key`
-})
+const config = new MarinadeConfig({ provider: new Provider(...) })
 const marinade = new Marinade()
 ```
 
 3) Use environment variables to set the configuration values:
 
-| Environment variable      | Default value                                    |
+| Environment variable           | Default value                                     |
 | ------------------------------ | ------------------------------------------------- |
 | `MARINADE_FINANCE_PROGRAM_ID`  | `'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'`   |
 | `MARINADE_REFERRAL_PROGRAM_ID` | `'FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR'`  |
 | `MARINADE_STATE_ADDRESS`       | `'8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'`  |
 | `STAKE_WITHDRAW_AUTH_PDA`      | `'9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'`  |
-| `ANCHOR_PROVIDER_URL`          | `'https://api.devnet.solana.com'`                 |
+| `MARINADE_REFERRAL_CODE`       | `null`                                            |
 
 
 4) When you use the `referral code`, staking/unstaking functions are run against the Marinade Referral Program.
@@ -59,7 +56,7 @@ const marinade = new Marinade()
 import { Marinade, MarinadeConfig, Wallet } from '@marinade.finance/marinade-ts-sdk'
 
 const config = new MarinadeConfig({
-  anchorProviderUrl: 'https://api.mainnet-beta.solana.com',
+  provider: new Provider(...),
   referralCode: new web3.PublicKey('...'),
 })
 const marinade = new Marinade()
