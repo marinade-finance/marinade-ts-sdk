@@ -6,7 +6,7 @@ describe('Marinade Referral State', () => {
   describe('getReferralPartnerState', () => {
     it('fetches the referral program\'s global state which matches the expected type', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
@@ -22,7 +22,7 @@ describe('Marinade Referral State', () => {
   describe('getReferralPartnerState', () => {
     it('fetches the referral partner\' state which matches the expected type', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)

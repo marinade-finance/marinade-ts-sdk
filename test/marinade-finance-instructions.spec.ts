@@ -11,12 +11,14 @@ describe('Marinade Finance', () => {
   describe('deposit', () => {
     it('deposits SOL', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
 
-      const { transactionSignature } = await marinade.deposit(MarinadeUtils.solToLamports(1))
+      const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1))
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Deposit tx:', transactionSignature)
     })
   })
@@ -24,12 +26,14 @@ describe('Marinade Finance', () => {
   describe('liquidUnstake', () => {
     it('unstakes SOL', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
 
-      const { transactionSignature } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
+      const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Liquid unstake tx:', transactionSignature)
     })
   })
@@ -39,13 +43,14 @@ describe('Marinade Finance', () => {
   //     console.log('ReferralCode:', TestWorld.REFERRAL_CODE.toBase58())
 
   //     const config = new MarinadeConfig({
-  //       anchorProviderUrl: TestWorld.PROVIDER_URL,
+  //       connection: TestWorld.CONNECTION,
+  //       publicKey: TestWorld.SDK_USER.publicKey,
   //       // referralCode: TestWorld.REFERRAL_CODE,
-  //       wallet: Wallet.local().payer,
   //     })
   //     const marinade = new Marinade(config)
 
-  //     const { transactionSignature } = await marinade.depositStakeAccount(new web3.PublicKey('FYPHkZ3SVZscHpzaYhLHWKzfe9LcGc5WKbUdb2gTuUrV'))
+  //     const { transaction } = await marinade.depositStakeAccount(new web3.PublicKey('FYPHkZ3SVZscHpzaYhLHWKzfe9LcGc5WKbUdb2gTuUrV'))
+  //     const transactionSignature = await TestWorld.PROVIDER.send(transaction)
   //     console.log('Deposit stake account tx:', transactionSignature)
   //   })
   // })

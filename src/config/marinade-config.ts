@@ -1,4 +1,4 @@
-import { Provider, Wallet, web3 } from '@project-serum/anchor'
+import { web3 } from '@project-serum/anchor'
 import { web3PubKeyOrNull } from '../util'
 
 const loadEnvVariable = (envVariableKey: string, defValue: string): string => process.env[envVariableKey] ?? defValue
@@ -13,11 +13,8 @@ export class MarinadeConfig {
 
   stakeWithdrawAuthPDA = new web3.PublicKey(loadEnvVariable('STAKE_WITHDRAW_AUTH_PDA', '9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'))
 
-  provider: Provider = new Provider(
-    new web3.Connection(DEFAULT_PROVIDER_URL),
-    new Wallet(web3.Keypair.generate()),
-    { commitment: 'confirmed' },
-  )
+  connection = new web3.Connection(DEFAULT_PROVIDER_URL)
+  publicKey: web3.PublicKey | null = null
 
   referralCode: web3.PublicKey | null = web3PubKeyOrNull(process.env['MARINADE_REFERRAL_CODE'] ?? null)
 

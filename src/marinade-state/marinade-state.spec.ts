@@ -19,7 +19,7 @@ describe('MarinadeState', () => {
       pubkey: new web3.PublicKey('6yWLeYR8RsBHGbAvUGQhsi72JEhn2sZAjY2jxjQPT5sC'),
     }]
 
-    marinade.config.provider.connection.getProgramAccounts = jest.fn().mockResolvedValueOnce(accountInfos)
+    marinade.provider.connection.getProgramAccounts = jest.fn().mockResolvedValueOnce(accountInfos)
 
     const stakeStates = await state.getStakeStates()
 

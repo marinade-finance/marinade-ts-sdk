@@ -11,12 +11,14 @@ describe('Marinade Referral', () => {
   describe('deposit', () => {
     it('deposits SOL', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
 
-      const { transactionSignature } = await marinade.deposit(MarinadeUtils.solToLamports(1))
+      const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1))
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Deposit tx:', transactionSignature)
     })
   })
@@ -24,12 +26,14 @@ describe('Marinade Referral', () => {
   describe('liquidUnstake', () => {
     it('unstakes SOL', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
 
-      const { transactionSignature } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
+      const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Liquid unstake tx:', transactionSignature)
     })
   })

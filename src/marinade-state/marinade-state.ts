@@ -25,7 +25,7 @@ export class MarinadeState {
   static async fetch(marinade: Marinade) { // @todo rework args
     const { marinadeFinanceProgram, config } = marinade
     const state = await marinadeFinanceProgram.program.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
-    return new MarinadeState(marinade, marinade.config.provider, state, config.marinadeStateAddress, config.marinadeFinanceProgramId)
+    return new MarinadeState(marinade, marinade.provider, state, config.marinadeStateAddress, config.marinadeFinanceProgramId)
   }
 
   reserveAddress = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)

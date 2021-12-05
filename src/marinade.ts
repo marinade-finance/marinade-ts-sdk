@@ -1,22 +1,29 @@
 import { MarinadeConfig } from './config/marinade-config'
-import { BN, web3 } from '@project-serum/anchor'
+import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import { getAssociatedTokenAccountAddress, getOrCreateAssociatedTokenAccount, getParsedStakeAccountInfo } from './util/anchor'
-import { MarinadeResult } from './marinade.types'
+import { ErrorMessage, MarinadeResult } from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
+import { assertNotNullAndReturn } from './util/assert'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
+
+  readonly provider: Provider = new Provider(
+    this.config.connection,
+    new Wallet(web3.Keypair.generate()),
+    { commitment: 'confirmed' },
+  )
 
   /**
    * The main Marinade Program
    */
   readonly marinadeFinanceProgram = new MarinadeFinanceProgram(
     this.config.marinadeFinanceProgramId,
-    this.config.provider,
+    this.provider,
   )
 
   /**
@@ -24,7 +31,7 @@ export class Marinade {
    */
   readonly marinadeReferralProgram = new MarinadeReferralProgram(
     this.config.marinadeReferralProgramId,
-    this.config.provider,
+    this.provider,
     this.config.referralCode,
   )
 
@@ -59,14 +66,14 @@ export class Marinade {
    * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
    */
   async addLiquidity(amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
-    const ownerAddress = this.config.provider.wallet.publicKey
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     const {
       associatedTokenAccountAddress: associatedLPTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.config.provider, marinadeState.lpMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.lpMintAddress, ownerAddress)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -82,11 +89,10 @@ export class Marinade {
     })
 
     transaction.add(addLiquidityInstruction)
-    const transactionSignature = await this.config.provider.send(transaction)
 
     return {
       associatedLPTokenAccountAddress,
-      transactionSignature,
+      transaction,
     }
   }
 
@@ -96,7 +102,7 @@ export class Marinade {
    * @param {BN} amountLamports - The amount of LP tokens burned
    */
   async removeLiquidity(amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
-    const ownerAddress = this.config.provider.wallet.publicKey
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
@@ -105,7 +111,7 @@ export class Marinade {
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.config.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -122,12 +128,11 @@ export class Marinade {
     })
 
     transaction.add(removeLiquidityInstruction)
-    const transactionSignature = await this.config.provider.send(transaction)
 
     return {
       associatedLPTokenAccountAddress,
       associatedMSolTokenAccountAddress,
-      transactionSignature,
+      transaction,
     }
   }
 
@@ -137,14 +142,14 @@ export class Marinade {
    * @param {BN} amountLamports - The amount lamports staked
    */
   async deposit(amountLamports: BN): Promise<MarinadeResult.Deposit> {
-    const ownerAddress = this.config.provider.wallet.publicKey
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.config.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -159,11 +164,10 @@ export class Marinade {
     })
 
     transaction.add(depositInstruction)
-    const transactionSignature = await this.config.provider.send(transaction)
 
     return {
       associatedMSolTokenAccountAddress,
-      transactionSignature,
+      transaction,
     }
   }
 
@@ -173,14 +177,14 @@ export class Marinade {
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
    */
   async liquidUnstake(amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
-    const ownerAddress = this.config.provider.wallet.publicKey
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.config.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -195,11 +199,10 @@ export class Marinade {
     })
 
     transaction.add(liquidUnstakeInstruction)
-    const transactionSignature = await this.config.provider.send(transaction)
 
     return {
       associatedMSolTokenAccountAddress,
-      transactionSignature,
+      transaction,
     }
   }
 
@@ -210,11 +213,11 @@ export class Marinade {
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    */
   async depositStakeAccount(stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
-    const ownerAddress = this.config.provider.wallet.publicKey
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
-    const currentEpoch = await this.config.provider.connection.getEpochInfo()
-    const stakeAccountInfo = await getParsedStakeAccountInfo(this.config.provider, stakeAccountAddress)
+    const currentEpoch = await this.provider.connection.getEpochInfo()
+    const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
 
     const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown } = stakeAccountInfo
 
@@ -245,7 +248,7 @@ export class Marinade {
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.config.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -264,11 +267,10 @@ export class Marinade {
 
     transaction.add(depositStakeAccountInstruction)
 
-    const transactionSignature = await this.config.provider.send(transaction)
     return {
       associatedMSolTokenAccountAddress,
       voterAddress,
-      transactionSignature,
+      transaction,
     }
   }
 }

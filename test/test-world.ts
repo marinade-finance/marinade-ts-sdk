@@ -3,10 +3,7 @@ import { MarinadeUtils } from '../src'
 
 export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(5)
 
-export const PROVIDER_URL = 'https://api.devnet.solana.com'
-
 export const MARINADE_PROGRAM_REFERRAL_ID = new web3.PublicKey('FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR')
-
 
 export const SDK_USER = web3.Keypair.fromSecretKey(new Uint8Array([
   120,  45, 242,  38,  63, 135,  84, 226,  66,  56,  76,
@@ -20,15 +17,17 @@ export const SDK_USER = web3.Keypair.fromSecretKey(new Uint8Array([
 // export const SDK_USER = new web3.Keypair()
 console.log('SDK User', SDK_USER.publicKey.toBase58())
 
-export const REFERRAL_CODE = new web3.PublicKey('5H2yKwFRmB1o3syXfXM72mR3iSyop47D1RxF1RcZ8ky5')
-export const PARTNER_NAME = 'abcde12345'
-console.log('Referral partner', PARTNER_NAME, REFERRAL_CODE.toBase58())
-
+export const PROVIDER_URL = 'https://api.devnet.solana.com'
+export const CONNECTION = new web3.Connection(PROVIDER_URL)
 export const PROVIDER = new Provider(
-  new web3.Connection(PROVIDER_URL),
+  CONNECTION,
   new Wallet(SDK_USER),
   { commitment: 'confirmed' },
 )
+
+export const REFERRAL_CODE = new web3.PublicKey('5H2yKwFRmB1o3syXfXM72mR3iSyop47D1RxF1RcZ8ky5')
+export const PARTNER_NAME = 'abcde12345'
+console.log('Referral partner', PARTNER_NAME, REFERRAL_CODE.toBase58())
 
 export const airdrop = async(to: web3.PublicKey, amountLamports: number) => {
   const signature = await PROVIDER.connection.requestAirdrop(to, amountLamports)
