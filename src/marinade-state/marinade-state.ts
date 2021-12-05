@@ -9,8 +9,8 @@ import { StakeRecord } from './borsh/stake-record'
 import { StakeState } from './borsh/stake-state'
 import { ValidatorRecord } from './borsh/validator-record'
 import { ProgramDerivedAddressSeed, MarinadeStateResponse } from './marinade-state.types'
-import {StakeInfo} from "./borsh/stake-info"
-import {AccountInfo} from "@solana/web3.js"
+import { StakeInfo } from "./borsh/stake-info"
+import { AccountInfo } from "@solana/web3.js"
 
 export class MarinadeState {
   // @todo rework args
@@ -18,12 +18,14 @@ export class MarinadeState {
     private readonly marinade: Marinade,
     private readonly anchorProvider: Provider,
     public readonly state: MarinadeStateResponse,
+    public readonly marinadeStateAddress: web3.PublicKey,
+    public readonly marinadeFinanceProgramId: web3.PublicKey,
   ) { }
 
   static async fetch(marinade: Marinade) { // @todo rework args
-    const { marinadeProgram, config } = marinade
-    const state = await marinadeProgram.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
-    return new MarinadeState(marinade, marinade.anchorProvider, state)
+    const { marinadeFinanceProgram, config } = marinade
+    const state = await marinadeFinanceProgram.program.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
+    return new MarinadeState(marinade, marinade.config.provider, state, config.marinadeStateAddress, config.marinadeFinanceProgramId)
   }
 
   reserveAddress = async() => this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)
@@ -44,7 +46,7 @@ export class MarinadeState {
 
   private async findProgramDerivedAddress(seed: ProgramDerivedAddressSeed, extraSeeds: Buffer[] = []): Promise<web3.PublicKey> {
     const seeds = [this.marinade.config.marinadeStateAddress.toBuffer(), Buffer.from(seed), ...extraSeeds]
-    const [result] = await web3.PublicKey.findProgramAddress(seeds, this.marinade.config.marinadeProgramId)
+    const [result] = await web3.PublicKey.findProgramAddress(seeds, this.marinade.config.marinadeFinanceProgramId)
     return result
   }
 
@@ -97,7 +99,7 @@ export class MarinadeState {
   /**
    * return validatorRecords with capacity
    */
-  async getValidatorRecords(): Promise<{validatorRecords: ValidatorRecord[], capacity: number}> {
+  async getValidatorRecords(): Promise<{ validatorRecords: ValidatorRecord[], capacity: number }> {
     const { validatorList } = this.state.validatorSystem
     const recordBounds = (index: number) => bounds(index, validatorList.itemSize, 8)
 
@@ -107,22 +109,25 @@ export class MarinadeState {
       throw new Error(`Failed to fetch validators' details!`)
     }
 
-    return {validatorRecords: Array.from(
-      { length: validatorList.count },
-      (_, index) => {
-        return deserializeUnchecked(
-          MARINADE_BORSH_SCHEMA,
-          ValidatorRecord,
-          validators.data.slice(...recordBounds(index))
-        )
-      }
-    ), capacity: (validators.data.length - 8)/validatorList.itemSize}
+    return {
+      validatorRecords: Array.from(
+        { length: validatorList.count },
+        (_, index) => {
+          return deserializeUnchecked(
+            MARINADE_BORSH_SCHEMA,
+            ValidatorRecord,
+            validators.data.slice(...recordBounds(index))
+          )
+        }
+      ),
+      capacity: (validators.data.length - 8) / validatorList.itemSize,
+    }
   }
 
   /**
    * return stakeRecords with capacity
    */
-  async getStakeRecords(): Promise<{stakeRecords: StakeRecord[], capacity: number}> {
+  async getStakeRecords(): Promise<{ stakeRecords: StakeRecord[], capacity: number }> {
     const { stakeList } = this.state.stakeSystem
     const recordBounds = (index: number) => bounds(index, stakeList.itemSize, 8)
 
@@ -132,16 +137,18 @@ export class MarinadeState {
       throw new Error(`Failed to fetch stakes' details!`)
     }
 
-    return {stakeRecords: Array.from(
-      { length: stakeList.count },
-      (_, index) => {
-        return deserializeUnchecked(
-          MARINADE_BORSH_SCHEMA,
-          StakeRecord,
-          stakes.data.slice(...recordBounds(index))
-        )
-      }
-    ), capacity: (stakes.data.length - 8)/stakeList.itemSize}
+    return {
+      stakeRecords: Array.from(
+        { length: stakeList.count },
+        (_, index) => {
+          return deserializeUnchecked(
+            MARINADE_BORSH_SCHEMA,
+            StakeRecord,
+            stakes.data.slice(...recordBounds(index))
+          )
+        }
+      ), capacity: (stakes.data.length - 8) / stakeList.itemSize,
+    }
   }
 
   async getStakeStates(): Promise<StakeState[]> {
@@ -176,8 +183,8 @@ export class MarinadeState {
   /**
    * return listStakeInfos with capacity
    */
-  async getStakeInfos(): Promise<{stakeInfos: StakeInfo[], capacity: number}> {
-    const {stakeRecords, capacity} = await this.getStakeRecords()
+  async getStakeInfos(): Promise<{ stakeInfos: StakeInfo[], capacity: number }> {
+    const { stakeRecords, capacity } = await this.getStakeRecords()
     const stakeInfos = new Array<StakeInfo>()
 
     const toProcess = stakeRecords.length
@@ -212,7 +219,7 @@ export class MarinadeState {
       }))
       processed += BATCH_SIZE
     }
-    return {stakeInfos: stakeInfos, capacity: capacity}
+    return { stakeInfos: stakeInfos, capacity: capacity }
   }
 
   treasuryMsolAccount: web3.PublicKey = this.state.treasuryMsolAccount

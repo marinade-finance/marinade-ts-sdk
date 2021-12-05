@@ -1,6 +1,6 @@
 {
   "name": "@marinade.finance/marinade-ts-sdk",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Marinade SDK for Typescript",
   "main": "dist/index.js",
   "repository": {
@@ -19,8 +19,12 @@
     "pretest": "npm run lint",
     "test": "npm run test:unit",
     "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
+    "test:integration": "jest --preset ts-jest --testTimeout 30000 --runInBand --roots '<rootDir>/test'",
     "lint": "npx eslint . --ext .ts",
     "lint:fix": "npx eslint . --ext .ts --fix",
+    "gen:idl:marinade-finance": "./scripts/idl2ts.js < ./src/programs/idl/marinade-finance-idl.json > ./src/programs/idl/marinade-finance-idl.ts",
+    "gen:idl:marinade-referral": "./scripts/idl2ts.js < ./src/programs/idl/marinade-referral-idl.json > ./src/programs/idl/marinade-referral-idl.ts",
+    "gen:idl": "npm run gen:idl:marinade-finance && npm run gen:idl:marinade-referral",
     "prepack": "npm run test && npm run build"
   },
   "keywords": [
