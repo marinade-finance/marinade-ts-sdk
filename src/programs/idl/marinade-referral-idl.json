@@ -16,20 +16,20 @@
           "isSigner": false
         },
         {
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "bump",
-          "type": "u8"
-        }
-      ]
+      "args": []
     },
     {
-      "name": "createReferralPda",
+      "name": "initReferralAccount",
       "accounts": [
         {
           "name": "globalState",
@@ -42,18 +42,18 @@
           "isSigner": true
         },
         {
-          "name": "msolMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "partnerAccount",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "beneficiaryAccount",
-          "isMut": true,
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenPartnerAccount",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -63,11 +63,6 @@
         },
         {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "associatedTokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -84,17 +79,8 @@
       ],
       "args": [
         {
-          "name": "bump",
-          "type": "u8"
-        },
-        {
           "name": "partnerName",
-          "type": {
-            "array": [
-              "u8",
-              10
-            ]
-          }
+          "type": "string"
         }
       ]
     },
@@ -401,7 +387,7 @@
           "isSigner": false
         },
         {
-          "name": "beneficiaryAccount",
+          "name": "tokenPartnerAccount",
           "isMut": true,
           "isSigner": false
         },
@@ -545,8 +531,18 @@
     },
     {
       "code": 303,
-      "name": "InvalidBeneficiaryAccount",
-      "msg": "Invalid beneficiary account"
+      "name": "InvalidBeneficiaryAccountOwner",
+      "msg": "Invalid beneficiary account owner"
+    },
+    {
+      "code": 304,
+      "name": "InvalidBeneficiaryAccountMint",
+      "msg": "Invalid beneficiary account mint"
+    },
+    {
+      "code": 305,
+      "name": "PartnerNameTooLong",
+      "msg": "Partner name too long"
     }
   ]
 }

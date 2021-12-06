@@ -6,19 +6,19 @@ export namespace MarinadeReferralIdl {
       export type Accounts = {
         adminAccount: web3.PublicKey
         globalState: web3.PublicKey
+        paymentMint: web3.PublicKey
         systemProgram: web3.PublicKey
       }
     }
-    export namespace CreateReferralPda {
+    export namespace InitReferralAccount {
       export type Accounts = {
         globalState: web3.PublicKey
         adminAccount: web3.PublicKey
-        msolMint: web3.PublicKey
         partnerAccount: web3.PublicKey
-        beneficiaryAccount: web3.PublicKey
+        paymentMint: web3.PublicKey
+        tokenPartnerAccount: web3.PublicKey
         referralState: web3.PublicKey
         systemProgram: web3.PublicKey
-        associatedTokenProgram: web3.PublicKey
         tokenProgram: web3.PublicKey
         rent: web3.PublicKey
       }
@@ -94,7 +94,7 @@ export namespace MarinadeReferralIdl {
     export namespace TransferLiqUnstakeShares {
       export type Accounts = {
         msolMint: web3.PublicKey
-        beneficiaryAccount: web3.PublicKey
+        tokenPartnerAccount: web3.PublicKey
         treasuryMsolAccount: web3.PublicKey
         treasuryAccount: web3.PublicKey
         referralState: web3.PublicKey
