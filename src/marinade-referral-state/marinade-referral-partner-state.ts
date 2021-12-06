@@ -19,8 +19,4 @@ export class MarinadeReferralPartnerState {
 
     return new MarinadeReferralPartnerState(state, config.referralCode, config.marinadeReferralProgramId)
   }
-
-  get partnerName(): string {
-    return Buffer.from(this.state.partnerName).toString('ascii')
-  }
 }

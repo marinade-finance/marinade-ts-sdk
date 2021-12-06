@@ -6,7 +6,7 @@ describe('Marinade Referral State', () => {
   describe('getReferralPartnerState', () => {
     it('fetches the referral program\'s global state which matches the expected type', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
@@ -15,6 +15,7 @@ describe('Marinade Referral State', () => {
 
       expect(state).toStrictEqual<MarinadeReferralStateResponse.GlobalState>({
         adminAccount: expect.any(web3.PublicKey),
+        paymentMint: expect.any(web3.PublicKey),
       })
     })
   })
@@ -22,18 +23,17 @@ describe('Marinade Referral State', () => {
   describe('getReferralPartnerState', () => {
     it('fetches the referral partner\' state which matches the expected type', async() => {
       const config = new MarinadeConfig({
-        provider: TestWorld.PROVIDER,
+        connection: TestWorld.CONNECTION,
         referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
 
-      const { state, partnerName } = await marinade.getReferralPartnerState()
+      const { state } = await marinade.getReferralPartnerState()
 
       expect(state).toStrictEqual<MarinadeReferralStateResponse.ReferralState>({
-        baseFee: { basisPoints: 10 },
-        beneficiaryAccount: expect.any(web3.PublicKey),
-        delUnstakeOperations: expect.any(BN),
+        baseFee: 10,
         delayedUnstakeAmount: expect.any(BN),
+        delayedUnstakeOperations: expect.any(BN),
         depositSolAmount: expect.any(BN),
         depositSolOperations: expect.any(BN),
         depositStakeAccountAmount: expect.any(BN),
@@ -42,13 +42,14 @@ describe('Marinade Referral State', () => {
         liqUnstakeAmount: expect.any(BN),
         liqUnstakeMsolFees: expect.any(BN),
         liqUnstakeOperations: expect.any(BN),
-        maxFee: { basisPoints: 100 },
+        maxFee: 100,
         maxNetStake: expect.any(BN),
-        partnerName: expect.any(Array),
+        partnerAccount: expect.any(web3.PublicKey),
+        partnerName: TestWorld.PARTNER_NAME,
         pause: expect.any(Boolean),
+        tokenPartnerAccount: expect.any(web3.PublicKey),
         transferDuration: expect.any(Number),
       })
-      expect(partnerName).toBe(TestWorld.PARTNER_NAME)
     })
   })
 })

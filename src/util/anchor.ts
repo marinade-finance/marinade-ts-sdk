@@ -49,7 +49,7 @@ export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.P
       mintAddress,
       associatedTokenAccountAddress,
       ownerAddress,
-      anchorProvider.wallet.publicKey
+      ownerAddress,
     )
   }
 
