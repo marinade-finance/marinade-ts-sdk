@@ -22,11 +22,11 @@ export const CONNECTION = new web3.Connection(PROVIDER_URL)
 export const PROVIDER = new Provider(
   CONNECTION,
   new Wallet(SDK_USER),
-  { commitment: 'confirmed' },
+  { commitment: 'confirmed'/*, skipPreflight: true*/ },
 )
 
-export const REFERRAL_CODE = new web3.PublicKey('5H2yKwFRmB1o3syXfXM72mR3iSyop47D1RxF1RcZ8ky5')
-export const PARTNER_NAME = 'abcde12345'
+export const REFERRAL_CODE = new web3.PublicKey('mRtnRH2M3rMLP4BBcrxkk4WBKsSi3JvoyUEog7gf3qE')
+export const PARTNER_NAME = 'REF_TEST'
 console.log('Referral partner', PARTNER_NAME, REFERRAL_CODE.toBase58())
 
 export const airdrop = async(to: web3.PublicKey, amountLamports: number) => {

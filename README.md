@@ -42,14 +42,14 @@ const marinade = new Marinade()
 
 3) Use environment variables to set the configuration values:
 
-| Environment variable           | Default value                                     |
-| ------------------------------ | ------------------------------------------------- |
-| `MARINADE_FINANCE_PROGRAM_ID`  | `'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'`   |
-| `MARINADE_REFERRAL_PROGRAM_ID` | `'FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR'`  |
-| `MARINADE_STATE_ADDRESS`       | `'8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'`  |
-| `STAKE_WITHDRAW_AUTH_PDA`      | `'9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'`  |
-| `MARINADE_REFERRAL_CODE`       | `null`                                            |
-
+| Environment variable                     | Default value                                    |
+| ---------------------------------------- | ------------------------------------------------ |
+| `MARINADE_FINANCE_PROGRAM_ID`            | `'MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD'`  |
+| `MARINADE_REFERRAL_CODE`                 | `null`                                           |
+| `MARINADE_REFERRAL_GLOBAL_STATE_ADDRESS` | `'mRg6bDsAd5uwERAdNTynoUeRbqQsLa7yzuK2kkCUPGW'`  |
+| `MARINADE_REFERRAL_PROGRAM_ID`           | `'FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR'` |
+| `MARINADE_STATE_ADDRESS`                 | `'8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'` |
+| `STAKE_WITHDRAW_AUTH_PDA`                | `'9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'` |
 
 4) When you use the `referral code`, staking/unstaking functions are run against the Marinade Referral Program.
 ```ts
@@ -69,8 +69,9 @@ Stake SOL and get your mSOL:
 ...
 const {
   associatedMSolTokenAccountAddress,
-  transactionSignature,
+  transaction,
 } = await marinade.deposit(amountLamports)
+// sign and send the `transaction`
 ```
 
 Swap your mSOL to get back SOL immediately using the liquidity pool:
@@ -78,8 +79,9 @@ Swap your mSOL to get back SOL immediately using the liquidity pool:
 ...
 const {
   associatedMSolTokenAccountAddress,
-  transactionSignature,
+  transaction,
 } = await marinade.liquidUnstake(amountLamports)
+// sign and send the `transaction`
 ```
 
 ### Liquidity pool
@@ -89,8 +91,9 @@ Add liquidity to the liquidity pool and receive LP tokens:
 ...
 const {
   associatedLPTokenAccountAddress,
-  transactionSignature,
+  transaction,
 } = await marinade.addLiquidity(amountLamports)
+// sign and send the `transaction`
 ```
 
 Burn LP tokens and get SOL and mSOL back from the liquidity pool:
@@ -99,8 +102,9 @@ Burn LP tokens and get SOL and mSOL back from the liquidity pool:
 const {
   associatedLPTokenAccountAddress,
   associatedMSolTokenAccountAddress,
-  transactionSignature,
+  transaction,
 } = await marinade.removeLiquidity(amountLamports)
+// sign and send the `transaction`
 ```
 
 For more examples have a look at [Marinade TS CLI](https://github.com/marinade-finance/marinade-ts-cli)

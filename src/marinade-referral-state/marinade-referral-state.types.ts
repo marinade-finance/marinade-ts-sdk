@@ -6,31 +6,29 @@ export const enum ProgramDerivedAddressSeed {
 }
 
 export namespace MarinadeReferralStateResponse {
-  export interface Fee {
-    basisPoints: number
-  }
-
   export interface GlobalState {
     adminAccount: web3.PublicKey
+    paymentMint: web3.PublicKey
   }
 
   export interface ReferralState {
-    partnerName: Uint8Array
-    beneficiaryAccount: web3.PublicKey
-    transferDuration: BN
-    lastTransferTime: BN
+    baseFee: number
+    delayedUnstakeAmount: BN
+    delayedUnstakeOperations: BN
     depositSolAmount: BN
     depositSolOperations: BN
     depositStakeAccountAmount: BN
     depositStakeAccountOperations: BN
-    liqUnstakeMsolFees: BN
+    lastTransferTime: BN
     liqUnstakeAmount: BN
+    liqUnstakeMsolFees: BN
     liqUnstakeOperations: BN
-    delayedUnstakeAmount: BN
-    delUnstakeOperations: BN
-    baseFee: Fee
-    maxFee: Fee
+    maxFee: number
     maxNetStake: BN
+    partnerAccount: web3.PublicKey
+    partnerName: string
     pause: boolean
+    tokenPartnerAccount: web3.PublicKey
+    transferDuration: BN
   }
 }

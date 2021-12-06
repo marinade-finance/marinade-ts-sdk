@@ -438,6 +438,10 @@
           {
             "name": "adminAccount",
             "type": "publicKey"
+          },
+          {
+            "name": "paymentMint",
+            "type": "publicKey"
           }
         ]
       }
@@ -449,15 +453,14 @@
         "fields": [
           {
             "name": "partnerName",
-            "type": {
-              "array": [
-                "u8",
-                10
-              ]
-            }
+            "type": "string"
           },
           {
-            "name": "beneficiaryAccount",
+            "name": "partnerAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenPartnerAccount",
             "type": "publicKey"
           },
           {
@@ -501,20 +504,16 @@
             "type": "u64"
           },
           {
-            "name": "delUnstakeOperations",
+            "name": "delayedUnstakeOperations",
             "type": "u64"
           },
           {
             "name": "baseFee",
-            "type": {
-              "defined": "Fee"
-            }
+            "type": "u32"
           },
           {
             "name": "maxFee",
-            "type": {
-              "defined": "Fee"
-            }
+            "type": "u32"
           },
           {
             "name": "maxNetStake",
@@ -523,20 +522,6 @@
           {
             "name": "pause",
             "type": "bool"
-          }
-        ]
-      }
-    }
-  ],
-  "types": [
-    {
-      "name": "Fee",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "basisPoints",
-            "type": "u32"
           }
         ]
       }
