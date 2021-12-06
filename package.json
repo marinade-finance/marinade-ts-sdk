@@ -1,8 +1,8 @@
 {
   "name": "@marinade.finance/marinade-ts-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Marinade SDK for Typescript",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marinade-finance/marinade-ts-sdk.git"
@@ -15,7 +15,7 @@
   ],
   "type": "commonjs",
   "scripts": {
-    "build": "npx tsc -b -verbose",
+    "build": "rm -fr dist; npx tsc -b -verbose",
     "pretest": "npm run lint",
     "test": "npm run test:unit",
     "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
