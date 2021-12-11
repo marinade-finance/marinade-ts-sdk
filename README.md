@@ -36,19 +36,24 @@ const marinade = new Marinade()
 ```ts
 import { Marinade, MarinadeConfig, Wallet, Provider } from '@marinade.finance/marinade-ts-sdk'
 
-const config = new MarinadeConfig({ provider: new Provider(...) })
-const marinade = new Marinade()
+const config = new MarinadeConfig({ 
+  connection: currentConnection, 
+  pubkey: wallet.pubKey 
+})
+const marinade = new Marinade(config)
 ```
 
-3) When you use the `referral code`, staking/unstaking functions are run against the Marinade Referral Program.
+3) When you use the `referral code`, staking/unstaking functions are run against the [Marinade Referral Program](https://github.com/marinade-finance/liquid-staking-referral-program).
 ```ts
-import { Marinade, MarinadeConfig, Wallet } from '@marinade.finance/marinade-ts-sdk'
+import { Marinade, MarinadeConfig } from '@marinade.finance/marinade-ts-sdk'
 
+const MY_REFERRAL_ACCOUNT = "...." // <-- your referral account
 const config = new MarinadeConfig({
-  provider: new Provider(...),
-  referralCode: new web3.PublicKey('...'),
+  connection: currentConnection, 
+  pubkey: wallet.pubKey,
+  referralCode: new web3.PublicKey(MY_REFERRAL_ACCOUNT),
 })
-const marinade = new Marinade()
+const marinade = new Marinade(config)
 ```
 
 ### Staking
@@ -61,6 +66,7 @@ const {
   transaction,
 } = await marinade.deposit(amountLamports)
 // sign and send the `transaction`
+const signature = await provider.send(transaction)
 ```
 
 Swap your mSOL to get back SOL immediately using the liquidity pool:
@@ -71,6 +77,7 @@ const {
   transaction,
 } = await marinade.liquidUnstake(amountLamports)
 // sign and send the `transaction`
+const signature = await provider.send(transaction)
 ```
 
 ### Liquidity pool
@@ -83,6 +90,7 @@ const {
   transaction,
 } = await marinade.addLiquidity(amountLamports)
 // sign and send the `transaction`
+const signature = await provider.send(transaction)
 ```
 
 Burn LP tokens and get SOL and mSOL back from the liquidity pool:
@@ -94,6 +102,7 @@ const {
   transaction,
 } = await marinade.removeLiquidity(amountLamports)
 // sign and send the `transaction`
+const signature = await provider.send(transaction)
 ```
 
 For more examples have a look at [Marinade TS CLI](https://github.com/marinade-finance/marinade-ts-cli)
