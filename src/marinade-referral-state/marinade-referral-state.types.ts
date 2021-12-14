@@ -8,7 +8,7 @@ export const enum ProgramDerivedAddressSeed {
 export namespace MarinadeReferralStateResponse {
   export interface GlobalState {
     adminAccount: web3.PublicKey
-    paymentMint: web3.PublicKey
+    treasuryMsolBumpSeed: number
   }
 
   export interface ReferralState {

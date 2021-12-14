@@ -259,7 +259,7 @@
           "isSigner": false
         },
         {
-          "name": "paymentMint",
+          "name": "treasuryMsolAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -269,7 +269,12 @@
           "isSigner": false
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "treasuryMsolBumpSeed",
+          "type": "u8"
+        }
+      ]
     },
     {
       "name": "initReferralAccount",
@@ -286,11 +291,6 @@
         },
         {
           "name": "partnerAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "paymentMint",
           "isMut": false,
           "isSigner": false
         },
@@ -382,11 +382,6 @@
       "name": "transferLiqUnstakeShares",
       "accounts": [
         {
-          "name": "msolMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "tokenPartnerAccount",
           "isMut": true,
           "isSigner": false
@@ -397,13 +392,18 @@
           "isSigner": false
         },
         {
-          "name": "treasuryAccount",
-          "isMut": true,
+          "name": "adminAccount",
+          "isMut": false,
           "isSigner": true
         },
         {
           "name": "referralState",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalState",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -426,8 +426,8 @@
             "type": "publicKey"
           },
           {
-            "name": "paymentMint",
-            "type": "publicKey"
+            "name": "treasuryMsolBumpSeed",
+            "type": "u8"
           }
         ]
       }
