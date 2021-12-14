@@ -262,16 +262,11 @@
           "name": "treasuryMsolAccount",
           "isMut": false,
           "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "treasuryMsolBumpSeed",
+          "name": "treasuryMsolAuthBump",
           "type": "u8"
         }
       ]
@@ -379,16 +374,21 @@
       "args": []
     },
     {
-      "name": "transferLiqUnstakeShares",
+      "name": "transferToPartner",
       "accounts": [
         {
           "name": "tokenPartnerAccount",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
           "name": "treasuryMsolAccount",
           "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "treasuryMsolAuth",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -413,6 +413,22 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "deleteProgramAccount",
+      "accounts": [
+        {
+          "name": "accountToDelete",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "beneficiary",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
     }
   ],
   "accounts": [
@@ -426,7 +442,7 @@
             "type": "publicKey"
           },
           {
-            "name": "treasuryMsolBumpSeed",
+            "name": "treasuryMsolAuthBump",
             "type": "u8"
           }
         ]
@@ -531,7 +547,7 @@
     {
       "code": 302,
       "name": "TransferNotAvailable",
-      "msg": "Transfer is not available"
+      "msg": "Transfer is not available yet"
     },
     {
       "code": 303,
@@ -547,6 +563,21 @@
       "code": 305,
       "name": "PartnerNameTooLong",
       "msg": "Partner name too long"
+    },
+    {
+      "code": 306,
+      "name": "TreasuryTokenAuthorityDoesNotMatch",
+      "msg": "Treasury token authority does not match"
+    },
+    {
+      "code": 307,
+      "name": "TreasuryTokenAccountMustNotBeDelegated",
+      "msg": "Treasury token account must not be delegated"
+    },
+    {
+      "code": 308,
+      "name": "TreasuryTokenAccountMustNotBeCloseable",
+      "msg": "Treasury token account must not be closeable"
     }
   ]
 }

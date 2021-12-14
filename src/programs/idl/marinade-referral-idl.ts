@@ -61,7 +61,6 @@ export namespace MarinadeReferralIdl {
         adminAccount: web3.PublicKey
         globalState: web3.PublicKey
         treasuryMsolAccount: web3.PublicKey
-        systemProgram: web3.PublicKey
       }
     }
     export namespace InitReferralAccount {
@@ -90,14 +89,21 @@ export namespace MarinadeReferralIdl {
         newAdminAccount: web3.PublicKey
       }
     }
-    export namespace TransferLiqUnstakeShares {
+    export namespace TransferToPartner {
       export type Accounts = {
         tokenPartnerAccount: web3.PublicKey
         treasuryMsolAccount: web3.PublicKey
+        treasuryMsolAuth: web3.PublicKey
         adminAccount: web3.PublicKey
         referralState: web3.PublicKey
         globalState: web3.PublicKey
         tokenProgram: web3.PublicKey
+      }
+    }
+    export namespace DeleteProgramAccount {
+      export type Accounts = {
+        accountToDelete: web3.PublicKey
+        beneficiary: web3.PublicKey
       }
     }
   }
