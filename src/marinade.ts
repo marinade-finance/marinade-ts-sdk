@@ -61,6 +61,7 @@ export class Marinade {
   }
 
   /**
+   * Returns a transaction with the instructions to 
    * Add liquidity to the liquidity pool and receive LP tokens
    *
    * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
@@ -97,6 +98,7 @@ export class Marinade {
   }
 
   /**
+   * Returns a transaction with the instructions to 
    * Burn LP tokens and get SOL and mSOL back from the liquidity pool
    *
    * @param {BN} amountLamports - The amount of LP tokens burned
@@ -137,6 +139,7 @@ export class Marinade {
   }
 
   /**
+   * Returns a transaction with the instructions to 
    * Stake SOL in exchange for mSOL
    *
    * @param {BN} amountLamports - The amount lamports staked
@@ -172,6 +175,7 @@ export class Marinade {
   }
 
   /**
+   * Returns a transaction with the instructions to 
    * Swap your mSOL to get back SOL immediately using the liquidity pool
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
@@ -207,7 +211,8 @@ export class Marinade {
   }
 
   /**
-   * Deposit delegated stake account.
+   * Returns a transaction with the instructions to 
+   * Deposit a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
