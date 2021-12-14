@@ -2,41 +2,6 @@ import { web3 } from '@project-serum/anchor'
 
 export namespace MarinadeReferralIdl {
   export namespace Instruction {
-    export namespace Initialize {
-      export type Accounts = {
-        adminAccount: web3.PublicKey
-        globalState: web3.PublicKey
-        paymentMint: web3.PublicKey
-        systemProgram: web3.PublicKey
-      }
-    }
-    export namespace InitReferralAccount {
-      export type Accounts = {
-        globalState: web3.PublicKey
-        adminAccount: web3.PublicKey
-        partnerAccount: web3.PublicKey
-        paymentMint: web3.PublicKey
-        tokenPartnerAccount: web3.PublicKey
-        referralState: web3.PublicKey
-        systemProgram: web3.PublicKey
-        tokenProgram: web3.PublicKey
-        rent: web3.PublicKey
-      }
-    }
-    export namespace UpdateReferral {
-      export type Accounts = {
-        globalState: web3.PublicKey
-        adminAccount: web3.PublicKey
-        referralState: web3.PublicKey
-      }
-    }
-    export namespace ChangeAuthority {
-      export type Accounts = {
-        globalState: web3.PublicKey
-        adminAccount: web3.PublicKey
-        newAdminAccount: web3.PublicKey
-      }
-    }
     export namespace Deposit {
       export type Accounts = {
         state: web3.PublicKey
@@ -89,6 +54,41 @@ export namespace MarinadeReferralIdl {
         tokenProgram: web3.PublicKey
         marinadeFinanceProgram: web3.PublicKey
         referralState: web3.PublicKey
+      }
+    }
+    export namespace Initialize {
+      export type Accounts = {
+        adminAccount: web3.PublicKey
+        globalState: web3.PublicKey
+        paymentMint: web3.PublicKey
+        systemProgram: web3.PublicKey
+      }
+    }
+    export namespace InitReferralAccount {
+      export type Accounts = {
+        globalState: web3.PublicKey
+        adminAccount: web3.PublicKey
+        partnerAccount: web3.PublicKey
+        paymentMint: web3.PublicKey
+        tokenPartnerAccount: web3.PublicKey
+        referralState: web3.PublicKey
+        systemProgram: web3.PublicKey
+        tokenProgram: web3.PublicKey
+        rent: web3.PublicKey
+      }
+    }
+    export namespace UpdateReferral {
+      export type Accounts = {
+        globalState: web3.PublicKey
+        adminAccount: web3.PublicKey
+        referralState: web3.PublicKey
+      }
+    }
+    export namespace ChangeAuthority {
+      export type Accounts = {
+        globalState: web3.PublicKey
+        adminAccount: web3.PublicKey
+        newAdminAccount: web3.PublicKey
       }
     }
     export namespace TransferLiqUnstakeShares {

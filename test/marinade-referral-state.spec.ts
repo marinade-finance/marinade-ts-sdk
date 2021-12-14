@@ -31,7 +31,7 @@ describe('Marinade Referral State', () => {
       const { state } = await marinade.getReferralPartnerState()
 
       expect(state).toStrictEqual<MarinadeReferralStateResponse.ReferralState>({
-        baseFee: 10,
+        baseFee: expect.any(Number),
         delayedUnstakeAmount: expect.any(BN),
         delayedUnstakeOperations: expect.any(BN),
         depositSolAmount: expect.any(BN),
@@ -39,10 +39,11 @@ describe('Marinade Referral State', () => {
         depositStakeAccountAmount: expect.any(BN),
         depositStakeAccountOperations: expect.any(BN),
         lastTransferTime: expect.any(BN),
-        liqUnstakeAmount: expect.any(BN),
+        liqUnstakeSolAmount: expect.any(BN),
+        liqUnstakeMsolAmount: expect.any(BN),
         liqUnstakeMsolFees: expect.any(BN),
         liqUnstakeOperations: expect.any(BN),
-        maxFee: 100,
+        maxFee: expect.any(Number),
         maxNetStake: expect.any(BN),
         partnerAccount: expect.any(web3.PublicKey),
         partnerName: TestWorld.PARTNER_NAME,

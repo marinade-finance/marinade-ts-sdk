@@ -12,23 +12,24 @@ export namespace MarinadeReferralStateResponse {
   }
 
   export interface ReferralState {
-    baseFee: number
-    delayedUnstakeAmount: BN
-    delayedUnstakeOperations: BN
+    partnerName: string
+    partnerAccount: web3.PublicKey
+    tokenPartnerAccount: web3.PublicKey
+    transferDuration: BN
+    lastTransferTime: BN
     depositSolAmount: BN
     depositSolOperations: BN
     depositStakeAccountAmount: BN
     depositStakeAccountOperations: BN
-    lastTransferTime: BN
-    liqUnstakeAmount: BN
     liqUnstakeMsolFees: BN
+    liqUnstakeSolAmount: BN
+    liqUnstakeMsolAmount: BN
     liqUnstakeOperations: BN
+    delayedUnstakeAmount: BN
+    delayedUnstakeOperations: BN
+    baseFee: number
     maxFee: number
     maxNetStake: BN
-    partnerAccount: web3.PublicKey
-    partnerName: string
     pause: boolean
-    tokenPartnerAccount: web3.PublicKey
-    transferDuration: BN
   }
 }

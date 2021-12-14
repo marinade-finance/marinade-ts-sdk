@@ -3,139 +3,6 @@
   "name": "marinade_referral",
   "instructions": [
     {
-      "name": "initialize",
-      "accounts": [
-        {
-          "name": "adminAccount",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "globalState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "paymentMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "initReferralAccount",
-      "accounts": [
-        {
-          "name": "globalState",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "adminAccount",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "partnerAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "paymentMint",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenPartnerAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "referralState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "partnerName",
-          "type": "string"
-        }
-      ]
-    },
-    {
-      "name": "updateReferral",
-      "accounts": [
-        {
-          "name": "globalState",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "adminAccount",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "referralState",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "transferDuration",
-          "type": "u32"
-        },
-        {
-          "name": "pause",
-          "type": "bool"
-        }
-      ]
-    },
-    {
-      "name": "changeAuthority",
-      "accounts": [
-        {
-          "name": "globalState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "adminAccount",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "newAdminAccount",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "deposit",
       "accounts": [
         {
@@ -379,6 +246,139 @@
       ]
     },
     {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initReferralAccount",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "partnerAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "paymentMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenPartnerAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "partnerName",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "updateReferral",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "transferDuration",
+          "type": "u32"
+        },
+        {
+          "name": "pause",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "changeAuthority",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "adminAccount",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "newAdminAccount",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "transferLiqUnstakeShares",
       "accounts": [
         {
@@ -478,7 +478,11 @@
             "type": "u64"
           },
           {
-            "name": "liqUnstakeAmount",
+            "name": "liqUnstakeSolAmount",
+            "type": "u64"
+          },
+          {
+            "name": "liqUnstakeMsolAmount",
             "type": "u64"
           },
           {
