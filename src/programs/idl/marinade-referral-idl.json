@@ -285,12 +285,7 @@
           "isSigner": true
         },
         {
-          "name": "partnerAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenPartnerAccount",
+          "name": "treasuryMsolAccount",
           "isMut": false,
           "isSigner": false
         },
@@ -300,17 +295,12 @@
           "isSigner": false
         },
         {
-          "name": "systemProgram",
+          "name": "partnerAccount",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
+          "name": "tokenPartnerAccount",
           "isMut": false,
           "isSigner": false
         }
@@ -372,63 +362,6 @@
         }
       ],
       "args": []
-    },
-    {
-      "name": "transferToPartner",
-      "accounts": [
-        {
-          "name": "tokenPartnerAccount",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryMsolAccount",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryMsolAuth",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "adminAccount",
-          "isMut": false,
-          "isSigner": true
-        },
-        {
-          "name": "referralState",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "globalState",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
-    },
-    {
-      "name": "deleteProgramAccount",
-      "accounts": [
-        {
-          "name": "accountToDelete",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "beneficiary",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": []
     }
   ],
   "accounts": [
@@ -439,6 +372,10 @@
         "fields": [
           {
             "name": "adminAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "treasuryMsolAccount",
             "type": "publicKey"
           },
           {

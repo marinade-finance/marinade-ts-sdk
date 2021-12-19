@@ -15,6 +15,7 @@ describe('Marinade Referral State', () => {
 
       expect(state).toStrictEqual<MarinadeReferralStateResponse.GlobalState>({
         adminAccount: expect.any(web3.PublicKey),
+        treasuryMsolAccount: expect.any(web3.PublicKey),
         treasuryMsolAuthBump: expect.any(Number),
       })
     })
