@@ -54,15 +54,15 @@ export class MarinadeState {
   epochInfo = async() => this.anchorProvider.connection.getEpochInfo()
 
   async unstakeNowFeeBp(lamportsToObtain: BN): Promise<number> {
-
-    const sol_leg_balance = await this.anchorProvider.connection.getBalance(await this.solLeg())
-    const max_lamports = new BN(sol_leg_balance).sub(this.state.rentExemptForTokenAcc)
+    const solLeg = await this.solLeg()
+    const solLegBalance = await this.anchorProvider.connection.getBalance(solLeg)
+    const maxLamports = new BN(solLegBalance).sub(this.state.rentExemptForTokenAcc)
 
     return StateHelper.unstakeNowFeeBp(
       this.state.liqPool.lpMinFee.basisPoints,
       this.state.liqPool.lpMaxFee.basisPoints,
       this.state.liqPool.lpLiquidityTarget,
-      max_lamports,
+      maxLamports,
       lamportsToObtain,
     )
   }
