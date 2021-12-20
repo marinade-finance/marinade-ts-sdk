@@ -16,7 +16,7 @@ export namespace MarinadeReferralStateResponse {
     partnerName: string
     partnerAccount: web3.PublicKey
     tokenPartnerAccount: web3.PublicKey
-    transferDuration: BN
+    transferDuration: number
     lastTransferTime: BN
     depositSolAmount: BN
     depositSolOperations: BN
