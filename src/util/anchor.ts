@@ -27,7 +27,7 @@ export async function getTokenAccountInfo(mintClient: Token, publicKey: web3.Pub
   return mintClient.getAccountInfo(publicKey)
 }
 
-export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey): Promise<{
+export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey, payerAddress?: web3.PublicKey): Promise<{
   associatedTokenAccountAddress: web3.PublicKey
   createAssociateTokenInstruction: web3.TransactionInstruction | null
 }> {
@@ -49,7 +49,7 @@ export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.P
       mintAddress,
       associatedTokenAccountAddress,
       ownerAddress,
-      ownerAddress,
+      payerAddress ?? ownerAddress,
     )
   }
 
