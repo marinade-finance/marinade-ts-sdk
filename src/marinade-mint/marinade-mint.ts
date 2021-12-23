@@ -16,8 +16,21 @@ export class MarinadeMint {
   mintClient = (): Token => getMintClient(this.anchorProvider, this.address)
   mintInfo = (): Promise<MintInfo> => this.mintClient().getMintInfo()
 
-  async tokenBalance(mintInfoCached?: MintInfo): Promise<number> {
+  /**
+   * Returns Total supply as a number with decimals
+   * @param mintInfoCached optional
+   * @returns 
+   */
+  async totalSupply(mintInfoCached?: MintInfo): Promise<number> {
     const mintInfo = mintInfoCached ?? await this.mintInfo()
     return tokenBalanceToNumber(mintInfo.supply, mintInfo.decimals)
   }
+
+  /**
+   * @deprecated use totalSupply() instead
+   */
+  async tokenBalance(mintInfoCached?: MintInfo): Promise<number> {
+    return this.totalSupply(mintInfoCached)
+  }
+
 }
