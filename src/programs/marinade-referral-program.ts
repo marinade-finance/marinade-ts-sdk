@@ -55,9 +55,9 @@ export class MarinadeReferralProgram {
       accounts: await this.liquidUnstakeInstructionAccounts(accountsArgs),
     })
 
-  depositInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
+  depositInstructionAccounts = async({ marinadeState, transferFrom, associatedMSolTokenAccountAddress }: {
     marinadeState: MarinadeState,
-    ownerAddress: web3.PublicKey,
+    transferFrom: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
   }): Promise<MarinadeReferralIdl.Instruction.Deposit.Accounts> => ({
     reservePda: await marinadeState.reserveAddress(),
@@ -70,7 +70,7 @@ export class MarinadeReferralProgram {
     liqPoolMsolLeg: marinadeState.mSolLeg,
     liqPoolSolLegPda: await marinadeState.solLeg(),
     mintTo: associatedMSolTokenAccountAddress,
-    transferFrom: ownerAddress,
+    transferFrom,
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
   })

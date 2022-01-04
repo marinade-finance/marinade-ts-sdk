@@ -146,15 +146,15 @@ export class Marinade {
    * @param {DepositOptions=} options - Additional deposit options
    */
   async deposit(amountLamports: BN, options: DepositOptions = {}): Promise<MarinadeResult.Deposit> {
+    const feePayer = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const mintToOwnerAddress = assertNotNullAndReturn(options.mintToOwnerAddress ?? this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
-    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, mintToOwnerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, mintToOwnerAddress, feePayer)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -164,7 +164,7 @@ export class Marinade {
     const depositInstruction = await program.depositInstructionBuilder({
       amountLamports,
       marinadeState,
-      ownerAddress,
+      transferFrom: feePayer,
       associatedMSolTokenAccountAddress,
     })
 

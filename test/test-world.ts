@@ -1,7 +1,7 @@
 import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeUtils } from '../src'
 
-export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(5)
+export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
 
 export const MARINADE_PROGRAM_REFERRAL_ID = new web3.PublicKey('FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR')
 

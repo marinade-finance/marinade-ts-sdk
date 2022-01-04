@@ -1,7 +1,7 @@
 import { Marinade, MarinadeConfig, MarinadeUtils, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
 
-const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(1.5)
+const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 
 describe('Marinade Finance', () => {
   beforeAll(async() => {
@@ -18,6 +18,20 @@ describe('Marinade Finance', () => {
       const marinade = new Marinade(config)
 
       const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1))
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      console.log('Deposit tx:', transactionSignature)
+    })
+
+    it('deposits SOL and get mSOL to another account', async() => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+        referralCode: TestWorld.REFERRAL_CODE,
+      })
+      const marinade = new Marinade(config)
+
+      const anotherAccount = web3.Keypair.generate()
+      const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1), { mintToOwnerAddress: anotherAccount.publicKey })
       const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Deposit tx:', transactionSignature)
     })
