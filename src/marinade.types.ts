@@ -32,3 +32,10 @@ export namespace MarinadeResult {
     transaction: web3.Transaction
   }
 }
+
+export interface DepositOptions {
+  /**
+   * The address of the owner account for the associated mSOL account.
+   */
+  mintToOwnerAddress?: web3.PublicKey
+}

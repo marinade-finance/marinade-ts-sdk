@@ -1,7 +1,7 @@
 import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeUtils } from '../src'
 
-export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(5)
+export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
 
 export const MARINADE_PROGRAM_REFERRAL_ID = new web3.PublicKey('FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR')
 
@@ -38,12 +38,12 @@ export const airdrop = async(to: web3.PublicKey, amountLamports: number) => {
 export const getBalanceLamports = async(account: web3.PublicKey) => PROVIDER.connection.getBalance(account)
 
 export const provideMinimumLamportsBalance = async(account: web3.PublicKey, minimumLamportsBalance: BN) => {
-  const balanceLamports = await getBalanceLamports(account)
-  if (new BN(balanceLamports).gte(minimumLamportsBalance)) {
+  const balanceLamports = new BN(await getBalanceLamports(account))
+  if (balanceLamports.gte(minimumLamportsBalance)) {
     return
   }
 
-  let remainingLamportsToAirdrop = minimumLamportsBalance.subn(balanceLamports)
+  let remainingLamportsToAirdrop = minimumLamportsBalance.sub(balanceLamports)
   while (remainingLamportsToAirdrop.gtn(0)) {
     const airdropLamports = BN.min(LAMPORTS_AIRDROP_CAP, remainingLamportsToAirdrop)
     await airdrop(account, airdropLamports.toNumber())
