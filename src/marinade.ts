@@ -2,7 +2,7 @@ import { MarinadeConfig } from './config/marinade-config'
 import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import { getAssociatedTokenAccountAddress, getOrCreateAssociatedTokenAccount, getParsedStakeAccountInfo } from './util/anchor'
-import { ErrorMessage, MarinadeResult } from './marinade.types'
+import { DepositOptions, ErrorMessage, MarinadeResult } from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'
@@ -61,7 +61,7 @@ export class Marinade {
   }
 
   /**
-   * Returns a transaction with the instructions to 
+   * Returns a transaction with the instructions to
    * Add liquidity to the liquidity pool and receive LP tokens
    *
    * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
@@ -98,7 +98,7 @@ export class Marinade {
   }
 
   /**
-   * Returns a transaction with the instructions to 
+   * Returns a transaction with the instructions to
    * Burn LP tokens and get SOL and mSOL back from the liquidity pool
    *
    * @param {BN} amountLamports - The amount of LP tokens burned
@@ -139,12 +139,14 @@ export class Marinade {
   }
 
   /**
-   * Returns a transaction with the instructions to 
+   * Returns a transaction with the instructions to
    * Stake SOL in exchange for mSOL
    *
    * @param {BN} amountLamports - The amount lamports staked
+   * @param {DepositOptions=} options - Additional deposit options
    */
-  async deposit(amountLamports: BN): Promise<MarinadeResult.Deposit> {
+  async deposit(amountLamports: BN, options: DepositOptions = {}): Promise<MarinadeResult.Deposit> {
+    const mintToOwnerAddress = assertNotNullAndReturn(options.mintToOwnerAddress ?? this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
@@ -152,7 +154,7 @@ export class Marinade {
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, mintToOwnerAddress)
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -175,7 +177,7 @@ export class Marinade {
   }
 
   /**
-   * Returns a transaction with the instructions to 
+   * Returns a transaction with the instructions to
    * Swap your mSOL to get back SOL immediately using the liquidity pool
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
@@ -211,7 +213,7 @@ export class Marinade {
   }
 
   /**
-   * Returns a transaction with the instructions to 
+   * Returns a transaction with the instructions to
    * Deposit a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
