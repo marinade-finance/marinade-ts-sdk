@@ -31,9 +31,7 @@ jobs:
           npm pack
         env:
           CI: true
-
-    steps:
-    - uses: ncipollo/release-action@v1
-      with:
-        artifacts: "*.tgz,./dist/*.min.js"
-        token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "*.tgz,./dist/*.min.js"
+          token: ${{ secrets.GITHUB_TOKEN }}
