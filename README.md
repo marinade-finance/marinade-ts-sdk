@@ -31,14 +31,22 @@ import { Marinade } from '@marinade.finance/marinade-ts-sdk'
 
 const marinade = new Marinade()
 ```
+or using plain HTML:
+```html
+<script src='.min.js'></script>
+<script>
+  const { Marinade } = MarinadeSdk
+  const marinade = new Marinade()
+</script>
+```
 
 2) Extend your configuration with other options:
 ```ts
 import { Marinade, MarinadeConfig, Wallet, Provider } from '@marinade.finance/marinade-ts-sdk'
 
-const config = new MarinadeConfig({ 
-  connection: currentConnection, 
-  pubkey: wallet.pubKey 
+const config = new MarinadeConfig({
+  connection: currentConnection,
+  pubkey: wallet.pubKey
 })
 const marinade = new Marinade(config)
 ```
@@ -49,7 +57,7 @@ import { Marinade, MarinadeConfig } from '@marinade.finance/marinade-ts-sdk'
 
 const MY_REFERRAL_ACCOUNT = "...." // <-- your referral account
 const config = new MarinadeConfig({
-  connection: currentConnection, 
+  connection: currentConnection,
   pubkey: wallet.pubKey,
   referralCode: new web3.PublicKey(MY_REFERRAL_ACCOUNT),
 })
