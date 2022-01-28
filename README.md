@@ -31,9 +31,9 @@ import { Marinade } from '@marinade.finance/marinade-ts-sdk'
 
 const marinade = new Marinade()
 ```
-or using plain HTML:
+or using plain HTML (do not forget to replace `<VERSION>`):
 ```html
-<script src='.min.js'></script>
+<script src='https://github.com/marinade-finance/marinade-ts-sdk/releases/download/<VERSION>/marinade-ts-sdk.min.js'></script>
 <script>
   const { Marinade } = MarinadeSdk
   const marinade = new Marinade()
