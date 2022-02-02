@@ -18,7 +18,7 @@ Contents:
 
 ## Installation
 ```bash
-$ npm run install @marinade.finance/marinade-ts-sdk
+$ npm install @marinade.finance/marinade-ts-sdk
 ```
 
 ## Examples
