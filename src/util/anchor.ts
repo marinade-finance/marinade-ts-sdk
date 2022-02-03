@@ -31,7 +31,10 @@ export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.P
   associatedTokenAccountAddress: web3.PublicKey
   createAssociateTokenInstruction: web3.TransactionInstruction | null
 }> {
-  const associatedTokenAccountAddress = await getAssociatedTokenAccountAddress(mintAddress, ownerAddress)
+  const existingTokenAccounts = await anchorProvider.connection.getTokenAccountsByOwner(ownerAddress, { mint: mintAddress })
+  const [existingTokenAccount] = existingTokenAccounts.value
+
+  const associatedTokenAccountAddress = existingTokenAccount?.pubkey ?? await getAssociatedTokenAccountAddress(mintAddress, ownerAddress)
   let createAssociateTokenInstruction: web3.TransactionInstruction | null = null
 
   const mintClient = getMintClient(anchorProvider, mintAddress)
