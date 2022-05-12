@@ -8,6 +8,7 @@ import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
+import { TicketAccount } from './marinade-state/borsh/ticket-account'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -279,5 +280,12 @@ export class Marinade {
       voterAddress,
       transaction,
     }
+  }
+
+  /**
+   * @todo
+   */
+  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<TicketAccount[]> {
+    return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 }

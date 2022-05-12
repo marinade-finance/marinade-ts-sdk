@@ -1,3 +1,4 @@
+import bs58 from 'bs58'
 import { BN, Program, web3, Provider, Idl } from '@project-serum/anchor'
 import { MarinadeFinanceIdl } from './idl/marinade-finance-idl'
 import * as marinadeFinanceIdlSchema from './idl/marinade-finance-idl.json'
@@ -5,6 +6,9 @@ import { MarinadeState } from '../marinade-state/marinade-state'
 import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
+import { MARINADE_BORSH_SCHEMA } from '../marinade-state/borsh'
+import { deserializeUnchecked } from 'borsh'
+import { TicketAccount } from '../marinade-state/borsh/ticket-account'
 
 export class MarinadeFinanceProgram {
   constructor(
@@ -18,6 +22,45 @@ export class MarinadeFinanceProgram {
       this.programAddress,
       this.anchorProvider,
     )
+  }
+
+  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<TicketAccount[]> {
+    const discriminator = bs58.encode(Uint8Array.from([0x85, 0x4d, 0x12, 0x62]))
+
+    const filters = [
+      {
+        dataSize: 88,
+      },
+      {
+        memcmp: {
+          offset: 0,
+          bytes: discriminator,
+        },
+      },
+    ]
+
+    if (beneficiary) {
+      filters.push({
+        memcmp: {
+          offset: 8 + 32,
+          bytes: beneficiary.toBase58(),
+        },
+      })
+    }
+
+    const ticketAccountInfos = await this.anchorProvider.connection.getProgramAccounts(this.programAddress, { filters })
+
+    return ticketAccountInfos.map((ticketAccountInfo) => {
+      const { data } = ticketAccountInfo.account
+
+      console.log(bs58.encode(data))
+
+      return deserializeUnchecked(
+        MARINADE_BORSH_SCHEMA,
+        TicketAccount,
+        data.slice(8, data.length),
+      )
+    })
   }
 
   addLiquidityInstructionAccounts = async({ marinadeState, ownerAddress, associatedLPTokenAccountAddress }: {

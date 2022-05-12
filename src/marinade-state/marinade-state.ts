@@ -9,8 +9,8 @@ import { StakeRecord } from './borsh/stake-record'
 import { StakeState } from './borsh/stake-state'
 import { ValidatorRecord } from './borsh/validator-record'
 import { ProgramDerivedAddressSeed, MarinadeStateResponse } from './marinade-state.types'
-import { StakeInfo } from "./borsh/stake-info"
-import { AccountInfo } from "@solana/web3.js"
+import { StakeInfo } from './borsh/stake-info'
+import { AccountInfo } from '@solana/web3.js'
 
 export class MarinadeState {
   // @todo rework args
