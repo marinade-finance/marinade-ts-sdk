@@ -24,7 +24,7 @@ export class MarinadeFinanceProgram {
     )
   }
 
-  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<TicketAccount[]> {
+  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
     const discriminator = bs58.encode(Uint8Array.from([0x85, 0x4d, 0x12, 0x62]))
 
     const filters = [
@@ -50,17 +50,18 @@ export class MarinadeFinanceProgram {
 
     const ticketAccountInfos = await this.anchorProvider.connection.getProgramAccounts(this.programAddress, { filters })
 
-    return ticketAccountInfos.map((ticketAccountInfo) => {
+    return new Map(ticketAccountInfos.map((ticketAccountInfo) => {
       const { data } = ticketAccountInfo.account
 
-      console.log(bs58.encode(data))
-
-      return deserializeUnchecked(
-        MARINADE_BORSH_SCHEMA,
-        TicketAccount,
-        data.slice(8, data.length),
-      )
-    })
+      return [
+        ticketAccountInfo.pubkey,
+        deserializeUnchecked(
+          MARINADE_BORSH_SCHEMA,
+          TicketAccount,
+          data.slice(8, data.length),
+        ),
+      ]
+    }))
   }
 
   addLiquidityInstructionAccounts = async({ marinadeState, ownerAddress, associatedLPTokenAccountAddress }: {

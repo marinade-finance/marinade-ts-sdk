@@ -285,7 +285,7 @@ export class Marinade {
   /**
    * @todo
    */
-  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<TicketAccount[]> {
+  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 }
