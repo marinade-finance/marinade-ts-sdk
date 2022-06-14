@@ -7,6 +7,8 @@ export class TicketAccount {
   beneficiary!: web3.PublicKey
   lamportsAmount!: BN
   createdEpoch!: BN
+  ticketDue?: boolean
+  ticketDueDate?: Date
 
   constructor(args: TicketAccount) {
     Object.assign(this, args)

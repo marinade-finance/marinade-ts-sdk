@@ -1,7 +1,7 @@
 import { BN, Provider, web3 } from '@project-serum/anchor'
 import * as anchor from '@project-serum/anchor'
 import { AccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { ParsedStakeAccountInfo } from './anchor.types'
+import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 
 export const SYSTEM_PROGRAM_ID = new web3.PublicKey('11111111111111111111111111111111')
 export const STAKE_PROGRAM_ID = new web3.PublicKey('Stake11111111111111111111111111111111111111')
@@ -90,5 +90,37 @@ export async function getParsedStakeAccountInfo(anchorProvider: anchor.Provider,
     activationEpoch,
     deactivationEpoch,
     isCoolingDown: deactivationEpoch ? !deactivationEpoch.eq(U64_MAX) : false,
+  }
+}
+
+export async function getEpochInfo(
+  connection: web3.Connection
+): Promise<ProcessedEpochInfo> {
+  const epochInfo = await connection.getEpochInfo()
+  const samples = await connection.getRecentPerformanceSamples(64)
+
+  const sampleSlots = samples.reduce(
+    (slots, sample) => sample.numSlots + slots,
+    0
+  )
+  const sampleSeconds = samples.reduce(
+    (seconds, sample) => sample.samplePeriodSecs + seconds,
+    0
+  )
+
+  const avgSlotDuration = sampleSeconds / sampleSlots * 1000
+
+  const slotsRemainingInEpoch = epochInfo.slotsInEpoch - epochInfo.slotIndex
+  const msUntilEpochEnd = avgSlotDuration * slotsRemainingInEpoch
+  const msElapsed = epochInfo.slotIndex * avgSlotDuration
+
+  const epochProgress = (100 * epochInfo.slotIndex) / epochInfo.slotsInEpoch
+
+  return {
+    ...epochInfo,
+    msUntilEpochEnd,
+    msElapsed,
+    epochProgress,
+    avgSlotDuration,
   }
 }
