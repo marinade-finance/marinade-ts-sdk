@@ -3,7 +3,7 @@ import { BN, Program, web3, Provider, Idl } from '@project-serum/anchor'
 import { MarinadeFinanceIdl } from './idl/marinade-finance-idl'
 import * as marinadeFinanceIdlSchema from './idl/marinade-finance-idl.json'
 import { MarinadeState } from '../marinade-state/marinade-state'
-import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
+import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID, getEpochInfo, getTicketDateInfo } from '../util'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
 import { MARINADE_BORSH_SCHEMA } from '../marinade-state/borsh'
@@ -49,17 +49,22 @@ export class MarinadeFinanceProgram {
     }
 
     const ticketAccountInfos = await this.anchorProvider.connection.getProgramAccounts(this.programAddress, { filters })
+    const epochInfo = await getEpochInfo(this.anchorProvider.connection)
+   
 
     return new Map(ticketAccountInfos.map((ticketAccountInfo) => {
       const { data } = ticketAccountInfo.account
+      const ticketAccount = deserializeUnchecked(
+        MARINADE_BORSH_SCHEMA,
+        TicketAccount,
+        data.slice(8, data.length),
+      )
 
+      const ticketDateInfo = getTicketDateInfo(epochInfo,ticketAccount.createdEpoch.toNumber(), Date.now())
+      
       return [
         ticketAccountInfo.pubkey,
-        deserializeUnchecked(
-          MARINADE_BORSH_SCHEMA,
-          TicketAccount,
-          data.slice(8, data.length),
-        ),
+        {...ticketAccount,...ticketDateInfo },
       ]
     }))
   }

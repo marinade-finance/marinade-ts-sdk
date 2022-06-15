@@ -9,3 +9,16 @@ export interface ParsedStakeAccountInfo {
   deactivationEpoch: BN | null
   isCoolingDown: boolean
 }
+
+export interface ProcessedEpochInfo {
+  epoch: number
+  slotIndex: number
+  slotsInEpoch: number
+  absoluteSlot: number
+  blockHeight?: number
+  transactionCount?: number
+  msUntilEpochEnd: number
+  msElapsed: number
+  epochProgress: number
+  avgSlotDuration: number
+}
