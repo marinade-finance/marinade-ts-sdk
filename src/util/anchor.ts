@@ -122,5 +122,6 @@ export async function getEpochInfo(
     msElapsed,
     epochProgress,
     avgSlotDuration,
+    slotsRemainingInEpoch,
   }
 }

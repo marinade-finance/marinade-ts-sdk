@@ -21,4 +21,5 @@ export interface ProcessedEpochInfo {
   msElapsed: number
   epochProgress: number
   avgSlotDuration: number
+  slotsRemainingInEpoch: number
 }
