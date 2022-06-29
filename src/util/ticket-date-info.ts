@@ -12,6 +12,7 @@ import { TicketDateInfo } from "./ticket-date-info.types"
 // https://docs.marinade.finance/marinade-protocol/system-overview#delayed-unstaked
 const EXTRA_WAIT_MILLISECONDS =  1000 * 60 * 45
 
+// Compute due date for an existing ticket
 export function getTicketDateInfo(
   currentEpoch: ProcessedEpochInfo,
   createdEpochNumber: number,
@@ -27,7 +28,7 @@ export function getTicketDateInfo(
   return { ticketDue: dueDate < currentTime, ticketDueDate: new Date(dueDate) }
 }
 
-
+// Estimate due date if a ticket would be created right now
 export function estimateTicketDateInfo(
   currentEpoch: ProcessedEpochInfo,
   currentTime: number = Date.now(),
@@ -38,9 +39,11 @@ export function estimateTicketDateInfo(
   const estimatedEpochDuration =
     currentEpoch.avgSlotDuration * currentEpoch.slotsInEpoch
 
-  const dueDate = ((slotsForStakeDelta > currentEpoch.slotsRemainingInEpoch) ? 
-    currentEpochEnd + estimatedEpochDuration : currentEpochEnd) + EXTRA_WAIT_MILLISECONDS
-
+  // if we're already inside the window where the bot stakes (last x slots in the epoch), 
+  // the ticket will have to wait one more epoch
+  const dueDate = currentEpochEnd  
+     + (currentEpoch.slotsRemainingInEpoch <= slotsForStakeDelta? estimatedEpochDuration : 0)
+     + EXTRA_WAIT_MILLISECONDS
 
   return {
     ticketDue: false,

@@ -69,6 +69,7 @@ export class MarinadeFinanceProgram {
     }))
   }
 
+  // Estimate due date if a ticket would be created right now
   getEstimatedUnstakeTicketDueDate = async(marinadeState:MarinadeState) => {
     const epochInfo = await getEpochInfo(this.anchorProvider.connection)
     return estimateTicketDateInfo(epochInfo,Date.now(),marinadeState.state.stakeSystem.slotsForStakeDelta.toNumber())
