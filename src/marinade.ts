@@ -286,6 +286,16 @@ export class Marinade {
    * @todo
    */
   async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
+    
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
+  }
+
+  /**
+   * Returns estimated Due date for an unstake ticket created now
+   * 
+   */
+  async getEstimatedUnstakeTicketDueDate() {
+    const marinadeState = await this.getMarinadeState()
+    return this.marinadeFinanceProgram.getEstimatedUnstakeTicketDueDate(marinadeState)
   }
 }
