@@ -185,18 +185,19 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
    */
-  async liquidUnstake(amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
+  async liquidUnstake(amountLamports: BN, associatedMSolTokenAccountAddress?: web3.PublicKey): Promise<MarinadeResult.LiquidUnstake> {
     const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
-    const {
-      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
-      createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
-
-    if (createAssociateTokenInstruction) {
-      transaction.add(createAssociateTokenInstruction)
+    if (!associatedMSolTokenAccountAddress) {
+      const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
+      const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
+      associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
+  
+      if (createAssociateTokenInstruction) {
+        transaction.add(createAssociateTokenInstruction)
+      }
     }
 
     const program = this.provideReferralOrMainProgram()
@@ -303,7 +304,7 @@ export class Marinade {
 
     const availableMsol = stakeBalance.divn(mintRatio)
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
-    const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount)
+    const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
     return {
       transactions: [depositTx, unstakeTx],
