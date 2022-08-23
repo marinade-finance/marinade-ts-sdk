@@ -30,6 +30,13 @@ export namespace MarinadeResult {
     associatedMSolTokenAccountAddress: web3.PublicKey
     voterAddress: web3.PublicKey
     transaction: web3.Transaction
+    mintRatio: number
+  }
+
+  export interface LiquidateStakeAccount {
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    voterAddress: web3.PublicKey
+    transactions: web3.Transaction[]
   }
 }
 

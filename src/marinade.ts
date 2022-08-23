@@ -279,6 +279,34 @@ export class Marinade {
       associatedMSolTokenAccountAddress,
       voterAddress,
       transaction,
+      mintRatio: marinadeState.mSolPrice,
+    }
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Liquidate a delegated stake account.
+   * Note that the stake must be fully activated and the validator must be known to Marinade
+   * and that the transaction should be executed immidiately after creation.
+   * 
+   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
+   */
+  async liquidateStakeAccount(stakeAccountAddress: web3.PublicKey, mSolToKeep?: BN): Promise<MarinadeResult.LiquidateStakeAccount> {
+    const totalBalance = await this.provider.connection.getBalance(stakeAccountAddress)
+    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(200)
+    const stakeBalance = new BN(totalBalance - rent)
+
+    const {transaction: depositTx, mintRatio, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
+
+    const availableMsol = stakeBalance.divn(mintRatio)
+    const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
+    const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount)
+
+    return {
+      transactions: [depositTx, unstakeTx],
+      associatedMSolTokenAccountAddress,
+      voterAddress,
     }
   }
 
