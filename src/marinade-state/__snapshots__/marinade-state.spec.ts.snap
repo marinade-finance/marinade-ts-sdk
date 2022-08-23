@@ -6,17 +6,11 @@ Array [
     "Stake": StakeState {
       "meta": Meta {
         "authorized": Authorized {
-          "staker": PublicKey {
-            "_bn": "356d1a8fa2c128f6c943fc135934a8420338a5659c8b6e7a61ed9342397c155b",
-          },
-          "withdrawer": PublicKey {
-            "_bn": "80690b4b1a46e8ae761e7a3258c379314586da6fc2e6628dd7e22aea68bd6aec",
-          },
+          "staker": "4bZ6o3eUUNXhKuqjdCnCoPAoLgWiuLYixKaxoa8PpiKk",
+          "withdrawer": "9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco",
         },
         "lockup": Lockup {
-          "custodian": PublicKey {
-            "_bn": "00",
-          },
+          "custodian": "11111111111111111111111111111111",
           "epoch": "00",
           "unixTimestamp": "00",
         },
@@ -28,9 +22,7 @@ Array [
           "activationEpoch": "93",
           "deactivationEpoch": "ffffffffffffffff",
           "stake": "8272040b",
-          "voterPubkey": PublicKey {
-            "_bn": "40a5335342622c5827f179d75c74d375398c00791d673eeaf181516038588493",
-          },
+          "voterPubkey": "5MMCR4NbTZqjthjLGywmeT66iwE9J9f7kjtxzJjwfUx2",
           "warmupCooldownRate": Object {
             "value": 0.25,
           },
