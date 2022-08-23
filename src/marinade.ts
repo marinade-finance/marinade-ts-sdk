@@ -10,6 +10,8 @@ import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
 
+const STAKE_ACCOUNT_SIZE = 200
+
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
 
@@ -294,7 +296,7 @@ export class Marinade {
    */
   async liquidateStakeAccount(stakeAccountAddress: web3.PublicKey, mSolToKeep?: BN): Promise<MarinadeResult.LiquidateStakeAccount> {
     const totalBalance = await this.provider.connection.getBalance(stakeAccountAddress)
-    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(200)
+    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(STAKE_ACCOUNT_SIZE)
     const stakeBalance = new BN(totalBalance - rent)
 
     const {transaction: depositTx, mintRatio, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
