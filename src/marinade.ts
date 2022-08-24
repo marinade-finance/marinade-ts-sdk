@@ -307,7 +307,7 @@ export class Marinade {
     const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
     return {
-      transactions: [depositTx, unstakeTx],
+      transaction: depositTx.add(unstakeTx),
       associatedMSolTokenAccountAddress,
       voterAddress,
     }
