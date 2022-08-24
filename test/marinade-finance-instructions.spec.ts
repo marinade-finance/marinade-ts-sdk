@@ -1,6 +1,7 @@
 import { Marinade, MarinadeConfig, MarinadeUtils, Provider, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
 import assert from 'assert'
+import base58 from 'bs58'
 
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 
@@ -84,13 +85,29 @@ describe('Marinade Finance', () => {
 
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
-        publicKey: Wallet.local().payer.publicKey,
+        publicKey: TestWorld.SDK_USER.publicKey,
       })
       const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.depositStakeAccount(new web3.PublicKey('2hpYdXDUxWwZFSx6RQVuPHSHuVVZU2Bsz4VLiLvvoG2h'))
+      // Make sure stake account still exist, if this test is included
+      const { transaction } = await marinade.depositStakeAccount(new web3.PublicKey('AtL1WfGDuyB2NvnqvuMuwJu4QwtiLyAhoczH5ESy7kNZ'))
       const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Deposit stake account tx:', transactionSignature)
+    })
+  })
+
+  describe.skip('liquidateStakeAccount', () => {
+    it('liquidates stake account', async() => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      // Make sure stake account still exist, if this test is included
+      const { transaction } = await marinade.liquidateStakeAccount(new web3.PublicKey('6Qs7bxRGERbi7G11vrGffi6VhhvwJpbTk3bRUasFq6jc'))
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      console.log('Liquidate stake account tx:', transactionSignature)
     })
   })
 })
