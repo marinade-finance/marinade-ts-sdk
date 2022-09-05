@@ -104,7 +104,7 @@ describe('Marinade Finance', () => {
       const marinade = new Marinade(config)
 
       // Make sure stake account still exist, if this test is included
-      const { transaction } = await marinade.liquidateStakeAccount(new web3.PublicKey('6Qs7bxRGERbi7G11vrGffi6VhhvwJpbTk3bRUasFq6jc'))
+      const { transaction } = await marinade.liquidateStakeAccount(new web3.PublicKey('7Pi7ye5SaKMFp1J6W4kygmAYYhotwoRLTk67Z1kcCcv4'))
       const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Liquidate stake account tx:', transactionSignature)
     })
