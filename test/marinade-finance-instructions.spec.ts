@@ -1,7 +1,6 @@
 import { Marinade, MarinadeConfig, MarinadeUtils, Provider, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
 import assert from 'assert'
-import base58 from 'bs58'
 
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 
