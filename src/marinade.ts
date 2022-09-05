@@ -302,7 +302,7 @@ export class Marinade {
 
     const {transaction: depositTx, mintRatio, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
 
-    const availableMsol = stakeBalance.divn(mintRatio)
+    const availableMsol = stakeBalance.mul(new BN(10 ** 12)).div(new BN(mintRatio * 10 ** 12))
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
     const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
