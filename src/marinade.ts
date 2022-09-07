@@ -183,18 +183,19 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
    */
-  async liquidUnstake(amountLamports: BN): Promise<MarinadeResult.LiquidUnstake> {
+  async liquidUnstake(amountLamports: BN, associatedMSolTokenAccountAddress?: web3.PublicKey): Promise<MarinadeResult.LiquidUnstake> {
     const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
-    const {
-      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
-      createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
-
-    if (createAssociateTokenInstruction) {
-      transaction.add(createAssociateTokenInstruction)
+    if (!associatedMSolTokenAccountAddress) {
+      const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
+      const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
+      associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
+  
+      if (createAssociateTokenInstruction) {
+        transaction.add(createAssociateTokenInstruction)
+      }
     }
 
     const program = this.provideReferralOrMainProgram()
@@ -279,6 +280,34 @@ export class Marinade {
       associatedMSolTokenAccountAddress,
       voterAddress,
       transaction,
+      mintRatio: marinadeState.mSolPrice,
+    }
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Liquidate a delegated stake account.
+   * Note that the stake must be fully activated and the validator must be known to Marinade
+   * and that the transaction should be executed immidiately after creation.
+   * 
+   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
+   */
+  async liquidateStakeAccount(stakeAccountAddress: web3.PublicKey, mSolToKeep?: BN): Promise<MarinadeResult.LiquidateStakeAccount> {
+    const totalBalance = await this.provider.connection.getBalance(stakeAccountAddress)
+    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
+    const stakeBalance = new BN(totalBalance - rent)
+
+    const {transaction: depositTx, mintRatio, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
+
+    const availableMsol = stakeBalance.mul(new BN(10 ** 12)).div(new BN(mintRatio * 10 ** 12))
+    const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
+    const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
+
+    return {
+      transaction: depositTx.add(unstakeTx),
+      associatedMSolTokenAccountAddress,
+      voterAddress,
     }
   }
 
