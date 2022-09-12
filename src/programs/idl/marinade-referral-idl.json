@@ -1,5 +1,5 @@
 {
-  "version": "0.0.0",
+  "version": "0.1.0",
   "name": "marinade_referral",
   "instructions": [
     {
@@ -67,6 +67,11 @@
         },
         {
           "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenPartnerAccount",
           "isMut": true,
           "isSigner": false
         }
@@ -339,6 +344,30 @@
         {
           "name": "pause",
           "type": "bool"
+        },
+        {
+          "name": "optionalNewPartnerAccount",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "operationDepositSolFee",
+          "type": {
+            "option": "u8"
+          }
+        },
+        {
+          "name": "operationDepositStakeAccountFee",
+          "type": {
+            "option": "u8"
+          }
+        },
+        {
+          "name": "operationLiquidUnstakeFee",
+          "type": {
+            "option": "u8"
+          }
         }
       ]
     },
@@ -465,56 +494,65 @@
           {
             "name": "pause",
             "type": "bool"
+          },
+          {
+            "name": "maxOperationFee",
+            "type": "u8"
+          },
+          {
+            "name": "operationDepositSolFee",
+            "type": "u8"
+          },
+          {
+            "name": "operationDepositStakeAccountFee",
+            "type": "u8"
+          },
+          {
+            "name": "operationLiquidUnstakeFee",
+            "type": "u8"
           }
         ]
       }
     }
   ],
-  "errors": [
+  "types": [
     {
-      "code": 300,
-      "name": "AccessDenied",
-      "msg": "Access denied"
-    },
-    {
-      "code": 301,
-      "name": "Paused",
-      "msg": "Paused"
-    },
-    {
-      "code": 302,
-      "name": "TransferNotAvailable",
-      "msg": "Transfer is not available yet"
-    },
-    {
-      "code": 303,
-      "name": "InvalidBeneficiaryAccountOwner",
-      "msg": "Invalid beneficiary account owner"
-    },
-    {
-      "code": 304,
-      "name": "InvalidBeneficiaryAccountMint",
-      "msg": "Invalid beneficiary account mint"
-    },
-    {
-      "code": 305,
-      "name": "PartnerNameTooLong",
-      "msg": "Partner name too long"
-    },
-    {
-      "code": 306,
-      "name": "TreasuryTokenAuthorityDoesNotMatch",
-      "msg": "Treasury token authority does not match"
-    },
-    {
-      "code": 307,
-      "name": "TreasuryTokenAccountMustNotBeDelegated",
-      "msg": "Treasury token account must not be delegated"
-    },
-    {
-      "code": 308,
-      "name": "TreasuryTokenAccountMustNotBeCloseable",
-      "msg": "Treasury token account must not be closeable"
+      "name": "ReferralError",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AccessDenied"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "TransferNotAvailable"
+          },
+          {
+            "name": "InvalidBeneficiaryAccountOwner"
+          },
+          {
+            "name": "InvalidBeneficiaryAccountMint"
+          },
+          {
+            "name": "PartnerNameTooLong"
+          },
+          {
+            "name": "TreasuryTokenAuthorityDoesNotMatch"
+          },
+          {
+            "name": "TreasuryTokenAccountMustNotBeDelegated"
+          },
+          {
+            "name": "TreasuryTokenAccountMustNotBeCloseable"
+          },
+          {
+            "name": "ReferralOperationFeeOverMax"
+          }
+        ]
+      }
     }
   ]
 }

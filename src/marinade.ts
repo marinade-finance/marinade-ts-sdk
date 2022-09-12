@@ -34,6 +34,7 @@ export class Marinade {
     this.config.marinadeReferralProgramId,
     this.provider,
     this.config.referralCode,
+    this.config.tokenPartnerAccount,
   )
 
   private provideReferralOrMainProgram(): MarinadeFinanceProgram | MarinadeReferralProgram {
@@ -162,6 +163,7 @@ export class Marinade {
     }
 
     const program = this.provideReferralOrMainProgram()
+    console.log(`programid: ${program.program.programId}, url: ${program.anchorProvider.connection.rpcEndpoint}`)  // TODO: delete me
     const depositInstruction = await program.depositInstructionBuilder({
       amountLamports,
       marinadeState,
@@ -192,7 +194,7 @@ export class Marinade {
       const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
       const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
       associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
-  
+
       if (createAssociateTokenInstruction) {
         transaction.add(createAssociateTokenInstruction)
       }
@@ -289,7 +291,7 @@ export class Marinade {
    * Liquidate a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
    * and that the transaction should be executed immidiately after creation.
-   * 
+   *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
    */
@@ -315,13 +317,13 @@ export class Marinade {
    * @todo
    */
   async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
-    
+
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 
   /**
    * Returns estimated Due date for an unstake ticket created now
-   * 
+   *
    */
   async getEstimatedUnstakeTicketDueDate() {
     const marinadeState = await this.getMarinadeState()

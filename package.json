@@ -56,5 +56,14 @@
     "typescript": "^4.5.2",
     "webpack": "^5.67.0",
     "webpack-cli": "^4.9.2"
-  }
+  },
+  "types": "./dist/src/index.d.ts",
+  "bugs": {
+    "url": "https://github.com/marinade-finance/marinade-ts-sdk/issues"
+  },
+  "homepage": "https://github.com/marinade-finance/marinade-ts-sdk#readme",
+  "directories": {
+    "test": "test"
+  },
+  "author": ""
 }

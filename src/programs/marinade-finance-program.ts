@@ -50,7 +50,7 @@ export class MarinadeFinanceProgram {
 
     const ticketAccountInfos = await this.anchorProvider.connection.getProgramAccounts(this.programAddress, { filters })
     const epochInfo = await getEpochInfo(this.anchorProvider.connection)
-   
+
 
     return new Map(ticketAccountInfos.map((ticketAccountInfo) => {
       const { data } = ticketAccountInfo.account
@@ -59,9 +59,9 @@ export class MarinadeFinanceProgram {
         TicketAccount,
         data.slice(8, data.length),
       )
-     
+
       const ticketDateInfo = getTicketDateInfo(epochInfo,ticketAccount.createdEpoch.toNumber(), Date.now())
-      
+
       return [
         ticketAccountInfo.pubkey,
         {...ticketAccount,...ticketDateInfo },

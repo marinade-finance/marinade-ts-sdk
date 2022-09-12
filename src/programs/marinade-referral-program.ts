@@ -12,6 +12,7 @@ export class MarinadeReferralProgram {
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider,
     public readonly referralState: web3.PublicKey | null,
+    public readonly tokenPartnerAccount: web3.PublicKey | null,
   ) { }
 
   get program(): Program {
@@ -73,6 +74,7 @@ export class MarinadeReferralProgram {
     transferFrom,
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
+    tokenPartnerAccount: assertNotNullAndReturn(this.tokenPartnerAccount, "The referral partner account must be provided!"),
   })
 
   depositInstruction = ({ accounts, amountLamports }: {
