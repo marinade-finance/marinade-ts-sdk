@@ -1,4 +1,5 @@
 import { BN } from '@project-serum/anchor'
+import BigNumber from 'bignumber.js'
 
 /**
  * Compute a linear fee base on liquidity amount.
@@ -30,7 +31,9 @@ export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints
 
 /**
  * Returns `amount` * `numerator` / `denominator`.
- * BN library we use does not handle fractions, so the value is `floored`
+ * BN library proves to not be as accurate as desired.
+ * BN was kept to minimize the change. To be replaced entirely by BigNumber.
+ * String is the safest way to convert between them 
  *
  * @param {BN} amount
  * @param {BN} numerator
@@ -40,5 +43,6 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
   if (denominator.isZero()) {
     return amount
   }
-  return amount.mul(numerator).div(denominator)
+  const result = new BigNumber(amount.toString()).multipliedBy(new BigNumber(numerator.toString())).dividedBy(new BigNumber(denominator.toString()))
+  return new BN(result.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString())
 }

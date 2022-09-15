@@ -33,6 +33,7 @@ describe('state-helpers', () => {
       { amount: 10, numerator: 1, denominator: 2, expectedResult: 5 },
       { amount: 10, numerator: 2, denominator: 3, expectedResult: 6 },
       { amount: 10, numerator: 1, denominator: 0, expectedResult: 10 },
+      { amount: 10230883291, numerator: 6978646921208343, denominator: 7428453065883502, expectedResult: 9611384974 },
     ].forEach(({ amount, numerator, denominator, expectedResult}) =>
       it(`calculates the proportional amount (${amount} * ${numerator} / ${denominator} ~ ${expectedResult})`, () => {
         const actualResult = proportionalBN(new BN(amount), new BN(numerator), new BN(denominator)).toNumber()
