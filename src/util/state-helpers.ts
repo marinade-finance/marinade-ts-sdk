@@ -1,5 +1,6 @@
 import { BN } from '@project-serum/anchor'
 import BigNumber from 'bignumber.js'
+import { MarinadeState } from '../marinade-state/marinade-state'
 
 /**
  * Compute a linear fee base on liquidity amount.
@@ -45,4 +46,18 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
   }
   const result = new BigNumber(amount.toString()).multipliedBy(new BigNumber(numerator.toString())).dividedBy(new BigNumber(denominator.toString()))
   return new BN(result.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString())
+}
+
+/**
+ * Returns amount of mSol that would result in a stake operation
+ *
+ * @param {BN} solAmount
+ * @param {MarinadeState} marinadeState
+ */
+export function getExpectedMsol(solAmount: BN, marinadeState: MarinadeState): BN {
+  const total_cooling_down = marinadeState.state.stakeSystem.delayedUnstakeCoolingDown.add(marinadeState.state.emergencyCoolingDown)
+  const total_lamports_under_control = marinadeState.state.validatorSystem.totalActiveBalance.add(total_cooling_down).add(marinadeState.state.availableReserveBalance)
+  const total_virtual_staked_lamports = total_lamports_under_control.sub(marinadeState.state.circulatingTicketBalance)
+
+  return proportionalBN(solAmount, marinadeState.state.msolSupply, total_virtual_staked_lamports)
 }

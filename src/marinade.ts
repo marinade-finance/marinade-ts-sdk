@@ -9,6 +9,7 @@ import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
+import { getExpectedMsol } from './util'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -297,10 +298,11 @@ export class Marinade {
     const totalBalance = await this.provider.connection.getBalance(stakeAccountAddress)
     const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
     const stakeBalance = new BN(totalBalance - rent)
+    const marinadeState = await this.getMarinadeState()
 
-    const {transaction: depositTx, mintRatio, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
+    const {transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
 
-    const availableMsol = stakeBalance.mul(new BN(10 ** 12)).div(new BN(mintRatio * 10 ** 12))
+    const availableMsol = getExpectedMsol(stakeBalance, marinadeState)
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
     const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
