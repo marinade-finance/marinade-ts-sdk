@@ -1,5 +1,8 @@
 import { BN } from '@project-serum/anchor'
-import { proportionalBN, unstakeNowFeeBp } from './state-helpers'
+import { MarinadeConfig } from '../config/marinade-config'
+import { Marinade } from '../marinade'
+import * as TestWorld from '../../test/test-world'
+import { computeMsolAmount, proportionalBN, unstakeNowFeeBp } from './state-helpers'
 
 describe('state-helpers', () => {
   describe('unstakeNowFeeBp', () => {
@@ -33,6 +36,7 @@ describe('state-helpers', () => {
       { amount: 10, numerator: 1, denominator: 2, expectedResult: 5 },
       { amount: 10, numerator: 2, denominator: 3, expectedResult: 6 },
       { amount: 10, numerator: 1, denominator: 0, expectedResult: 10 },
+      { amount: 10230883291, numerator: 6978646921208343, denominator: 7428453065883502, expectedResult: 9611384974 },
     ].forEach(({ amount, numerator, denominator, expectedResult}) =>
       it(`calculates the proportional amount (${amount} * ${numerator} / ${denominator} ~ ${expectedResult})`, () => {
         const actualResult = proportionalBN(new BN(amount), new BN(numerator), new BN(denominator)).toNumber()
@@ -40,5 +44,26 @@ describe('state-helpers', () => {
         expect(actualResult).toBe(expectedResult)
       })
     )
+  })
+
+  describe('computeMsolAmount', () => {
+    it('apply napkin math', async() => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+      const marinadeState = await marinade.getMarinadeState()
+      marinadeState.state.stakeSystem.delayedUnstakeCoolingDown = new BN(0)
+      marinadeState.state.emergencyCoolingDown = new BN(0)
+      marinadeState.state.validatorSystem.totalActiveBalance = new BN(7127287605604809)
+      marinadeState.state.availableReserveBalance = new BN(314928893290695)
+      marinadeState.state.circulatingTicketBalance = new BN(14301681747495)
+      marinadeState.state.msolSupply = new BN(6978141264398309)
+
+      const actualResult = computeMsolAmount(new BN('10230883291'), marinadeState)
+
+      expect(actualResult.toString()).toBe('9611384974')
+    })
   })
 })

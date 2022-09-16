@@ -1,4 +1,6 @@
 import { BN } from '@project-serum/anchor'
+import BigNumber from 'bignumber.js'
+import { MarinadeState } from '../marinade-state/marinade-state'
 
 /**
  * Compute a linear fee base on liquidity amount.
@@ -30,7 +32,9 @@ export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints
 
 /**
  * Returns `amount` * `numerator` / `denominator`.
- * BN library we use does not handle fractions, so the value is `floored`
+ * BN library proves to not be as accurate as desired.
+ * BN was kept to minimize the change. To be replaced entirely by BigNumber.
+ * String is the safest way to convert between them 
  *
  * @param {BN} amount
  * @param {BN} numerator
@@ -40,5 +44,20 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
   if (denominator.isZero()) {
     return amount
   }
-  return amount.mul(numerator).div(denominator)
+  const result = new BigNumber(amount.toString()).multipliedBy(new BigNumber(numerator.toString())).dividedBy(new BigNumber(denominator.toString()))
+  return new BN(result.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString())
+}
+
+/**
+ * Returns amount of mSol that would result in a stake operation
+ *
+ * @param {BN} solAmount
+ * @param {MarinadeState} marinadeState
+ */
+export function computeMsolAmount(solAmount: BN, marinadeState: MarinadeState): BN {
+  const total_cooling_down = marinadeState.state.stakeSystem.delayedUnstakeCoolingDown.add(marinadeState.state.emergencyCoolingDown)
+  const total_lamports_under_control = marinadeState.state.validatorSystem.totalActiveBalance.add(total_cooling_down).add(marinadeState.state.availableReserveBalance)
+  const total_virtual_staked_lamports = total_lamports_under_control.sub(marinadeState.state.circulatingTicketBalance)
+
+  return proportionalBN(solAmount, marinadeState.state.msolSupply, total_virtual_staked_lamports)
 }
