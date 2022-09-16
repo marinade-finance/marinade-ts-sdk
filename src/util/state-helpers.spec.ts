@@ -2,7 +2,7 @@ import { BN } from '@project-serum/anchor'
 import { MarinadeConfig } from '../config/marinade-config'
 import { Marinade } from '../marinade'
 import * as TestWorld from '../../test/test-world'
-import { getExpectedMsol, proportionalBN, unstakeNowFeeBp } from './state-helpers'
+import { computeMsolAmount, proportionalBN, unstakeNowFeeBp } from './state-helpers'
 
 describe('state-helpers', () => {
   describe('unstakeNowFeeBp', () => {
@@ -46,7 +46,7 @@ describe('state-helpers', () => {
     )
   })
 
-  describe('getExpectedMsol', () => {
+  describe('computeMsolAmount', () => {
     it('apply napkin math', async() => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
@@ -61,7 +61,7 @@ describe('state-helpers', () => {
       marinadeState.state.circulatingTicketBalance = new BN(14301681747495)
       marinadeState.state.msolSupply = new BN(6978141264398309)
 
-      const actualResult = getExpectedMsol(new BN('10230883291'), marinadeState)
+      const actualResult = computeMsolAmount(new BN('10230883291'), marinadeState)
 
       expect(actualResult.toString()).toBe('9611384974')
     })

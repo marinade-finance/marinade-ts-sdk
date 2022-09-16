@@ -9,7 +9,7 @@ import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
-import { getExpectedMsol } from './util'
+import { computeMsolAmount } from './util'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -302,7 +302,7 @@ export class Marinade {
 
     const {transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
 
-    const availableMsol = getExpectedMsol(stakeBalance, marinadeState)
+    const availableMsol = computeMsolAmount(stakeBalance, marinadeState)
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
     const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 

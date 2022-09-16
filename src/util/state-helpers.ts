@@ -54,7 +54,7 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
  * @param {BN} solAmount
  * @param {MarinadeState} marinadeState
  */
-export function getExpectedMsol(solAmount: BN, marinadeState: MarinadeState): BN {
+export function computeMsolAmount(solAmount: BN, marinadeState: MarinadeState): BN {
   const total_cooling_down = marinadeState.state.stakeSystem.delayedUnstakeCoolingDown.add(marinadeState.state.emergencyCoolingDown)
   const total_lamports_under_control = marinadeState.state.validatorSystem.totalActiveBalance.add(total_cooling_down).add(marinadeState.state.availableReserveBalance)
   const total_virtual_staked_lamports = total_lamports_under_control.sub(marinadeState.state.circulatingTicketBalance)
