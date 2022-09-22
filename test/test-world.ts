@@ -3,8 +3,6 @@ import { MarinadeUtils } from '../src'
 
 export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
 
-export const MARINADE_PROGRAM_REFERRAL_ID = new web3.PublicKey('FqYPYHc3man91xYDCugbGuDdWgkNLp5TvbXPascHW6MR')
-
 export const SDK_USER = web3.Keypair.fromSecretKey(new Uint8Array([
   120,  45, 242,  38,  63, 135,  84, 226,  66,  56,  76,
   216, 125, 144,  38, 182,  53,  47, 169, 251, 128,  65,

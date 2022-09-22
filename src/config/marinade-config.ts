@@ -7,7 +7,7 @@ export class MarinadeConfig {
   marinadeReferralProgramId = new web3.PublicKey('MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv')
 
   marinadeStateAddress = new web3.PublicKey('8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC')
-  marinadeReferralGlobalStateAddress = new web3.PublicKey('mRg6bDsAd5uwERAdNTynoUeRbqQsLa7yzuK2kkCUPGW')
+  marinadeReferralGlobalStateAddress = new web3.PublicKey('MRSh4rUNrpn7mjAq9ENHV4rvwwPKMij113ScZq3twp2')
 
   stakeWithdrawAuthPDA = new web3.PublicKey('9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco')
 

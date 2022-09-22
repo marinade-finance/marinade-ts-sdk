@@ -2,8 +2,8 @@ import { Marinade, MarinadeConfig, web3, BN } from '../src'
 import { MarinadeReferralStateResponse } from '../src/marinade-referral-state/marinade-referral-state.types'
 import * as TestWorld from './test-world'
 
-describe('Marinade Referral State', () => {
-  describe('getReferralPartnerState', () => {
+describe('Marinade Referral Program', () => {
+  describe('getReferralGlobalState', () => {
     it('fetches the referral program\'s global state which matches the expected type', async() => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
@@ -15,8 +15,11 @@ describe('Marinade Referral State', () => {
 
       expect(state).toStrictEqual<MarinadeReferralStateResponse.GlobalState>({
         adminAccount: expect.any(web3.PublicKey),
-        treasuryMsolAccount: expect.any(web3.PublicKey),
-        treasuryMsolAuthBump: expect.any(Number),
+        msolMintAccount: expect.any(web3.PublicKey),
+        foreman1: expect.any(web3.PublicKey),
+        foreman2: expect.any(web3.PublicKey),
+        minKeepPct: expect.any(Number),
+        maxKeepPct: expect.any(Number),
       })
     })
   })
@@ -33,13 +36,14 @@ describe('Marinade Referral State', () => {
 
       expect(state).toStrictEqual<MarinadeReferralStateResponse.ReferralState>({
         baseFee: expect.any(Number),
+        validatorVoteKey: null,
+        keepSelfStakePct: expect.any(Number),
         delayedUnstakeAmount: expect.any(BN),
         delayedUnstakeOperations: expect.any(BN),
         depositSolAmount: expect.any(BN),
         depositSolOperations: expect.any(BN),
         depositStakeAccountAmount: expect.any(BN),
         depositStakeAccountOperations: expect.any(BN),
-        lastTransferTime: expect.any(BN),
         liqUnstakeSolAmount: expect.any(BN),
         liqUnstakeMsolAmount: expect.any(BN),
         liqUnstakeMsolFees: expect.any(BN),
@@ -49,8 +53,15 @@ describe('Marinade Referral State', () => {
         partnerAccount: expect.any(web3.PublicKey),
         partnerName: TestWorld.PARTNER_NAME,
         pause: expect.any(Boolean),
-        tokenPartnerAccount: expect.any(web3.PublicKey),
-        transferDuration: expect.any(Number),
+        msolTokenPartnerAccount: expect.any(web3.PublicKey),
+        operationDepositSolFee: expect.any(Number),
+        operationDepositStakeAccountFee: expect.any(Number),
+        operationLiquidUnstakeFee: expect.any(Number),
+        operationDelayedUnstakeFee: expect.any(Number),
+        accumDepositSolFee: expect.any(BN),
+        accumDepositStakeAccountFee: expect.any(BN),
+        accumLiquidUnstakeFee: expect.any(BN),
+        accumDelayedUnstakeFee: expect.any(BN),
       })
     })
   })
