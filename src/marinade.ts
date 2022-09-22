@@ -171,7 +171,7 @@ export class Marinade {
         marinadeState,
         transferFrom: feePayer,
         associatedMSolTokenAccountAddress,
-        msolTokenPartnerAccount: referralState.state.msolTokenPartnerAccount
+        msolTokenPartnerAccount: referralState.state.msolTokenPartnerAccount,
       })
     }
     else {
@@ -335,7 +335,7 @@ export class Marinade {
    * Liquidate a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
    * and that the transaction should be executed immediately after creation.
-   * 
+   *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
    */
@@ -368,7 +368,7 @@ export class Marinade {
 
   /**
    * Returns estimated Due date for an unstake ticket created now
-   * 
+   *
    */
   async getEstimatedUnstakeTicketDueDate() {
     const marinadeState = await this.getMarinadeState()
