@@ -4,7 +4,7 @@ const DEFAULT_PROVIDER_URL = 'https://api.devnet.solana.com'
 
 export class MarinadeConfig {
   marinadeFinanceProgramId = new web3.PublicKey('MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD')
-  marinadeReferralProgramId = new web3.PublicKey('mRefx8ypXNxE59NhoBqwqb3vTvjgf8MYECp4kgJWiDY')
+  marinadeReferralProgramId = new web3.PublicKey('MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv')
 
   marinadeStateAddress = new web3.PublicKey('8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC')
   marinadeReferralGlobalStateAddress = new web3.PublicKey('mRg6bDsAd5uwERAdNTynoUeRbqQsLa7yzuK2kkCUPGW')
