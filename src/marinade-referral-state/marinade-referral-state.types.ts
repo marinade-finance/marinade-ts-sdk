@@ -14,7 +14,7 @@ export namespace MarinadeReferralStateResponse {
 
   export interface ReferralState {
     partnerName: string
-    validatorVoteKey: string|null
+    validatorVoteKey: web3.PublicKey|null
     keepSelfStakePct: number
     partnerAccount: web3.PublicKey
     msolTokenPartnerAccount: web3.PublicKey
