@@ -22,10 +22,11 @@ export class MarinadeReferralProgram {
     )
   }
 
-  liquidUnstakeInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress }: {
+  liquidUnstakeInstructionAccounts = async({ marinadeState, ownerAddress, associatedMSolTokenAccountAddress, msolTokenPartnerAccount }: {
     marinadeState: MarinadeState,
     ownerAddress: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
+    msolTokenPartnerAccount: web3.PublicKey,
   }): Promise<MarinadeReferralIdl.Instruction.LiquidUnstake.Accounts> => ({
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
     state: marinadeState.marinadeStateAddress,
@@ -39,6 +40,7 @@ export class MarinadeReferralProgram {
     treasuryMsolAccount: marinadeState.treasuryMsolAccount,
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
+    msolTokenPartnerAccount: msolTokenPartnerAccount,
   })
 
   liquidUnstakeInstruction = ({ accounts, amountLamports }: {
@@ -55,10 +57,11 @@ export class MarinadeReferralProgram {
       accounts: await this.liquidUnstakeInstructionAccounts(accountsArgs),
     })
 
-  depositInstructionAccounts = async({ marinadeState, transferFrom, associatedMSolTokenAccountAddress }: {
+  depositInstructionAccounts = async({ marinadeState, transferFrom, associatedMSolTokenAccountAddress, msolTokenPartnerAccount }: {
     marinadeState: MarinadeState,
     transferFrom: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
+    msolTokenPartnerAccount: web3.PublicKey
   }): Promise<MarinadeReferralIdl.Instruction.Deposit.Accounts> => ({
     reservePda: await marinadeState.reserveAddress(),
     marinadeFinanceProgram: marinadeState.marinadeFinanceProgramId,
@@ -73,6 +76,7 @@ export class MarinadeReferralProgram {
     transferFrom,
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
+    msolTokenPartnerAccount: msolTokenPartnerAccount,
   })
 
   depositInstruction = ({ accounts, amountLamports }: {
@@ -96,6 +100,7 @@ export class MarinadeReferralProgram {
     stakeAccountAddress,
     authorizedWithdrawerAddress,
     associatedMSolTokenAccountAddress,
+    msolTokenPartnerAccount,
   }: {
     marinadeState: MarinadeState,
     duplicationFlag: web3.PublicKey,
@@ -103,6 +108,7 @@ export class MarinadeReferralProgram {
     stakeAccountAddress: web3.PublicKey,
     authorizedWithdrawerAddress: web3.PublicKey,
     associatedMSolTokenAccountAddress: web3.PublicKey,
+    msolTokenPartnerAccount: web3.PublicKey,
   }): Promise<MarinadeReferralIdl.Instruction.DepositStakeAccount.Accounts> => ({
     duplicationFlag,
     stakeAuthority: authorizedWithdrawerAddress,
@@ -121,6 +127,7 @@ export class MarinadeReferralProgram {
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
     stakeProgram: STAKE_PROGRAM_ID,
+    msolTokenPartnerAccount,
   })
 
   depositStakeAccountInstruction = ({ accounts, validatorIndex }: {

@@ -69,6 +69,11 @@
           "name": "referralState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "msolTokenPartnerAccount",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -165,6 +170,11 @@
           "name": "referralState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "msolTokenPartnerAccount",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -236,6 +246,11 @@
           "name": "referralState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "msolTokenPartnerAccount",
+          "isMut": true,
+          "isSigner": false
         }
       ],
       "args": [
@@ -259,14 +274,28 @@
           "isSigner": false
         },
         {
-          "name": "treasuryMsolAccount",
+          "name": "msolMintAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "foreman1",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "foreman2",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "treasuryMsolAuthBump",
+          "name": "minKeepPct",
+          "type": "u8"
+        },
+        {
+          "name": "maxKeepPct",
           "type": "u8"
         }
       ]
@@ -280,14 +309,9 @@
           "isSigner": false
         },
         {
-          "name": "adminAccount",
+          "name": "signer",
           "isMut": false,
           "isSigner": true
-        },
-        {
-          "name": "treasuryMsolAccount",
-          "isMut": false,
-          "isSigner": false
         },
         {
           "name": "referralState",
@@ -300,7 +324,7 @@
           "isSigner": false
         },
         {
-          "name": "tokenPartnerAccount",
+          "name": "msolTokenPartnerAccount",
           "isMut": false,
           "isSigner": false
         }
@@ -309,6 +333,16 @@
         {
           "name": "partnerName",
           "type": "string"
+        },
+        {
+          "name": "validatorVoteKey",
+          "type": {
+            "option": "publicKey"
+          }
+        },
+        {
+          "name": "keepSelfStakePct",
+          "type": "u8"
         }
       ]
     },
@@ -329,16 +363,68 @@
           "name": "referralState",
           "isMut": true,
           "isSigner": false
+        },
+        {
+          "name": "newPartnerAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "newMsolTokenPartnerAccount",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "transferDuration",
-          "type": "u32"
-        },
-        {
           "name": "pause",
           "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "updateOperationFees",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "operationDepositSolFee",
+          "type": {
+            "option": "u8"
+          }
+        },
+        {
+          "name": "operationDepositStakeAccountFee",
+          "type": {
+            "option": "u8"
+          }
+        },
+        {
+          "name": "operationLiquidUnstakeFee",
+          "type": {
+            "option": "u8"
+          }
+        },
+        {
+          "name": "operationDelayedUnstakeFee",
+          "type": {
+            "option": "u8"
+          }
         }
       ]
     },
@@ -359,6 +445,16 @@
           "name": "newAdminAccount",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "newForeman1",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "newForeman2",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": []
@@ -375,11 +471,23 @@
             "type": "publicKey"
           },
           {
-            "name": "treasuryMsolAccount",
+            "name": "msolMintAccount",
             "type": "publicKey"
           },
           {
-            "name": "treasuryMsolAuthBump",
+            "name": "foreman1",
+            "type": "publicKey"
+          },
+          {
+            "name": "foreman2",
+            "type": "publicKey"
+          },
+          {
+            "name": "minKeepPct",
+            "type": "u8"
+          },
+          {
+            "name": "maxKeepPct",
             "type": "u8"
           }
         ]
@@ -395,20 +503,22 @@
             "type": "string"
           },
           {
+            "name": "validatorVoteKey",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "keepSelfStakePct",
+            "type": "u8"
+          },
+          {
             "name": "partnerAccount",
             "type": "publicKey"
           },
           {
-            "name": "tokenPartnerAccount",
+            "name": "msolTokenPartnerAccount",
             "type": "publicKey"
-          },
-          {
-            "name": "transferDuration",
-            "type": "u32"
-          },
-          {
-            "name": "lastTransferTime",
-            "type": "i64"
           },
           {
             "name": "depositSolAmount",
@@ -465,6 +575,38 @@
           {
             "name": "pause",
             "type": "bool"
+          },
+          {
+            "name": "operationDepositSolFee",
+            "type": "u8"
+          },
+          {
+            "name": "operationDepositStakeAccountFee",
+            "type": "u8"
+          },
+          {
+            "name": "operationLiquidUnstakeFee",
+            "type": "u8"
+          },
+          {
+            "name": "operationDelayedUnstakeFee",
+            "type": "u8"
+          },
+          {
+            "name": "accumDepositSolFee",
+            "type": "u64"
+          },
+          {
+            "name": "accumDepositStakeAccountFee",
+            "type": "u64"
+          },
+          {
+            "name": "accumLiquidUnstakeFee",
+            "type": "u64"
+          },
+          {
+            "name": "accumDelayedUnstakeFee",
+            "type": "u64"
           }
         ]
       }
@@ -488,13 +630,13 @@
     },
     {
       "code": 303,
-      "name": "InvalidBeneficiaryAccountOwner",
-      "msg": "Invalid beneficiary account owner"
+      "name": "InvalidPartnerAccountOwner",
+      "msg": "Invalid partner account owner"
     },
     {
       "code": 304,
-      "name": "InvalidBeneficiaryAccountMint",
-      "msg": "Invalid beneficiary account mint"
+      "name": "InvalidPartnerAccountMint",
+      "msg": "Invalid partner account mint"
     },
     {
       "code": 305,
@@ -503,18 +645,43 @@
     },
     {
       "code": 306,
-      "name": "TreasuryTokenAuthorityDoesNotMatch",
-      "msg": "Treasury token authority does not match"
+      "name": "NotInitializedMintAccount",
+      "msg": "Mint account is not initialized"
     },
     {
       "code": 307,
-      "name": "TreasuryTokenAccountMustNotBeDelegated",
-      "msg": "Treasury token account must not be delegated"
+      "name": "ReferralOperationFeeOverMax",
+      "msg": "Referral operation fee was set over the maximum permitted amount"
     },
     {
       "code": 308,
-      "name": "TreasuryTokenAccountMustNotBeCloseable",
-      "msg": "Treasury token account must not be closeable"
+      "name": "NotAllowedForStakeAsCollateralPartner",
+      "msg": "Not allowed for stake-as-collateral-partners"
+    },
+    {
+      "code": 309,
+      "name": "KeepPctOutOfRange",
+      "msg": "Keep_pct out of valid range"
+    },
+    {
+      "code": 310,
+      "name": "MaxKeepPctOutOfRange",
+      "msg": "Max Keep_pct out of valid range, cannot go over 100%"
+    },
+    {
+      "code": 311,
+      "name": "MinMaxKeepPctOutOfRange",
+      "msg": "Min Keep-pct is bounded by value of Max Keep_pct"
+    },
+    {
+      "code": 312,
+      "name": "StakeAccountMustBeDelegatedToPartnerValidator",
+      "msg": "Stake-account must be delegated to partner validator"
+    },
+    {
+      "code": 313,
+      "name": "StakeAccountAuthMustBePartnerAccount",
+      "msg": "Stake-account authority must be partner account"
     }
   ]
 }

@@ -38,7 +38,7 @@ export class Marinade {
   )
 
   private provideReferralOrMainProgram(): MarinadeFinanceProgram | MarinadeReferralProgram {
-    return this.config.referralCode ? this.marinadeReferralProgram: this.marinadeFinanceProgram
+    return this.config.referralCode ? this.marinadeReferralProgram : this.marinadeFinanceProgram
   }
 
   /**
@@ -162,13 +162,27 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const program = this.provideReferralOrMainProgram()
-    const depositInstruction = await program.depositInstructionBuilder({
-      amountLamports,
-      marinadeState,
-      transferFrom: feePayer,
-      associatedMSolTokenAccountAddress,
-    })
+    let depositInstruction
+    if (this.config.referralCode) {
+      const program = this.marinadeReferralProgram
+      const referralState = await this.getReferralPartnerState()
+      depositInstruction = await program.depositInstructionBuilder({
+        amountLamports,
+        marinadeState,
+        transferFrom: feePayer,
+        associatedMSolTokenAccountAddress,
+        msolTokenPartnerAccount: referralState.state.msolTokenPartnerAccount
+      })
+    }
+    else {
+      const program = this.marinadeFinanceProgram
+      depositInstruction = await program.depositInstructionBuilder({
+        amountLamports,
+        marinadeState,
+        transferFrom: feePayer,
+        associatedMSolTokenAccountAddress,
+      })
+    }
 
     transaction.add(depositInstruction)
 
@@ -193,19 +207,33 @@ export class Marinade {
       const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
       const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
       associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
-  
+
       if (createAssociateTokenInstruction) {
         transaction.add(createAssociateTokenInstruction)
       }
     }
 
-    const program = this.provideReferralOrMainProgram()
-    const liquidUnstakeInstruction = await program.liquidUnstakeInstructionBuilder({
-      amountLamports,
-      marinadeState,
-      ownerAddress,
-      associatedMSolTokenAccountAddress,
-    })
+    let liquidUnstakeInstruction
+    if (this.config.referralCode) {
+      const program = this.marinadeReferralProgram
+      const referralState = await this.getReferralPartnerState()
+      liquidUnstakeInstruction = await program.liquidUnstakeInstructionBuilder({
+        amountLamports,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+        msolTokenPartnerAccount: referralState.state.msolTokenPartnerAccount,
+      })
+    }
+    else {
+      const program = this.marinadeFinanceProgram
+      liquidUnstakeInstruction = await program.liquidUnstakeInstructionBuilder({
+        amountLamports,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+      })
+    }
 
     transaction.add(liquidUnstakeInstruction)
 
@@ -264,16 +292,33 @@ export class Marinade {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const program = this.provideReferralOrMainProgram()
-    const depositStakeAccountInstruction = await program.depositStakeAccountInstructionBuilder({
-      validatorIndex,
-      marinadeState,
-      duplicationFlag,
-      authorizedWithdrawerAddress,
-      associatedMSolTokenAccountAddress,
-      ownerAddress,
-      stakeAccountAddress,
-    })
+    let depositStakeAccountInstruction
+    if (this.config.referralCode) {
+      const program = this.marinadeReferralProgram
+      const referralState = await this.getReferralPartnerState()
+      depositStakeAccountInstruction = await program.depositStakeAccountInstructionBuilder({
+        validatorIndex,
+        marinadeState,
+        duplicationFlag,
+        authorizedWithdrawerAddress,
+        associatedMSolTokenAccountAddress,
+        ownerAddress,
+        stakeAccountAddress,
+        msolTokenPartnerAccount: referralState.state.msolTokenPartnerAccount,
+      })
+    }
+    else {
+      const program = this.marinadeFinanceProgram
+      depositStakeAccountInstruction = await program.depositStakeAccountInstructionBuilder({
+        validatorIndex,
+        marinadeState,
+        duplicationFlag,
+        authorizedWithdrawerAddress,
+        associatedMSolTokenAccountAddress,
+        ownerAddress,
+        stakeAccountAddress,
+      })
+    }
 
     transaction.add(depositStakeAccountInstruction)
 
@@ -289,7 +334,7 @@ export class Marinade {
    * Returns a transaction with the instructions to
    * Liquidate a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
-   * and that the transaction should be executed immidiately after creation.
+   * and that the transaction should be executed immediately after creation.
    * 
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
@@ -300,11 +345,11 @@ export class Marinade {
     const stakeBalance = new BN(totalBalance - rent)
     const marinadeState = await this.getMarinadeState()
 
-    const {transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
+    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = await this.depositStakeAccount(stakeAccountAddress)
 
     const availableMsol = computeMsolAmount(stakeBalance, marinadeState)
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
-    const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
+    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
     return {
       transaction: depositTx.add(unstakeTx),
@@ -317,7 +362,7 @@ export class Marinade {
    * @todo
    */
   async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
-    
+
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 

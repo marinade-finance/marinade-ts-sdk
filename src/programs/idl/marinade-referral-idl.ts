@@ -17,6 +17,7 @@ export namespace MarinadeReferralIdl {
         tokenProgram: web3.PublicKey
         marinadeFinanceProgram: web3.PublicKey
         referralState: web3.PublicKey
+        msolTokenPartnerAccount: web3.PublicKey
       }
     }
     export namespace DepositStakeAccount {
@@ -38,6 +39,7 @@ export namespace MarinadeReferralIdl {
         stakeProgram: web3.PublicKey
         marinadeFinanceProgram: web3.PublicKey
         referralState: web3.PublicKey
+        msolTokenPartnerAccount: web3.PublicKey
       }
     }
     export namespace LiquidUnstake {
@@ -54,29 +56,40 @@ export namespace MarinadeReferralIdl {
         tokenProgram: web3.PublicKey
         marinadeFinanceProgram: web3.PublicKey
         referralState: web3.PublicKey
+        msolTokenPartnerAccount: web3.PublicKey
       }
     }
     export namespace Initialize {
       export type Accounts = {
         adminAccount: web3.PublicKey
         globalState: web3.PublicKey
-        treasuryMsolAccount: web3.PublicKey
+        msolMintAccount: web3.PublicKey
+        foreman1: web3.PublicKey
+        foreman2: web3.PublicKey
       }
     }
     export namespace InitReferralAccount {
       export type Accounts = {
         globalState: web3.PublicKey
-        adminAccount: web3.PublicKey
-        treasuryMsolAccount: web3.PublicKey
+        signer: web3.PublicKey
         referralState: web3.PublicKey
         partnerAccount: web3.PublicKey
-        tokenPartnerAccount: web3.PublicKey
+        msolTokenPartnerAccount: web3.PublicKey
       }
     }
     export namespace UpdateReferral {
       export type Accounts = {
         globalState: web3.PublicKey
         adminAccount: web3.PublicKey
+        referralState: web3.PublicKey
+        newPartnerAccount: web3.PublicKey
+        newMsolTokenPartnerAccount: web3.PublicKey
+      }
+    }
+    export namespace UpdateOperationFees {
+      export type Accounts = {
+        globalState: web3.PublicKey
+        signer: web3.PublicKey
         referralState: web3.PublicKey
       }
     }
@@ -85,6 +98,8 @@ export namespace MarinadeReferralIdl {
         globalState: web3.PublicKey
         adminAccount: web3.PublicKey
         newAdminAccount: web3.PublicKey
+        newForeman1: web3.PublicKey
+        newForeman2: web3.PublicKey
       }
     }
   }
