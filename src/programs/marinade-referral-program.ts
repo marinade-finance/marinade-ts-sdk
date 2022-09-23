@@ -2,16 +2,21 @@ import { BN, Idl, Program, Provider, web3 } from '@project-serum/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
 import { MarinadeState } from '../marinade-state/marinade-state'
+import { MarinadeReferralStateResponse } from '../marinade-referral-state/marinade-referral-state.types'
+import { Marinade } from '../marinade'
 import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
 import { assertNotNullAndReturn } from '../util/assert'
 import { MarinadeReferralIdl } from './idl/marinade-referral-idl'
 import * as marinadeReferralIdlSchema from './idl/marinade-referral-idl.json'
 
 export class MarinadeReferralProgram {
+  referralStateData: MarinadeReferralStateResponse.ReferralState | null = null
+
   constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider,
     public readonly referralState: web3.PublicKey | null,
+    readonly marinade: Marinade,
   ) { }
 
   get program(): Program {
@@ -39,6 +44,7 @@ export class MarinadeReferralProgram {
     treasuryMsolAccount: marinadeState.treasuryMsolAccount,
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
+    msolTokenPartnerAccount: (await this.getReferralStateData()).msolTokenPartnerAccount,
   })
 
   liquidUnstakeInstruction = ({ accounts, amountLamports }: {
@@ -73,6 +79,7 @@ export class MarinadeReferralProgram {
     transferFrom,
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
+    msolTokenPartnerAccount: (await this.getReferralStateData()).msolTokenPartnerAccount,
   })
 
   depositInstruction = ({ accounts, amountLamports }: {
@@ -121,6 +128,7 @@ export class MarinadeReferralProgram {
     systemProgram: SYSTEM_PROGRAM_ID,
     tokenProgram: TOKEN_PROGRAM_ID,
     stakeProgram: STAKE_PROGRAM_ID,
+    msolTokenPartnerAccount: (await this.getReferralStateData()).msolTokenPartnerAccount,
   })
 
   depositStakeAccountInstruction = ({ accounts, validatorIndex }: {
@@ -136,4 +144,11 @@ export class MarinadeReferralProgram {
       validatorIndex,
       accounts: await this.depositStakeAccountInstructionAccounts(accountsArgs),
     })
+
+  async getReferralStateData(): Promise<MarinadeReferralStateResponse.ReferralState> {
+    if (!this.referralStateData) {
+      this.referralStateData = (await this.marinade.getReferralPartnerState()).state
+    }
+    return this.referralStateData
+  }
 }

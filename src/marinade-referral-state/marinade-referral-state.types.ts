@@ -8,16 +8,19 @@ export const enum ProgramDerivedAddressSeed {
 export namespace MarinadeReferralStateResponse {
   export interface GlobalState {
     adminAccount: web3.PublicKey
-    treasuryMsolAccount: web3.PublicKey
-    treasuryMsolAuthBump: number
+    msolMintAccount: web3.PublicKey
+    foreman1: web3.PublicKey
+    foreman2: web3.PublicKey
+    minKeepPct: number
+    maxKeepPct: number
   }
 
   export interface ReferralState {
     partnerName: string
+    validatorVoteKey: web3.PublicKey|null
+    keepSelfStakePct: number
     partnerAccount: web3.PublicKey
-    tokenPartnerAccount: web3.PublicKey
-    transferDuration: number
-    lastTransferTime: BN
+    msolTokenPartnerAccount: web3.PublicKey
     depositSolAmount: BN
     depositSolOperations: BN
     depositStakeAccountAmount: BN
@@ -32,5 +35,13 @@ export namespace MarinadeReferralStateResponse {
     maxFee: number
     maxNetStake: BN
     pause: boolean
+    operationDepositSolFee: number
+    operationDepositStakeAccountFee: number
+    operationLiquidUnstakeFee: number
+    operationDelayedUnstakeFee: number
+    accumDepositSolFee: BN
+    accumDepositStakeAccountFee: BN
+    accumLiquidUnstakeFee: BN
+    accumDelayedUnstakeFee: BN
   }
 }

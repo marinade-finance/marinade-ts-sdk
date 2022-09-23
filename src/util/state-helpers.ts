@@ -1,5 +1,4 @@
 import { BN } from '@project-serum/anchor'
-import BigNumber from 'bignumber.js'
 import { MarinadeState } from '../marinade-state/marinade-state'
 
 /**
@@ -44,8 +43,8 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
   if (denominator.isZero()) {
     return amount
   }
-  const result = new BigNumber(amount.toString()).multipliedBy(new BigNumber(numerator.toString())).dividedBy(new BigNumber(denominator.toString()))
-  return new BN(result.decimalPlaces(0, BigNumber.ROUND_FLOOR).toString())
+  const result = BigInt(amount.toString()) * BigInt(numerator.toString()) / BigInt(denominator.toString())
+  return new BN(result.toString())
 }
 
 /**

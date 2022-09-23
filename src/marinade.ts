@@ -35,10 +35,11 @@ export class Marinade {
     this.config.marinadeReferralProgramId,
     this.provider,
     this.config.referralCode,
+    this,
   )
 
   private provideReferralOrMainProgram(): MarinadeFinanceProgram | MarinadeReferralProgram {
-    return this.config.referralCode ? this.marinadeReferralProgram: this.marinadeFinanceProgram
+    return this.config.referralCode ? this.marinadeReferralProgram : this.marinadeFinanceProgram
   }
 
   /**
@@ -193,7 +194,7 @@ export class Marinade {
       const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
       const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
       associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
-  
+
       if (createAssociateTokenInstruction) {
         transaction.add(createAssociateTokenInstruction)
       }
@@ -289,8 +290,8 @@ export class Marinade {
    * Returns a transaction with the instructions to
    * Liquidate a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
-   * and that the transaction should be executed immidiately after creation.
-   * 
+   * and that the transaction should be executed immediately after creation.
+   *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
    */
@@ -300,11 +301,11 @@ export class Marinade {
     const stakeBalance = new BN(totalBalance - rent)
     const marinadeState = await this.getMarinadeState()
 
-    const {transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress} = await this.depositStakeAccount(stakeAccountAddress)
+    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = await this.depositStakeAccount(stakeAccountAddress)
 
     const availableMsol = computeMsolAmount(stakeBalance, marinadeState)
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
-    const {transaction: unstakeTx} = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
+    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
     return {
       transaction: depositTx.add(unstakeTx),
@@ -317,13 +318,13 @@ export class Marinade {
    * @todo
    */
   async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
-    
+
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 
   /**
    * Returns estimated Due date for an unstake ticket created now
-   * 
+   *
    */
   async getEstimatedUnstakeTicketDueDate() {
     const marinadeState = await this.getMarinadeState()
