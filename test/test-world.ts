@@ -23,7 +23,7 @@ export const PROVIDER = new Provider(
   { commitment: 'confirmed'/*, skipPreflight: true*/ },
 )
 
-export const REFERRAL_CODE = new web3.PublicKey('mRtnRH2M3rMLP4BBcrxkk4WBKsSi3JvoyUEog7gf3qE')
+export const REFERRAL_CODE = new web3.PublicKey('RFTpNa1t7k2R7MUZYJyhYHB4wGHbU1tzCHAShXcy2oL')
 export const PARTNER_NAME = 'REF_TEST'
 console.log('Referral partner', PARTNER_NAME, REFERRAL_CODE.toBase58())
 
