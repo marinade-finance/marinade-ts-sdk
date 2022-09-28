@@ -305,18 +305,18 @@ export class Marinade {
     const stakeBalance = new BN(totalBalance - rent)
     const marinadeState = await this.getMarinadeState()
 
-    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = await this.depositStakeAccount(stakeAccountAddress)
+    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
+      await this.depositStakeAccount(stakeAccountAddress)
 
-    const availableMsol = computeMsolAmount(stakeBalance, marinadeState)
-    const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
-
-    // when working with referral partner the costs of the deposit operation is substracted from the available unstake mSOL amount
+    const mSolAmountToReceive = computeMsolAmount(stakeBalance, marinadeState)
+    // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
     if (this.isReferralProgram()) {
       const partnerOperationFee = (await this.marinadeReferralProgram.getReferralStateData()).operationDepositStakeAccountFee
-      unstakeAmount.sub(proportionalBN(unstakeAmount, new BN(partnerOperationFee), new BN(10_000)))
+      mSolAmountToReceive.sub(proportionalBN(mSolAmountToReceive, new BN(partnerOperationFee), new BN(10_000)))
     }
 
-    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
+    const unstakeAmountMSol = mSolAmountToReceive.sub(mSolToKeep ?? new BN(0))
+    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmountMSol, associatedMSolTokenAccountAddress)
 
     return {
       transaction: depositTx.add(unstakeTx),
