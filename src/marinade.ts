@@ -9,7 +9,7 @@ import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
-import { computeMsolAmount } from './util'
+import { computeMsolAmount, proportionalBN } from './util'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -38,8 +38,12 @@ export class Marinade {
     this,
   )
 
+  private isReferralProgram(): boolean {
+    return this.config.referralCode != null
+  }
+
   private provideReferralOrMainProgram(): MarinadeFinanceProgram | MarinadeReferralProgram {
-    return this.config.referralCode ? this.marinadeReferralProgram : this.marinadeFinanceProgram
+    return this.isReferralProgram() ? this.marinadeReferralProgram : this.marinadeFinanceProgram
   }
 
   /**
@@ -301,11 +305,18 @@ export class Marinade {
     const stakeBalance = new BN(totalBalance - rent)
     const marinadeState = await this.getMarinadeState()
 
-    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = await this.depositStakeAccount(stakeAccountAddress)
+    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
+      await this.depositStakeAccount(stakeAccountAddress)
 
-    const availableMsol = computeMsolAmount(stakeBalance, marinadeState)
-    const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
-    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
+    const mSolAmountToReceive = computeMsolAmount(stakeBalance, marinadeState)
+    // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
+    if (this.isReferralProgram()) {
+      const partnerOperationFee = (await this.marinadeReferralProgram.getReferralStateData()).operationDepositStakeAccountFee
+      mSolAmountToReceive.sub(proportionalBN(mSolAmountToReceive, new BN(partnerOperationFee), new BN(10_000)))
+    }
+
+    const unstakeAmountMSol = mSolAmountToReceive.sub(mSolToKeep ?? new BN(0))
+    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmountMSol, associatedMSolTokenAccountAddress)
 
     return {
       transaction: depositTx.add(unstakeTx),
