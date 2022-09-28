@@ -9,7 +9,7 @@ import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
-import { computeMsolAmount } from './util'
+import { computeMsolAmount, proportionalBN } from './util'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -38,8 +38,12 @@ export class Marinade {
     this,
   )
 
+  private isReferralProgram(): boolean {
+    return this.config.referralCode != null
+  }
+
   private provideReferralOrMainProgram(): MarinadeFinanceProgram | MarinadeReferralProgram {
-    return this.config.referralCode ? this.marinadeReferralProgram : this.marinadeFinanceProgram
+    return this.isReferralProgram() ? this.marinadeReferralProgram : this.marinadeFinanceProgram
   }
 
   /**
@@ -305,6 +309,13 @@ export class Marinade {
 
     const availableMsol = computeMsolAmount(stakeBalance, marinadeState)
     const unstakeAmount = availableMsol.sub(mSolToKeep ?? new BN(0))
+
+    // when working with referral partner the costs of the deposit operation is substracted from the available unstake mSOL amount
+    if (this.isReferralProgram()) {
+      const partnerOperationFee = (await this.marinadeReferralProgram.getReferralStateData()).operationDepositStakeAccountFee
+      unstakeAmount.sub(proportionalBN(unstakeAmount, new BN(partnerOperationFee), new BN(10_000)))
+    }
+
     const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmount, associatedMSolTokenAccountAddress)
 
     return {
