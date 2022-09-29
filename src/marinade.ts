@@ -308,11 +308,11 @@ export class Marinade {
     const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
       await this.depositStakeAccount(stakeAccountAddress)
 
-    const mSolAmountToReceive = computeMsolAmount(stakeBalance, marinadeState)
+    let mSolAmountToReceive = computeMsolAmount(stakeBalance, marinadeState)
     // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
     if (this.isReferralProgram()) {
       const partnerOperationFee = (await this.marinadeReferralProgram.getReferralStateData()).operationDepositStakeAccountFee
-      mSolAmountToReceive.sub(proportionalBN(mSolAmountToReceive, new BN(partnerOperationFee), new BN(10_000)))
+      mSolAmountToReceive = mSolAmountToReceive.sub(proportionalBN(mSolAmountToReceive, new BN(partnerOperationFee), new BN(10_000)))
     }
 
     const unstakeAmountMSol = mSolAmountToReceive.sub(mSolToKeep ?? new BN(0))
