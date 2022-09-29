@@ -1,5 +1,4 @@
-import { BN, Provider, web3 } from '@project-serum/anchor'
-import * as anchor from '@project-serum/anchor'
+import { BN, Provider, utils, web3 } from '@project-serum/anchor'
 import { AccountInfo, ASSOCIATED_TOKEN_PROGRAM_ID, Token, TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 
@@ -20,14 +19,14 @@ export function getMintClient(anchorProvider: Provider, mintAddress: web3.Public
 }
 
 export async function getAssociatedTokenAccountAddress(mint: web3.PublicKey, owner: web3.PublicKey): Promise<web3.PublicKey> {
-  return anchor.utils.token.associatedAddress({ mint, owner })
+  return utils.token.associatedAddress({ mint, owner })
 }
 
 export async function getTokenAccountInfo(mintClient: Token, publicKey: web3.PublicKey): Promise<AccountInfo> {
   return mintClient.getAccountInfo(publicKey)
 }
 
-export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey, payerAddress?: web3.PublicKey): Promise<{
+export async function getOrCreateAssociatedTokenAccount(anchorProvider: Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey, payerAddress?: web3.PublicKey): Promise<{
   associatedTokenAccountAddress: web3.PublicKey
   createAssociateTokenInstruction: web3.TransactionInstruction | null
 }> {
@@ -62,7 +61,7 @@ export async function getOrCreateAssociatedTokenAccount(anchorProvider: anchor.P
   }
 }
 
-export async function getParsedStakeAccountInfo(anchorProvider: anchor.Provider, stakeAccountAddress: web3.PublicKey): Promise<ParsedStakeAccountInfo> {
+export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeAccountAddress: web3.PublicKey): Promise<ParsedStakeAccountInfo> {
   const { value: stakeAccountInfo } = await anchorProvider.connection.getParsedAccountInfo(stakeAccountAddress)
 
   if (!stakeAccountInfo) {
