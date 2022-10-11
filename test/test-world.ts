@@ -48,3 +48,18 @@ export const provideMinimumLamportsBalance = async(account: web3.PublicKey, mini
     remainingLamportsToAirdrop = remainingLamportsToAirdrop.sub(airdropLamports)
   }
 }
+
+export const simulateTransaction = async(transaction: web3.Transaction) => {
+  const {
+    context: { slot: executedSlot },
+    value: { blockhash },
+  } = await PROVIDER.connection.getLatestBlockhashAndContext()
+  transaction.recentBlockhash = blockhash
+  transaction.feePayer = SDK_USER.publicKey
+
+  const {
+    context: { slot: simulatedSlot },
+    value: { err, logs, unitsConsumed, accounts, returnData },
+  } = await PROVIDER.connection.simulateTransaction(transaction)
+  return {executedSlot, simulatedSlot, err, logs, unitsConsumed, accounts, returnData}
+}

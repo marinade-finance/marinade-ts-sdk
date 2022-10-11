@@ -40,18 +40,26 @@ describe('Marinade Referral', () => {
     })
   })
 
-  describe.skip('liquidateStakeAccount', () => {
-    it('liquidates stake account to SOL', async() => {
+  describe("liquidateStakeAccount", () => {
+    it("liquidates stake account (simulation)", async() => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
         publicKey: TestWorld.SDK_USER.publicKey,
-        referralCode: TestWorld.REFERRAL_CODE,
       })
       const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.liquidateStakeAccount(new web3.PublicKey("Cp4JSgUrPVaqMkr6m4KEu5yyu1khPTHQHrMNn5wfQabp"))
-      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
-      console.log('Liquididate stake account tx:', transactionSignature)
+      // Make sure stake account still exist, if this test is included
+      const { transaction } = await marinade.liquidateStakeAccount(
+        new web3.PublicKey("FPFQJ7SNx2ZgpJ4nSuqzAhpofDdKMxN9sT8FDXpxGxng")
+      )
+
+      const { executedSlot, simulatedSlot, err, logs, unitsConsumed }
+        = await TestWorld.simulateTransaction(transaction)
+
+      expect(err).toBeNull()  // no error at simulation
+      expect(simulatedSlot).toBeGreaterThanOrEqual(executedSlot)
+      expect(unitsConsumed).toBeGreaterThan(0)  // some actions were processed
+      console.debug("Liquidate stake account tx log:", logs)
     })
   })
 })
