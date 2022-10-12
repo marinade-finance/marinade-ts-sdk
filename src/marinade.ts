@@ -56,8 +56,8 @@ export class Marinade {
   /**
    * Fetch the Marinade referral partner's state
    */
-  async getReferralPartnerState(): Promise<MarinadeReferralPartnerState> {
-    return MarinadeReferralPartnerState.fetch(this)
+  async getReferralPartnerState(referralCode?: web3.PublicKey): Promise<MarinadeReferralPartnerState> {
+    return MarinadeReferralPartnerState.fetch(this, referralCode)
   }
 
   /**
@@ -65,6 +65,29 @@ export class Marinade {
    */
   async getReferralGlobalState(): Promise<MarinadeReferralGlobalState> {
     return MarinadeReferralGlobalState.fetch(this)
+  }
+
+  /**
+   * Fetch all the referral partners
+   */
+  async getReferralPartners(): Promise<MarinadeReferralPartnerState[]> {
+    const accounts = await this.config.connection.getProgramAccounts(
+      new web3.PublicKey(this.config.marinadeReferralProgramId),
+      {
+        filters: [
+          {
+            dataSize:
+                this.marinadeReferralProgram.program.account.referralState.size +
+                20 +
+                96, // number of bytes,
+          },
+        ],
+      }
+    )
+    const codes = accounts.map((acc) => acc.pubkey)
+    return await Promise.all(
+      codes.map((referralCode) => this.getReferralPartnerState(referralCode))
+    )
   }
 
   /**
