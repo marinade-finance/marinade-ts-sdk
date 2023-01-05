@@ -59,6 +59,29 @@ export namespace MarinadeReferralIdl {
         msolTokenPartnerAccount: web3.PublicKey
       }
     }
+    export namespace OrderUnstake {
+      export type Accounts = {
+        state: web3.PublicKey
+        msolMint: web3.PublicKey
+        burnMsolFrom: web3.PublicKey
+        burnMsolAuthority: web3.PublicKey
+        newTicketAccount: web3.PublicKey
+        clock: web3.PublicKey
+        rent: web3.PublicKey
+        tokenProgram: web3.PublicKey
+        msolTokenPartnerAccount: web3.PublicKey
+      }
+    }
+    export namespace Claim {
+      export type Accounts = {
+        state: web3.PublicKey
+        reservePda: web3.PublicKey
+        ticketAccount: web3.PublicKey
+        transferSolTo: web3.PublicKey
+        clock: web3.PublicKey
+        systemProgram: web3.PublicKey
+      }
+    }
     export namespace Initialize {
       export type Accounts = {
         adminAccount: web3.PublicKey

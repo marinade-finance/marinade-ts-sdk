@@ -217,14 +217,9 @@ export class Marinade {
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
+    // if msol address not passed in, derive it from the msol authority
     if (!associatedMSolTokenAccountAddress) {
-      const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
-      const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
-      associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
-
-      if (createAssociateTokenInstruction) {
-        transaction.add(createAssociateTokenInstruction)
-      }
+      associatedMSolTokenAccountAddress = await getAssociatedTokenAccountAddress(marinadeState.mSolMintAddress, ownerAddress)
     }
 
     const program = this.provideReferralOrMainProgram()
@@ -239,6 +234,80 @@ export class Marinade {
 
     return {
       associatedMSolTokenAccountAddress,
+      transaction,
+    }
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Order a delayed unstake of mSOL and create a ticket account to claim later
+   *
+   * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
+   * @param associatedMSolTokenAccountAddress
+   */
+  async orderUnstake(amountLamports: BN, associatedMSolTokenAccountAddress?: web3.PublicKey): Promise<MarinadeResult.OrderUnstake> {
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const marinadeState = await this.getMarinadeState()
+    const transaction = new web3.Transaction()
+
+    // if msol address not passed in, derive it from the msol authority
+    if (!associatedMSolTokenAccountAddress) {
+      associatedMSolTokenAccountAddress = await getAssociatedTokenAccountAddress(marinadeState.mSolMintAddress, ownerAddress)
+    }
+
+    const newTicketAccountSpace = 32 + 32 + 8 + 8 + 8
+    const newTicketLamports = await this.provider.connection.getMinimumBalanceForRentExemption(newTicketAccountSpace)
+    const newTicketAccount = web3.Keypair.generate()
+    transaction.add(web3.SystemProgram.createAccount({
+      fromPubkey: ownerAddress,
+      newAccountPubkey: newTicketAccount.publicKey,
+      space: newTicketAccountSpace,
+      lamports: newTicketLamports,
+      programId: marinadeState.marinadeFinanceProgramId,
+    }))
+
+    const program = this.provideReferralOrMainProgram()
+    const orderUnstakeInstruction = await program.orderUnstakeInstructionBuilder({
+      amountLamports,
+      marinadeState,
+      ownerAddress,
+      associatedMSolTokenAccountAddress,
+      newTicketAccount: newTicketAccount.publicKey,
+    })
+
+    transaction.add(orderUnstakeInstruction)
+
+    return {
+      newTicketAccount,
+      transaction,
+    }
+  }
+
+  public async claimUnstakeTicket(
+    ticketAccount: web3.PublicKey,
+    associatedMSolTokenAccountAddress?: web3.PublicKey
+  ): Promise<MarinadeResult.Claim> {
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const marinadeState = await this.getMarinadeState()
+    const program = this.provideReferralOrMainProgram()
+
+    // if msol address not passed in, derive it from the msol authority
+    if (!associatedMSolTokenAccountAddress) {
+      associatedMSolTokenAccountAddress = await getAssociatedTokenAccountAddress(marinadeState.mSolMintAddress, ownerAddress)
+    }
+
+    const transaction = new web3.Transaction()
+
+    const claimInstruction = await program.claimInstructionBuilder({
+      marinadeState,
+      ownerAddress,
+      associatedMSolTokenAccountAddress,
+      ticketAccount,
+    })
+
+    transaction.add(claimInstruction)
+
+    return {
       transaction,
     }
   }
@@ -328,7 +397,7 @@ export class Marinade {
     const stakeBalance = new BN(totalBalance - rent)
     const marinadeState = await this.getMarinadeState()
 
-    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
+    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } =
       await this.depositStakeAccount(stakeAccountAddress)
 
     let mSolAmountToReceive = computeMsolAmount(stakeBalance, marinadeState)
@@ -352,8 +421,11 @@ export class Marinade {
    * @todo
    */
   async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
-
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
+  }
+
+  async getDelayedUnstakeTicket(ticketAccountAddress: web3.PublicKey): Promise<TicketAccount | null> {
+    return this.marinadeFinanceProgram.getDelayedUnstakeTicket(ticketAccountAddress)
   }
 
   /**

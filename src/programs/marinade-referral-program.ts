@@ -8,6 +8,7 @@ import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
 import { assertNotNullAndReturn } from '../util/assert'
 import { MarinadeReferralIdl } from './idl/marinade-referral-idl'
 import * as marinadeReferralIdlSchema from './idl/marinade-referral-idl.json'
+import {MarinadeFinanceIdl} from "./idl/marinade-finance-idl"
 
 export class MarinadeReferralProgram {
   referralStateData: MarinadeReferralStateResponse.ReferralState | null = null
@@ -59,6 +60,71 @@ export class MarinadeReferralProgram {
     this.liquidUnstakeInstruction({
       amountLamports,
       accounts: await this.liquidUnstakeInstructionAccounts(accountsArgs),
+    })
+
+  orderUnstakeInstructionAccounts = async({
+    marinadeState,
+    ownerAddress,
+    associatedMSolTokenAccountAddress,
+    newTicketAccount,
+  }: {
+    marinadeState: MarinadeState,
+    ownerAddress: web3.PublicKey,
+    associatedMSolTokenAccountAddress: web3.PublicKey,
+    newTicketAccount: web3.PublicKey,
+  }): Promise<MarinadeReferralIdl.Instruction.OrderUnstake.Accounts> => ({
+    state: marinadeState.marinadeStateAddress,
+    msolMint: marinadeState.mSolMintAddress,
+    burnMsolFrom: associatedMSolTokenAccountAddress,
+    burnMsolAuthority: ownerAddress,
+    newTicketAccount,
+    tokenProgram: TOKEN_PROGRAM_ID,
+    rent: SYSVAR_RENT_PUBKEY,
+    clock: SYSVAR_CLOCK_PUBKEY,
+    msolTokenPartnerAccount: (await this.getReferralStateData()).msolTokenPartnerAccount,
+  })
+
+  orderUnstakeInstruction = ({ accounts, amountLamports }: {
+    accounts: MarinadeReferralIdl.Instruction.OrderUnstake.Accounts,
+    amountLamports: BN,
+  }): web3.TransactionInstruction => this.program.instruction.orderUnstake(
+    amountLamports,
+    { accounts }
+  )
+
+  orderUnstakeInstructionBuilder = async({ amountLamports, ...accountsArgs }: { amountLamports: BN } & Parameters<this['orderUnstakeInstructionAccounts']>[0]) =>
+    this.orderUnstakeInstruction({
+      amountLamports,
+      accounts: await this.orderUnstakeInstructionAccounts(accountsArgs),
+    })
+
+  claimInstructionAccounts = async({
+    marinadeState,
+    ownerAddress,
+    ticketAccount,
+  }: {
+    marinadeState: MarinadeState,
+    ownerAddress: web3.PublicKey,
+    associatedMSolTokenAccountAddress: web3.PublicKey,
+    ticketAccount: web3.PublicKey,
+  }): Promise<MarinadeFinanceIdl.Instruction.Claim.Accounts> => ({
+    state: marinadeState.marinadeStateAddress,
+    reservePda: await marinadeState.reserveAddress(),
+    ticketAccount,
+    transferSolTo: ownerAddress,
+    clock: SYSVAR_CLOCK_PUBKEY,
+    systemProgram: SYSTEM_PROGRAM_ID,
+  })
+
+  claimInstruction = ({ accounts }: {
+    accounts: MarinadeFinanceIdl.Instruction.Claim.Accounts,
+  }): web3.TransactionInstruction => this.program.instruction.claim(
+    { accounts }
+  )
+
+  claimInstructionBuilder = async({ ...accountsArgs }: Parameters<this['claimInstructionAccounts']>[0]) =>
+    this.claimInstruction({
+      accounts: await this.claimInstructionAccounts(accountsArgs),
     })
 
   depositInstructionAccounts = async({ marinadeState, transferFrom, associatedMSolTokenAccountAddress }: {

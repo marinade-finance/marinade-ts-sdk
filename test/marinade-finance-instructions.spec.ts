@@ -1,6 +1,6 @@
 import { Marinade, MarinadeConfig, MarinadeUtils, Provider, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
-import assert from 'assert'
+import * as assert from 'assert'
 
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 
@@ -75,6 +75,24 @@ describe('Marinade Finance', () => {
       const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
       const transactionSignature = await TestWorld.PROVIDER.send(transaction)
       console.log('Liquid unstake tx:', transactionSignature)
+    })
+  })
+
+  describe('orderUnstake', () => {
+    it.skip('creates a ticket to unstake SOL', async() => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      const orderUnstakeLamports = MarinadeUtils.solToLamports(0.8)
+      const { transaction, newTicketAccount } = await marinade.orderUnstake(orderUnstakeLamports)
+      const transactionSignature = await TestWorld.PROVIDER.send(transaction, [newTicketAccount])
+      console.debug('Order unstake tx:', transactionSignature)
+
+      const ticketAccount = await marinade.getDelayedUnstakeTicket(newTicketAccount.publicKey)
+      assert.strictEqual(ticketAccount?.lamportsAmount.toString(), orderUnstakeLamports.toString())
     })
   })
 
