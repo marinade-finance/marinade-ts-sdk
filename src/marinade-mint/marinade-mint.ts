@@ -1,6 +1,5 @@
-import { Provider, web3 } from '@project-serum/anchor'
-import { MintInfo, Token } from '@solana/spl-token'
-import { getMintClient } from '../util/anchor'
+import { Provider, web3, BN } from '@project-serum/anchor'
+import { getMint, Mint } from '@solana/spl-token'
 import { tokenBalanceToNumber } from '../util/conversion'
 
 export class MarinadeMint {
@@ -13,23 +12,22 @@ export class MarinadeMint {
     return new MarinadeMint(anchorProvider, mintAddress)
   }
 
-  mintClient = (): Token => getMintClient(this.anchorProvider, this.address)
-  mintInfo = (): Promise<MintInfo> => this.mintClient().getMintInfo()
+  mintInfo = (): Promise<Mint> => getMint(this.anchorProvider.connection, this.address)
 
   /**
    * Returns Total supply as a number with decimals
    * @param mintInfoCached optional
-   * @returns 
+   * @returns
    */
-  async totalSupply(mintInfoCached?: MintInfo): Promise<number> {
+  async totalSupply(mintInfoCached?: Mint): Promise<number> {
     const mintInfo = mintInfoCached ?? await this.mintInfo()
-    return tokenBalanceToNumber(mintInfo.supply, mintInfo.decimals)
+    return tokenBalanceToNumber(new BN(mintInfo.supply.toString()), mintInfo.decimals)
   }
 
   /**
    * @deprecated use totalSupply() instead
    */
-  async tokenBalance(mintInfoCached?: MintInfo): Promise<number> {
+  async tokenBalance(mintInfoCached?: Mint): Promise<number> {
     return this.totalSupply(mintInfoCached)
   }
 

@@ -1,7 +1,11 @@
 import { MarinadeConfig } from './config/marinade-config'
 import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
-import { getAssociatedTokenAccountAddress, getOrCreateAssociatedTokenAccount, getParsedStakeAccountInfo } from './util/anchor'
+import {
+  getAssociatedTokenAccountAddress,
+  getOrCreateAssociatedTokenAccount,
+  getParsedStakeAccountInfo,
+} from './util/anchor'
 import { DepositOptions, ErrorMessage, MarinadeResult } from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
