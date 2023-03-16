@@ -261,7 +261,7 @@ export class Marinade {
     const currentEpoch = await this.provider.connection.getEpochInfo()
     const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
 
-    const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown } = stakeAccountInfo
+    const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown, stakedLamports, balanceLamports } = stakeAccountInfo
 
     if (!authorizedWithdrawerAddress) {
       throw new Error('Withdrawer address is not available!')
@@ -273,6 +273,17 @@ export class Marinade {
 
     if (isCoolingDown) {
       throw new Error('The stake is cooling down!')
+    }
+
+    if (stakedLamports && balanceLamports?.gt(stakedLamports)) {
+      transaction.add(
+        web3.StakeProgram.withdraw({
+          stakePubkey: stakeAccountAddress,
+          authorizedPubkey: ownerAddress,
+          toPubkey: ownerAddress,
+          lamports: balanceLamports.sub(stakedLamports).toNumber(),
+        })
+      )
     }
 
     const waitEpochs = 2
