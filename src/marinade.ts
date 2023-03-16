@@ -260,6 +260,7 @@ export class Marinade {
     const transaction = new web3.Transaction()
     const currentEpoch = await this.provider.connection.getEpochInfo()
     const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
+    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
 
     const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown, stakedLamports, balanceLamports } = stakeAccountInfo
 
@@ -276,14 +277,16 @@ export class Marinade {
     }
 
     if (stakedLamports && balanceLamports?.gt(stakedLamports)) {
-      transaction.add(
-        web3.StakeProgram.withdraw({
-          stakePubkey: stakeAccountAddress,
-          authorizedPubkey: ownerAddress,
-          toPubkey: ownerAddress,
-          lamports: balanceLamports.sub(stakedLamports).toNumber(),
-        })
-      )
+      const lamportsToWithdraw = balanceLamports.sub(stakedLamports).toNumber() - rent
+      if (lamportsToWithdraw > 0)
+        transaction.add(
+          web3.StakeProgram.withdraw({
+            stakePubkey: stakeAccountAddress,
+            authorizedPubkey: ownerAddress,
+            toPubkey: ownerAddress,
+            lamports: lamportsToWithdraw,
+          })
+        )
     }
 
     const waitEpochs = 2
