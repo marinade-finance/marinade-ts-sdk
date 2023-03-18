@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { MarinadeConfig } from './config/marinade-config'
 import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
@@ -14,6 +15,19 @@ import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
 import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN } from './util'
+import { getStakePoolAccount, StakePool, withdrawStake } from '@solana/spl-stake-pool'
+
+export function calcLamportsWithdrawAmount(
+  stakePool: StakePool,
+  poolTokens: BN
+): BN {
+  const numerator = poolTokens.mul(stakePool.totalLamports)
+  const denominator = stakePool.poolTokenSupply
+  if (numerator.lt(denominator)) {
+    return new BN(0)
+  }
+  return numerator.div(denominator)
+}
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -377,6 +391,87 @@ export class Marinade {
       transaction: depositTx.add(unstakeTx),
       associatedMSolTokenAccountAddress,
       voterAddress,
+    }
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Liquidate an amount of stake pool tokens.
+   *
+   * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
+   * @param {BN} amountToLiquidate - Amount to liquidate
+   */
+  async liquidateStakePoolToken(stakePoolTokenAddress: web3.PublicKey, amountToLiquidate: number): Promise<MarinadeResult.LiquidateStakeAccount> {
+    const marinadeState = await this.getMarinadeState()
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+
+    const transaction = new web3.Transaction({
+      feePayer: ownerAddress,
+    })
+
+    const withdrawTx = await withdrawStake(
+      this.provider.connection,
+      stakePoolTokenAddress,
+      ownerAddress,
+      amountToLiquidate
+    )
+    const stakePool = await getStakePoolAccount(this.provider.connection, stakePoolTokenAddress)
+    const solValue = calcLamportsWithdrawAmount(
+      stakePool.account.data,
+      new BN(amountToLiquidate)
+    )
+    const mSolAmountToReceive = solValue.toNumber() / marinadeState.mSolPrice
+
+    transaction.add(...withdrawTx.instructions)
+
+    const {
+      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
+      createAssociateTokenInstruction,
+    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
+
+    if (createAssociateTokenInstruction) {
+      transaction.add(createAssociateTokenInstruction)
+    }
+
+    const duplicationFlag = await marinadeState.validatorDuplicationFlag(
+      new web3.PublicKey(
+        "GE6atKoWiQ2pt3zL7N13pjNHjdLVys8LinG8qeJLcAiL"
+      )
+    )
+    const { validatorRecords } = await marinadeState.getValidatorRecords()
+    const validatorLookupIndex = validatorRecords.findIndex(
+      ({ validatorAccount }) => validatorAccount.equals(new web3.PublicKey(
+        "GE6atKoWiQ2pt3zL7N13pjNHjdLVys8LinG8qeJLcAiL"
+      ))
+    )
+    const validatorIndex =
+        validatorLookupIndex === -1
+          ? marinadeState.state.validatorSystem.validatorList.count
+          : validatorLookupIndex
+
+    const depositTx = await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
+      validatorIndex,
+      marinadeState,
+      duplicationFlag,
+      ownerAddress,
+      stakeAccountAddress: withdrawTx.signers[1].publicKey,
+      authorizedWithdrawerAddress: ownerAddress,
+      associatedMSolTokenAccountAddress,
+    })
+
+    const liquidUnstakeInstruction = await this.marinadeFinanceProgram.liquidUnstakeInstructionBuilder({
+      amountLamports: new BN(mSolAmountToReceive),
+      marinadeState,
+      ownerAddress,
+      associatedMSolTokenAccountAddress,
+    })
+    transaction.add(depositTx)
+    transaction.add(liquidUnstakeInstruction)
+
+    return {
+      transaction: transaction,
+      associatedMSolTokenAccountAddress,
+      voterAddress: stakePoolTokenAddress,
     }
   }
 

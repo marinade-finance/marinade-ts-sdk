@@ -1,5 +1,5 @@
 import { Provider, web3, BN } from '@project-serum/anchor'
-import { getMint, Mint } from '@solana/spl-token'
+import { getMint, Mint } from '@solana/spl-token-3.x'
 import { tokenBalanceToNumber } from '../util/conversion'
 
 export class MarinadeMint {

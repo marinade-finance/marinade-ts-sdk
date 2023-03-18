@@ -1,5 +1,5 @@
 import { BN, Idl, Program, Provider, web3 } from '@project-serum/anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
 import { MarinadeState } from '../marinade-state/marinade-state'
 import { MarinadeReferralStateResponse } from '../marinade-referral-state/marinade-referral-state.types'
