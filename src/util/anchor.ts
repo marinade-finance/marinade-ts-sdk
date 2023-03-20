@@ -69,6 +69,8 @@ export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeA
 
   const activationEpoch = BNOrNull(parsedData?.info?.stake?.delegation?.activationEpoch ?? null)
   const deactivationEpoch = BNOrNull(parsedData?.info?.stake?.delegation?.deactivationEpoch ?? null)
+  const balanceLamports = BNOrNull(stakeAccountInfo.lamports)
+  const stakedLamports = BNOrNull(parsedData?.info?.stake?.delegation.stake ?? null)
 
   return {
     ownerAddress: stakeAccountInfo.owner,
@@ -78,6 +80,8 @@ export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeA
     activationEpoch,
     deactivationEpoch,
     isCoolingDown: deactivationEpoch ? !deactivationEpoch.eq(U64_MAX) : false,
+    balanceLamports,
+    stakedLamports,
   }
 }
 
