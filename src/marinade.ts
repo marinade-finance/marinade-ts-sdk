@@ -13,7 +13,7 @@ import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
-import { computeMsolAmount, proportionalBN } from './util'
+import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN } from './util'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
@@ -255,12 +255,27 @@ export class Marinade {
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    */
   async depositStakeAccount(stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
-    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
     const marinadeState = await this.getMarinadeState()
+    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
+
+    return this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState)
+  }
+
+
+  /**
+   * Returns a transaction with the instructions to
+   * Deposit a delegated stake account.
+   * Note that the stake must be fully activated and the validator must be known to Marinade
+   *
+   * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
+   * @param {number} rent - Rent needed for a stake account
+   * @param {MarinadeState} marinadeState - Marinade State needed for retrieving validator info
+   */
+  async depositStakeAccountByAccount(stakeAccountInfo: ParsedStakeAccountInfo, rent: number, marinadeState: MarinadeState): Promise<MarinadeResult.DepositStakeAccount> {
+    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const transaction = new web3.Transaction()
     const currentEpoch = await this.provider.connection.getEpochInfo()
-    const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
-    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
 
     const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown, stakedLamports, balanceLamports } = stakeAccountInfo
 
@@ -281,7 +296,7 @@ export class Marinade {
       if (lamportsToWithdraw > 0)
         transaction.add(
           web3.StakeProgram.withdraw({
-            stakePubkey: stakeAccountAddress,
+            stakePubkey: stakeAccountInfo.address,
             authorizedPubkey: ownerAddress,
             toPubkey: ownerAddress,
             lamports: lamportsToWithdraw,
@@ -292,7 +307,7 @@ export class Marinade {
     const waitEpochs = 2
     const earliestDepositEpoch = activationEpoch.addn(waitEpochs)
     if (earliestDepositEpoch.gtn(currentEpoch.epoch)) {
-      throw new Error(`Deposited stake ${stakeAccountAddress} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
+      throw new Error(`Deposited stake ${stakeAccountInfo.address} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
     }
 
     const { validatorRecords } = await marinadeState.getValidatorRecords()
@@ -318,7 +333,7 @@ export class Marinade {
       authorizedWithdrawerAddress,
       associatedMSolTokenAccountAddress,
       ownerAddress,
-      stakeAccountAddress,
+      stakeAccountAddress: stakeAccountInfo.address,
     })
 
     transaction.add(depositStakeAccountInstruction)
@@ -347,7 +362,7 @@ export class Marinade {
     const marinadeState = await this.getMarinadeState()
 
     const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
-      await this.depositStakeAccount(stakeAccountAddress)
+      await this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState)
 
     let mSolAmountToReceive = computeMsolAmount((stakeBalance ?? new BN(0)), marinadeState)
     // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
@@ -367,10 +382,11 @@ export class Marinade {
   }
 
   /**
-   * @todo
+   * Retrieve user's ticket accounts
+   * 
+   * @param {web3.PublicKey} beneficiary - The owner of the ticket accounts
    */
-  async getDelayedUnstakeTickets(beneficiary?: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
-
+  async getDelayedUnstakeTickets(beneficiary: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 
