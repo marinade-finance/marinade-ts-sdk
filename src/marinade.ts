@@ -358,13 +358,12 @@ export class Marinade {
   async liquidateStakeAccount(stakeAccountAddress: web3.PublicKey, mSolToKeep?: BN): Promise<MarinadeResult.LiquidateStakeAccount> {
     const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
     const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
-    const stakeBalance = stakeAccountInfo.stakedLamports?.sub(new BN(rent))
     const marinadeState = await this.getMarinadeState()
 
     const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
       await this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState)
 
-    let mSolAmountToReceive = computeMsolAmount((stakeBalance ?? new BN(0)), marinadeState)
+    let mSolAmountToReceive = computeMsolAmount((stakeAccountInfo.stakedLamports ?? new BN(0)), marinadeState)
     // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
     if (this.isReferralProgram()) {
       const partnerOperationFee = (await this.marinadeReferralProgram.getReferralStateData()).operationDepositStakeAccountFee
