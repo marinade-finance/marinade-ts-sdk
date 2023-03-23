@@ -1,6 +1,7 @@
 import { BN, web3 } from '@project-serum/anchor'
 
 export interface ParsedStakeAccountInfo {
+  address: web3.PublicKey
   ownerAddress: web3.PublicKey
   authorizedStakerAddress: web3.PublicKey | null
   authorizedWithdrawerAddress: web3.PublicKey | null

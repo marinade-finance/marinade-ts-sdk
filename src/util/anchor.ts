@@ -73,6 +73,7 @@ export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeA
   const stakedLamports = BNOrNull(parsedData?.info?.stake?.delegation.stake ?? null)
 
   return {
+    address: stakeAccountAddress,
     ownerAddress: stakeAccountInfo.owner,
     authorizedStakerAddress: web3PubKeyOrNull(parsedData?.info?.meta?.authorized?.staker ?? null),
     authorizedWithdrawerAddress: web3PubKeyOrNull(parsedData?.info?.meta?.authorized?.withdrawer ?? null),
