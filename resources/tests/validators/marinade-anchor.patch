@@ -1,0 +1,75 @@
+diff --git a/.gitignore b/.gitignore
+index 34e74f6..21c6545 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -26,3 +26,6 @@ ts/node_modules
+ .#*
+ \#*#
+ data/marinade_staking.csv
++
++# Intellij
++.idea/
+diff --git a/Cargo.lock b/Cargo.lock
+index 57414da..0a24048 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -2258,6 +2258,25 @@ dependencies = [
+  "thiserror",
+ ]
+ 
++[[package]]
++name = "mardmin-init"
++version = "0.1.0"
++dependencies = [
++ "anyhow",
++ "bincode",
++ "cli-common",
++ "csv",
++ "derive_more",
++ "enum_dispatch",
++ "log",
++ "once_cell",
++ "serde",
++ "serde_json",
++ "solana-cli-config",
++ "structopt",
++ "thiserror",
++]
++
+ [[package]]
+ name = "marinade"
+ version = "0.1.0"
+diff --git a/Cargo.toml b/Cargo.toml
+index 79b066b..cb01ce2 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -9,7 +9,7 @@ members = [
+   "sdk/offchain",
+ # "sdk/reflection",
+   "cli/cli-common",
+-# "cli/admin-init",
++  "cli/admin-init",
+   "cli/admin",
+   "cli/validator-manager",
+   "cli/marinade-cli",
+diff --git a/sdk/onchain/src/lib.rs b/sdk/onchain/src/lib.rs
+index ab71830..213c883 100644
+--- a/sdk/onchain/src/lib.rs
++++ b/sdk/onchain/src/lib.rs
+@@ -9,6 +9,7 @@ use anchor_lang::solana_program::{
+     pubkey::Pubkey,
+     stake, system_program,
+     sysvar::{clock, epoch_schedule, rent, stake_history},
++    msg
+ };
+ /// instruction helpers to be used by:
+ /// * other on-chain programs
+@@ -59,6 +60,8 @@ pub fn add_validator(
+     score: u32,
+     rent_payer: Pubkey,
+ ) -> Instruction {
++    let df = ValidatorRecord::find_duplication_flag(&state.key(), &validator_vote).0;
++    msg!("duplication flag {}", df);
+     let accounts = accounts::AddValidator {
+         state: state.key(),
+         manager_authority: state.as_ref().validator_system.manager_authority,

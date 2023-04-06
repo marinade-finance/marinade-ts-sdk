@@ -19,7 +19,8 @@
     "pretest": "npm run lint",
     "test": "npm run test:unit",
     "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
-    "test:integration": "jest --preset ts-jest --testTimeout 90000 --runInBand --roots '<rootDir>/test'",
+    "test:integration": "ts-node './test/runner/run.ts'",
+    "_test:integration": "jest --preset ts-jest --testTimeout 90000 --runInBand --roots '<rootDir>/test' -i $FILE",
     "lint": "npx eslint . --ext .ts",
     "lint:fix": "npx eslint . --ext .ts --fix",
     "gen:idl:marinade-finance": "./scripts/idl2ts.js < ./src/programs/idl/marinade-finance-idl.json > ./src/programs/idl/marinade-finance-idl.ts",
@@ -36,7 +37,7 @@
   "license": "ISC",
   "dependencies": {
     "@coral-xyz/anchor": "^0.27.0",
-    "@marinade.finance/directed-stake-sdk": "file:./marinade.finance-directed-stake-sdk-0.0.4.tgz",
+    "@marinade.finance/directed-stake-sdk": "file:/home/chalda/marinade/directed-stake/build/packages/directed-stake-sdk/",
     "@solana/spl-token": "^0.3.7",
     "bignumber.js": "^9.1.1",
     "borsh": "^0.7.0",
@@ -56,6 +57,7 @@
     "terser-webpack-plugin": "^5.3.7",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
     "webpack": "^5.79.0",
     "webpack-cli": "^5.0.1"

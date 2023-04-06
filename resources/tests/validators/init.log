@@ -1,0 +1,91 @@
+$ ./target/debug/mardmin-init init -c keys/creator.json -i keys/instance.json   -a $MARINADE_TS_SDK_DIR/resources/tests/keys/marinade-state-admin-keypair.json   -m ./mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So.json -l ./LPmSozJJ8Jh69ut2WP3XmVohTjL4ipR18yiCzxrUmVj.json   --output-instance keys/instance.pubkey
+[..][..][mardmin_init][INFO] Solana config: Config { json_rpc_url: "http://127.0.0.1:8899", websocket_url: "", keypair_path: "~/.config/solana/id.json", address_labels: {"11111111111111111111111111111111": "System Program"}, commitment: "confirmed" }
+[..][..][mardmin_init][INFO] Using fee payer CUuLjSEx7q3AB3sRGn3sMJBsSNTmULwowMGUh6NdsxQD(~/.config/solana/id.json)
+[..][..][mardmin_init::init][INFO] Initialize instance Some(InputKeypair(keys/instance.json, 8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC))
+[..][..][mardmin_init::init][INFO] Marinade program MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
+msol_mint Some(Keypair(InputKeypair(./mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So.json, mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So)))
+[..][..][mardmin_init::init][INFO] Create mSOL mint mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So
+[..][..][mardmin_init::init][INFO] Using admin authority 2APsntHoKXCeHWfxZ49ADwc5XrdB8GGmxK34jVXRYZyV(marinade-ts-sdk/resources/tests/keys/marinade-state-admin-keypair.json)
+[..][..][mardmin_init::init][INFO] Use fee payer as operational_sol_account
+[..][..][mardmin_init::init][INFO] Using admin as validator manager authority
+[..][..][mardmin_init::init][INFO] Create LP mint LPmSozJJ8Jh69ut2WP3XmVohTjL4ipR18yiCzxrUmVj
+--treasury msol acc as spl_associated_token_account base:CUuLjSEx7q3AB3sRGn3sMJBsSNTmULwowMGUh6NdsxQD mint:mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So
+[..][..][mardmin_init::init][INFO] Create treasury mSOL account 8qfSJCVHGehG3LSteUGWcog9S4csU9F3oCKnceF5FKDH
+--treasury msol acc as spl_associated_token_account base:CUuLjSEx7q3AB3sRGn3sMJBsSNTmULwowMGUh6NdsxQD mint:mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So
+[..][..][cli_common::rpc_client_helpers][INFO] Transaction 1AhYHaVQcP2hPYujMgRdJN3zh18iSpwDzTJbhfKd9gY43ugTQ2EXU6TwDwhiyp4JG1DNvMBEhW7f4pJPNHJHchy
+[..][..][cli_common::rpc_client_helpers][INFO] Transaction 5uFikuCkjdQyAX4dezATK8r1VR5GozuxFWuxFQKFv2DrTpkaVpLUv42DLgNmMHcuQZ5LfDzB5npbWxTftWiEvfPy
+
+
+$ ./target/debug/marinade -i `cat keys/instance.pubkey` show -l
+[..][..][marinade][INFO] Cluster: Other, commitment: confirmed
+[..][..][marinade][INFO] ProgramId: MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
+[..][..][marinade][INFO] Instance : Pubkey(8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC)
+[..][..][marinade::show][INFO] Epoch EpochInfo { epoch: 0, slot_index: 449, slots_in_epoch: 432000, absolute_slot: 449, block_height: 449, transaction_count: Some(450) }
+[..][..][marinade::show][INFO] Stake Withdraw Auth (PDA): 9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco
+[..][..][marinade::show][INFO] No cap on stake
+[..][..][marinade::show][INFO] No cap on liquidity
+[..][..][marinade::show][INFO] slots_for_stake_delta 18000, 180 mins approx
+[..][..][marinade::show][INFO] validator_system.auto_add_validator_enabled 0
+-- Treasury ---------------
+reserve 0.00203928 SOL (PDA) Du3Ysj1wKbxPKkuPPnvzQLQh8oMSVifs3jGZjJWXFmHN
+treasury mSOL account 0 mSOL 8qfSJCVHGehG3LSteUGWcog9S4csU9F3oCKnceF5FKDH
+-- Config ---------------
+rent_exempt_for_token_acc 2039280
+min_deposit 0.000000001 SOL
+min_stake 1 SOL
+reward_fee 2%
+mSOL supply 0
+-- mSOL token ---------------
+mSOL price 1 SOL (start epoch price 1 SOL)
+mSOL supply 0 mint mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So auth 3JLPCS1qM2zRw3Dp6V4hZnYHd4toMNPkNesXdX9tg6KM
+-- Liq-Pool ---------------
+mSOL-SOL-LP supply 0 mint LPmSozJJ8Jh69ut2WP3XmVohTjL4ipR18yiCzxrUmVj auth HZsepB79dnpvH6qfVgvMpS738EndHw3qSHo4Gv5WX1KA
+mSOL  0.000000000 account 7GgPYjS5Dza89wV6FpZ23kUJRG5vbQ1GM25ezspYFSoE auth EyaSjUtSgo9aRD1f8LWXwdvkpDTmXAW54yoSHZRF14WL
+SOL   0.00203928 account UefNb6z6yvArqe4cJHTXCqStRsKmWhGxnZzuHbikP5Q
+Liquidity Target: 10000
+Current-fee: 3%
+Min-Max-Fee: 0.3%-3%
+Treasury cut: 25%
+--------------------------
+reserve balance: 0.00203928
+cooling down: 0
+Circulating ticket accounts: 0 (0 tickets)
+-- TVL ---------------
+validators.total_active_balance: 0
+emergency_cooling_down: 0
+stake-delta: 0
+Liq-pool SOL amount 0.00203928
+TVL SOL: 0.00203928
+validator_manager_authority 2APsntHoKXCeHWfxZ49ADwc5XrdB8GGmxK34jVXRYZyV
+Stake list account: Anv3XE7e5saNdm16MU6bniYS59Mpv7DzQXHAhxJUmAKW with 0/10000 stakes
+-----------------
+-- Validators ---
+Total staked: 0 SOL
+List account: DwFYJNnhLmw19FBTrVaLWZ8SZJpxdPoSYVSJaio9tjbY with 0/1000 validators
+--------------------------
+ 0 validators listed, 0 with active stakes, total_staked 0 total_staked_fully_activated 0, warming-up in this epoch:0
+--
+
+
+marinade state validator duplication account addresses (20)
+---
+8ZDy8KZKM7sbPJuXBY6DdX4sWevTmu1tE1RbrycXm1Xr
+4B7PSNmfTC1wUhn4mdDM5E7DtDbNV1mktLbiebeK6QqG
+4k7kR5hLC7mbe4J5kfJRuEfpyxojFs1enUjMe71wodVn
+7Zuu7HfxGSqtuDeWHb48hHUgDtyeTL7YyoUQL2F3Tzfb
+5gKGWkrC3fSodG7uSba1thnPBGSfBVsk54SfRN2Ad7KE
+2rKtsfwC1cG3yHHzWj3bKynWvidhgDLkck6ayWgDovsz
+CXR8V6CTb4wsNt5pGa2jGB95v2QUYBPAcWzDALG7AZDV
+EvCd2BG8umDhYbJobsBDXrVgsP6KqTGbzA3kwicZzFhF
+DwQ6N4YVac7wbPqnUMpDUiWqTDu2YesYbHMHbfRsPacm
+2jQQEUjVgxiW7M4d34ABTRFHJxwR3bJtM2KUHqmYj4Cb
+DNfb2G1EpXtpXCTZkhLexh1MS3J8ub8G5TDUcde85JKB
+FjHzxBGLzDstYt5ghbtyBGcThBiC3GU44F21cDdoKuqD
+7EvaQwc6vwzVaZ9pA8GcCrWYJp8SivZjsHn9nrc7NRjt
+36rnk8SPmprGtFG7UFZvTBeCREMQ3JCsDqmb1KFsKHYN
+4Amq9DYbHvg3Yofvoz2KJeZye84CZGZnNye1QnBpyekW
+5KVZ7m2AFDPpGXgUDSYomad2iSJeMhGkqn5j8LTD86m8
+GFthjVWZk3reXE1YJexPzMzER4fGyFtcwgAMJSiK9t59
+4a3MBEQubAC9XDSy22MrKtt3dJae2LMeS9crPpR4Eai6
+3oEiYNpgXiFUAiDrcw4iVt2c4q6Yv8rP2DxSiRihwW7x
+DAX8sbk4H8Wr8gvfGCEExx2oBnk3N2Y72CSXpZMcPFDv
