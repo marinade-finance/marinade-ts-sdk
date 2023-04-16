@@ -38,6 +38,12 @@ export namespace MarinadeResult {
     voterAddress: web3.PublicKey
     transaction: web3.Transaction
   }
+
+  export interface LiquidateStakePoolToken {
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    voterAddress: web3.PublicKey
+    transaction: web3.VersionedTransaction
+  }
 }
 
 export interface DepositOptions {

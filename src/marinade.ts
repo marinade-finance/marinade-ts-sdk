@@ -401,13 +401,17 @@ export class Marinade {
    * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
    * @param {BN} amountToLiquidate - Amount to liquidate
    */
-  async liquidateStakePoolToken(stakePoolTokenAddress: web3.PublicKey, amountToLiquidate: number): Promise<MarinadeResult.LiquidateStakeAccount> {
+  async liquidateStakePoolToken(stakePoolTokenAddress: web3.PublicKey, amountToLiquidate: number): Promise<MarinadeResult.LiquidateStakePoolToken> {
     const marinadeState = await this.getMarinadeState()
     const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const lookupTable = await this.getLookupTable()
+    if (!lookupTable) {
+      throw new Error('Failed to load the lookup table')
+    }
 
-    const transaction = new web3.Transaction({
-      feePayer: ownerAddress,
-    })
+    const { blockhash: recentBlockhash } = await this.config.connection.getLatestBlockhash('finalized')
+
+    const instructions: web3.TransactionInstruction[] = []
 
     const withdrawTx = await withdrawStake(
       this.provider.connection,
@@ -422,7 +426,7 @@ export class Marinade {
     )
     const mSolAmountToReceive = solValue.toNumber() / marinadeState.mSolPrice
 
-    transaction.add(...withdrawTx.instructions)
+    instructions.push(...withdrawTx.instructions)
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
@@ -430,7 +434,7 @@ export class Marinade {
     } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
 
     if (createAssociateTokenInstruction) {
-      transaction.add(createAssociateTokenInstruction)
+      instructions.push(createAssociateTokenInstruction)
     }
 
     const duplicationFlag = await marinadeState.validatorDuplicationFlag(
@@ -445,11 +449,11 @@ export class Marinade {
       ))
     )
     const validatorIndex =
-        validatorLookupIndex === -1
-          ? marinadeState.state.validatorSystem.validatorList.count
-          : validatorLookupIndex
+      validatorLookupIndex === -1
+        ? marinadeState.state.validatorSystem.validatorList.count
+        : validatorLookupIndex
 
-    const depositTx = await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
+    const depositInstruction = await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
       validatorIndex,
       marinadeState,
       duplicationFlag,
@@ -465,11 +469,18 @@ export class Marinade {
       ownerAddress,
       associatedMSolTokenAccountAddress,
     })
-    transaction.add(depositTx)
-    transaction.add(liquidUnstakeInstruction)
+    instructions.push(depositInstruction)
+    instructions.push(liquidUnstakeInstruction)
+
+    const transactionMessage = new web3.TransactionMessage({
+      payerKey: ownerAddress,
+      recentBlockhash,
+      instructions,
+    }).compileToV0Message([lookupTable])
+    const transaction = new web3.VersionedTransaction(transactionMessage)
 
     return {
-      transaction: transaction,
+      transaction,
       associatedMSolTokenAccountAddress,
       voterAddress: stakePoolTokenAddress,
     }
@@ -491,5 +502,9 @@ export class Marinade {
   async getEstimatedUnstakeTicketDueDate() {
     const marinadeState = await this.getMarinadeState()
     return this.marinadeFinanceProgram.getEstimatedUnstakeTicketDueDate(marinadeState)
+  }
+
+  async getLookupTable(): Promise<web3.AddressLookupTableAccount | null> {
+    return (await this.config.connection.getAddressLookupTable(this.config.lookupTableAddress)).value
   }
 }

@@ -16,6 +16,8 @@ export class MarinadeConfig {
 
   referralCode: web3.PublicKey | null = null
 
+  lookupTableAddress = new web3.PublicKey('DCcQeBaCiYsEsjjmEsSYPCr9o4n174LKqXNDvQT5wVd8')
+
   constructor(configOverrides: Partial<MarinadeConfig> = {}) {
     Object.assign(this, configOverrides)
   }

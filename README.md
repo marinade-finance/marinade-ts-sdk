@@ -119,3 +119,25 @@ For more examples have a look at [Marinade TS CLI](https://github.com/marinade-f
 - [Marinade web](https://marinade.finance)
 - [Marinade docs](https://docs.marinade.finance/)
 - [Join on Discord](https://discord.com/invite/6EtUf4Euu6)
+
+## Marinade Lookup Table
+Marinade lookup table address: `DCcQeBaCiYsEsjjmEsSYPCr9o4n174LKqXNDvQT5wVd8`
+```bash
+solana address-lookup-table --keypair ...
+solana address-lookup-table extend --keypair ... DCcQeBaCiYsEsjjmEsSYPCr9o4n174LKqXNDvQT5wVd8 --addresses \
+11111111111111111111111111111111,\
+TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA,\
+SysvarC1ock11111111111111111111111111111111,\
+SysvarRent111111111111111111111111111111111,\
+Stake11111111111111111111111111111111111111,\
+MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD,\
+8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC,\
+mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So,\
+UefNb6z6yvArqe4cJHTXCqStRsKmWhGxnZzuHbikP5Q,\
+7GgPYjS5Dza89wV6FpZ23kUJRG5vbQ1GM25ezspYFSoE,\
+EyaSjUtSgo9aRD1f8LWXwdvkpDTmXAW54yoSHZRF14WL,\
+Du3Ysj1wKbxPKkuPPnvzQLQh8oMSVifs3jGZjJWXFmHN,\
+3JLPCS1qM2zRw3Dp6V4hZnYHd4toMNPkNesXdX9tg6KM,\
+Anv3XE7e5saNdm16MU6bniYS59Mpv7DzQXHAhxJUmAKW,\
+DwFYJNnhLmw19FBTrVaLWZ8SZJpxdPoSYVSJaio9tjbY
+```
