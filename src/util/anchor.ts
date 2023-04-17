@@ -69,6 +69,7 @@ export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeA
 
   const activationEpoch = BNOrNull(parsedData?.info?.stake?.delegation?.activationEpoch ?? null)
   const deactivationEpoch = BNOrNull(parsedData?.info?.stake?.delegation?.deactivationEpoch ?? null)
+  const lockup = parsedData?.info?.meta?.lockup
   const balanceLamports = BNOrNull(stakeAccountInfo.lamports)
   const stakedLamports = BNOrNull(parsedData?.info?.stake?.delegation.stake ?? null)
 
@@ -81,6 +82,7 @@ export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeA
     activationEpoch,
     deactivationEpoch,
     isCoolingDown: deactivationEpoch ? !deactivationEpoch.eq(U64_MAX) : false,
+    isLockedUp: lockup?.custodian && lockup?.custodian !== "" && lockup?.epoch > 0,
     balanceLamports,
     stakedLamports,
   }
