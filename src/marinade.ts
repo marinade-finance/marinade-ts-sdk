@@ -6,7 +6,7 @@ import {
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
 } from './util/anchor'
-import { DepositOptions, ErrorMessage, MarinadeResult } from './marinade.types'
+import { DepositOptions, DepositStakeAccountOptions, ErrorMessage, MarinadeResult } from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'
@@ -14,6 +14,7 @@ import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
 import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN } from './util'
+import { DirectedStakeSdk, findVoteRecords, withCreateVote, withRemoveVote, withUpdateVote } from "@marinade.finance/directed-stake-sdk"
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 export class Marinade {
@@ -174,6 +175,52 @@ export class Marinade {
   }
 
   /**
+   * Adds directed stake voting instructions to the given instructions array for the specified validator.
+   * If the vote address is left at undefined the standard delegation strategy is used.
+   *
+   * @param {web3.TransactionInstruction} amountLamports - The instruction array to add the instruction to
+   * @param {web3.PublicKey} validatorVoteAddress - The vote address to identify the validator
+   */
+  private async createDirectedStakeVoteIx(validatorVoteAddress?: web3.PublicKey): Promise<web3.TransactionInstruction | undefined> {
+    const owner = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const directedStakeSdk = new DirectedStakeSdk({
+      connection: this.config.connection,
+      wallet: {
+        signTransaction: async() => new Promise(() => new web3.Transaction()),
+        signAllTransactions: async() => new Promise(() => [new web3.Transaction()]),
+        publicKey: owner,
+      },
+    })
+    const voteRecord = (await findVoteRecords({
+      sdk: directedStakeSdk,
+      owner,
+    }))[0]
+
+    if (!voteRecord) {
+      if (validatorVoteAddress) {
+        return (await withCreateVote({
+          sdk: directedStakeSdk,
+          validatorVote: validatorVoteAddress,
+        })).instruction
+      }
+      return
+    }
+
+    if (validatorVoteAddress) {
+      return (await withUpdateVote({
+        sdk: directedStakeSdk,
+        validatorVote: validatorVoteAddress,
+        voteRecord: voteRecord.publicKey,
+      })).instruction
+    }
+
+    return (await withRemoveVote({
+      sdk: directedStakeSdk,
+      voteRecord: voteRecord.publicKey,
+    })).instruction
+  }
+
+  /**
    * Returns a transaction with the instructions to
    * Stake SOL in exchange for mSOL
    *
@@ -204,6 +251,11 @@ export class Marinade {
     })
 
     transaction.add(depositInstruction)
+
+    const directedStakeInstruction = await this.createDirectedStakeVoteIx(options.directToValidatorVoteAddress)
+    if (directedStakeInstruction) {
+      transaction.add(directedStakeInstruction)
+    }
 
     return {
       associatedMSolTokenAccountAddress,
@@ -254,13 +306,14 @@ export class Marinade {
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
-  async depositStakeAccount(stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
+  async depositStakeAccount(stakeAccountAddress: web3.PublicKey, options: DepositStakeAccountOptions = {}): Promise<MarinadeResult.DepositStakeAccount> {
     const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
     const marinadeState = await this.getMarinadeState()
     const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
 
-    return this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState)
+    return this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState, options)
   }
 
 
@@ -272,8 +325,9 @@ export class Marinade {
    * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
    * @param {number} rent - Rent needed for a stake account
    * @param {MarinadeState} marinadeState - Marinade State needed for retrieving validator info
+   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
-  async depositStakeAccountByAccount(stakeAccountInfo: ParsedStakeAccountInfo, rent: number, marinadeState: MarinadeState): Promise<MarinadeResult.DepositStakeAccount> {
+  async depositStakeAccountByAccount(stakeAccountInfo: ParsedStakeAccountInfo, rent: number, marinadeState: MarinadeState, options: DepositStakeAccountOptions = {}): Promise<MarinadeResult.DepositStakeAccount> {
     const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
     const transaction = new web3.Transaction()
     const currentEpoch = await this.provider.connection.getEpochInfo()
@@ -338,6 +392,11 @@ export class Marinade {
     })
 
     transaction.add(depositStakeAccountInstruction)
+
+    const directedStakeInstruction = await this.createDirectedStakeVoteIx(options.directToValidatorVoteAddress)
+    if (directedStakeInstruction) {
+      transaction.add(directedStakeInstruction)
+    }
 
     return {
       associatedMSolTokenAccountAddress,
