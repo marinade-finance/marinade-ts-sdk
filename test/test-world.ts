@@ -1,4 +1,4 @@
-import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
+import { AnchorProvider, BN, Wallet, web3 } from '@coral-xyz/anchor'
 import { MarinadeUtils } from '../src'
 
 export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
@@ -17,7 +17,7 @@ console.log('SDK User', SDK_USER.publicKey.toBase58())
 
 export const PROVIDER_URL = 'https://api.devnet.solana.com'
 export const CONNECTION = new web3.Connection(PROVIDER_URL)
-export const PROVIDER = new Provider(
+export const PROVIDER = new AnchorProvider(
   CONNECTION,
   new Wallet(SDK_USER),
   { commitment: 'confirmed'/*, skipPreflight: true*/ },

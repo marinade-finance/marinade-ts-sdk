@@ -1,4 +1,4 @@
-import { BN } from '@project-serum/anchor'
+import { BN } from '@coral-xyz/anchor'
 import { MarinadeConfig } from '../config/marinade-config'
 import { Marinade } from '../marinade'
 import * as TestWorld from '../../test/test-world'

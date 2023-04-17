@@ -1,5 +1,5 @@
 import bs58 from 'bs58'
-import { BN, Program, web3, Provider, Idl } from '@project-serum/anchor'
+import { BN, Program, web3, Provider, Idl } from '@coral-xyz/anchor'
 import { MarinadeFinanceIdl } from './idl/marinade-finance-idl'
 import * as marinadeFinanceIdlSchema from './idl/marinade-finance-idl.json'
 import { MarinadeState } from '../marinade-state/marinade-state'

@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 import { Marinade, MarinadeConfig, MarinadeUtils } from '../src'
 import * as TestWorld from './test-world'

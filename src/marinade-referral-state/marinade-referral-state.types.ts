@@ -1,4 +1,4 @@
-import { web3, BN } from '@project-serum/anchor'
+import { web3, BN } from '@coral-xyz/anchor'
 
 export const enum ProgramDerivedAddressSeed {
   GLOBAL_STATE_SEED = 'mrp_initialize',

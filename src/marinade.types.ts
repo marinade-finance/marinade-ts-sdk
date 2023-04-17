@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 export const enum ErrorMessage {
   NO_PUBLIC_KEY = `User's public key must be provided in the configuration!`,

@@ -1,4 +1,4 @@
-import {  Marinade, MarinadeUtils, web3 } from '..'
+import { Marinade, MarinadeUtils, web3 } from '..'
 
 describe('MarinadeState', () => {
   it('getStakeStates', async() => {

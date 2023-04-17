@@ -1,4 +1,4 @@
-import { BN, Provider, web3 } from '@project-serum/anchor'
+import { BN, Provider, web3 } from '@coral-xyz/anchor'
 import { deserializeUnchecked } from 'borsh'
 import { Marinade } from '../marinade'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
@@ -24,7 +24,7 @@ export class MarinadeState {
 
   static async fetch(marinade: Marinade) { // @todo rework args
     const { marinadeFinanceProgram, config } = marinade
-    const state = await marinadeFinanceProgram.program.account.state.fetch(config.marinadeStateAddress) as MarinadeStateResponse
+    const state = await marinadeFinanceProgram.program.account.state.fetch(config.marinadeStateAddress) as unknown as MarinadeStateResponse
     return new MarinadeState(marinade, marinade.provider, state, config.marinadeStateAddress, config.marinadeFinanceProgramId)
   }
 

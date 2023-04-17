@@ -1,5 +1,5 @@
 import { MarinadeConfig } from './config/marinade-config'
-import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
+import { AnchorProvider, BN, Provider, web3 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
   getAssociatedTokenAccountAddress,
@@ -14,13 +14,14 @@ import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
 import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN } from './util'
+import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
 
-  readonly provider: Provider = new Provider(
+  readonly provider: Provider = new AnchorProvider(
     this.config.connection,
-    new Wallet(web3.Keypair.generate()),
+    new NodeWallet(web3.Keypair.generate()),
     { commitment: 'confirmed' },
   )
 
@@ -177,7 +178,7 @@ export class Marinade {
    * Stake SOL in exchange for mSOL
    *
    * @param {BN} amountLamports - The amount lamports staked
-   * @param {DepositOptions=} options - Additional deposit options
+   * @param {DepositOptions} options - Additional deposit options
    */
   async deposit(amountLamports: BN, options: DepositOptions = {}): Promise<MarinadeResult.Deposit> {
     const feePayer = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)

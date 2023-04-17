@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 import { Marinade } from '../marinade'
 import { MarinadeReferralStateResponse } from './marinade-referral-state.types'
 
@@ -15,7 +15,7 @@ export class MarinadeReferralPartnerState {
     if (!code) {
       throw new Error('The Referral Code must be provided in the MarinadeConfigor supplied as an arg!')
     }
-    const state = await marinadeReferralProgram.program.account.referralState.fetch(code) as MarinadeReferralStateResponse.ReferralState
+    const state = await marinadeReferralProgram.program.account.referralState.fetch(code) as unknown as MarinadeReferralStateResponse.ReferralState
 
     return new MarinadeReferralPartnerState(state, code, config.marinadeReferralProgramId)
   }
