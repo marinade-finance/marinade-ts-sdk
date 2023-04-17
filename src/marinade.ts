@@ -343,7 +343,13 @@ export class Marinade {
     }
 
     if (isCoolingDown) {
-      throw new Error('The stake is cooling down!')
+      transaction.add(
+        web3.StakeProgram.delegate({
+          stakePubkey: stakeAccountInfo.address,
+          authorizedPubkey: ownerAddress,
+          votePubkey: voterAddress,
+        })
+      )
     }
 
     if (stakedLamports && balanceLamports?.gt(stakedLamports)) {
