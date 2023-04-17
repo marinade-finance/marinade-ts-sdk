@@ -9,6 +9,7 @@ export interface ParsedStakeAccountInfo {
   activationEpoch: BN | null
   deactivationEpoch: BN | null
   isCoolingDown: boolean
+  isLockedUp: boolean
   balanceLamports: BN | null
   stakedLamports: BN | null
 }

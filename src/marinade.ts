@@ -328,10 +328,14 @@ export class Marinade {
     const transaction = new web3.Transaction()
     const currentEpoch = await this.provider.connection.getEpochInfo()
 
-    const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown, stakedLamports, balanceLamports } = stakeAccountInfo
+    const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown, isLockedUp, stakedLamports, balanceLamports } = stakeAccountInfo
 
     if (!authorizedWithdrawerAddress) {
       throw new Error('Withdrawer address is not available!')
+    }
+
+    if (isLockedUp) {
+      throw new Error('The stake account is locked up!')
     }
 
     if (!activationEpoch || !voterAddress) {
