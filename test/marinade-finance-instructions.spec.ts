@@ -1,6 +1,7 @@
-import { Marinade, MarinadeConfig, MarinadeUtils, Provider, Wallet, web3 } from '../src'
+import { Marinade, MarinadeConfig, MarinadeUtils, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
 import assert from 'assert'
+import { AnchorProvider } from '@coral-xyz/anchor'
 
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 
@@ -18,7 +19,7 @@ describe('Marinade Finance', () => {
       const marinade = new Marinade(config)
 
       const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1))
-      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(transaction)
       console.log('Deposit tx:', transactionSignature, transaction.instructions.length)
     })
 
@@ -26,7 +27,7 @@ describe('Marinade Finance', () => {
       const newAccount = new web3.Keypair()
       await TestWorld.provideMinimumLamportsBalance(newAccount.publicKey, MarinadeUtils.solToLamports(2.5))
 
-      const provider = new Provider(
+      const provider = new AnchorProvider(
         TestWorld.CONNECTION,
         new Wallet(newAccount),
         { commitment: 'finalized' },
@@ -41,12 +42,12 @@ describe('Marinade Finance', () => {
 
       const { transaction: tx1 } = await marinade.deposit(MarinadeUtils.solToLamports(1), { mintToOwnerAddress: anotherAccount.publicKey })
       assert.strictEqual(tx1.instructions.length, 2)
-      const transactionSignature1 = await provider.send(tx1)
+      const transactionSignature1 = await provider.sendAndConfirm(tx1)
       console.log('Deposit tx1:', transactionSignature1)
 
       const { transaction: tx2 } = await marinade.deposit(MarinadeUtils.solToLamports(1),{ mintToOwnerAddress: anotherAccount.publicKey })
       assert.strictEqual(tx2.instructions.length, 1)
-      const transactionSignature2 = await provider.send(tx2)
+      const transactionSignature2 = await provider.sendAndConfirm(tx2)
       console.log('Deposit tx2:', transactionSignature2)
     })
 
@@ -59,7 +60,7 @@ describe('Marinade Finance', () => {
 
       const anotherAccount = web3.Keypair.generate()
       const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1), { mintToOwnerAddress: anotherAccount.publicKey })
-      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(transaction)
       console.log('Deposit tx:', transactionSignature)
     })
   })
@@ -73,7 +74,7 @@ describe('Marinade Finance', () => {
       const marinade = new Marinade(config)
 
       const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
-      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(transaction)
       console.log('Liquid unstake tx:', transactionSignature)
     })
   })
