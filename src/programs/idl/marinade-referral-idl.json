@@ -458,11 +458,37 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "adminRecognizeDeposit",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "globalState",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "referralState",
+          "isMut": true,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "lamports",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
     {
-      "name": "GlobalState",
+      "name": "globalState",
       "type": {
         "kind": "struct",
         "fields": [
@@ -494,7 +520,7 @@
       }
     },
     {
-      "name": "ReferralState",
+      "name": "referralState",
       "type": {
         "kind": "struct",
         "fields": [
@@ -682,6 +708,16 @@
       "code": 313,
       "name": "StakeAccountAuthMustBePartnerAccount",
       "msg": "Stake-account authority must be partner account"
+    },
+    {
+      "code": 314,
+      "name": "OnlyAllowedForStakeAsCollateralPartner",
+      "msg": "Only allowed for stake-as-collateral-partners"
+    },
+    {
+      "code": 315,
+      "name": "InvalidGlobalAccount",
+      "msg": "Invalid Global Account"
     }
   ]
 }
