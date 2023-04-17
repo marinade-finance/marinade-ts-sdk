@@ -1,4 +1,4 @@
-import { Provider, web3, BN } from '@project-serum/anchor'
+import { Provider, web3, BN } from '@coral-xyz/anchor'
 import { getMint, Mint } from '@solana/spl-token'
 import { tokenBalanceToNumber } from '../util/conversion'
 

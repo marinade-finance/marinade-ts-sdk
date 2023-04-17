@@ -1,4 +1,4 @@
-import { BN, Idl, Program, Provider, web3 } from '@project-serum/anchor'
+import { BN, Idl, Program, Provider, web3 } from '@coral-xyz/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY } from '@solana/web3.js'
 import { MarinadeState } from '../marinade-state/marinade-state'

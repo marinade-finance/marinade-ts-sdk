@@ -1,4 +1,4 @@
-import { BN, Provider, utils, web3 } from '@project-serum/anchor'
+import { BN, Provider, utils, web3 } from '@coral-xyz/anchor'
 import { createAssociatedTokenAccountInstruction, getAccount, TokenError } from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 

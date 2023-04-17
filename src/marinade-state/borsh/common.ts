@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 export function deserializePublicKey({ publicKey }: { publicKey: Buffer }) {
   return new web3.PublicKey(publicKey)

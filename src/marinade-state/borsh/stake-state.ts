@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 import BN from 'bn.js'
 import { deserializeF64, deserializePublicKey } from './common'
 

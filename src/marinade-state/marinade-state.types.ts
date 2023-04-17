@@ -1,4 +1,4 @@
-import { web3, BN } from '@project-serum/anchor'
+import { web3, BN } from '@coral-xyz/anchor'
 
 export const enum ProgramDerivedAddressSeed {
   LIQ_POOL_MINT_AUTHORITY = 'liq_mint',
