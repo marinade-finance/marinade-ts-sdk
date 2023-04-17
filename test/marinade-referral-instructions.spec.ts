@@ -20,7 +20,7 @@ describe('Marinade Referral', () => {
       const marinade = new Marinade(config)
 
       const { transaction } = await marinade.deposit(MarinadeUtils.solToLamports(1))
-      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(transaction)
       console.log('Deposit tx:', transactionSignature)
     })
   })
@@ -35,7 +35,7 @@ describe('Marinade Referral', () => {
       const marinade = new Marinade(config)
 
       const { transaction } = await marinade.liquidUnstake(MarinadeUtils.solToLamports(0.8))
-      const transactionSignature = await TestWorld.PROVIDER.send(transaction)
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(transaction)
       console.log('Liquid unstake tx:', transactionSignature)
     })
   })
