@@ -1,6 +1,6 @@
-import BN from 'bn.js'
-import {StakeRecord} from "./stake-record"
-import {StakeState} from "./stake-state"
+import { BN } from '@coral-xyz/anchor'
+import { StakeRecord } from './stake-record'
+import { StakeState } from './stake-state'
 
 export class StakeInfo {
   index!: number

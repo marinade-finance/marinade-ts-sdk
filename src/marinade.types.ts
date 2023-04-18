@@ -1,7 +1,7 @@
 import { web3 } from '@coral-xyz/anchor'
 
 export const enum ErrorMessage {
-  NO_PUBLIC_KEY = `User's public key must be provided in the configuration!`,
+  NO_PUBLIC_KEY = "User's public key must be provided in the configuration!",
 }
 
 export namespace MarinadeResult {

@@ -4,7 +4,7 @@ import * as TestWorld from './test-world'
 
 describe('Marinade Referral Program', () => {
   describe('getReferralGlobalState', () => {
-    it('fetches the referral program\'s global state which matches the expected type', async() => {
+    it("fetches the referral program's global state which matches the expected type", async () => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
         referralCode: TestWorld.REFERRAL_CODE,
@@ -25,7 +25,7 @@ describe('Marinade Referral Program', () => {
   })
 
   describe('getReferralPartnerState', () => {
-    it('fetches the referral partner\' state which matches the expected type', async() => {
+    it("fetches the referral partner' state which matches the expected type", async () => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
         referralCode: TestWorld.REFERRAL_CODE,
@@ -66,8 +66,8 @@ describe('Marinade Referral Program', () => {
     })
   })
 
-  describe("getReferralPartnerState", () => {
-    it("fetches the referral partner' state using argument and no config and which matches the expected type", async() => {
+  describe('getReferralPartnerState', () => {
+    it("fetches the referral partner' state using argument and no config and which matches the expected type", async () => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
       })
@@ -109,8 +109,8 @@ describe('Marinade Referral Program', () => {
     })
   })
 
-  describe("getReferralPartners", () => {
-    it("fetches all the referral partners ", async() => {
+  describe('getReferralPartners', () => {
+    it('fetches all the referral partners ', async () => {
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
       })

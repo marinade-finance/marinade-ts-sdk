@@ -1,21 +1,14 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "plugins": [
-    "@typescript-eslint"
-  ],
+  "plugins": ["@typescript-eslint"],
   "extends": [
     "eslint:recommended",
-    "plugin:@typescript-eslint/recommended"
+    "plugin:@typescript-eslint/recommended",
+    "./node_modules/gts/"
   ],
   "rules": {
     "@typescript-eslint/no-namespace": "off",
-    "semi": ["error", "never"],
-    "@typescript-eslint/comma-dangle": [
-      "error",
-      "always-multiline",
-    ],
-    "@typescript-eslint/indent": ["error", 2],
-    "space-before-function-paren": ["error", "never"]
+    "semi": ["error", "never"]
   }
 }

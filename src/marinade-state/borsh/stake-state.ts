@@ -1,5 +1,4 @@
-import { web3 } from '@coral-xyz/anchor'
-import BN from 'bn.js'
+import { BN, web3 } from '@coral-xyz/anchor'
 import { deserializeF64, deserializePublicKey } from './common'
 
 export class StakeState {
@@ -107,74 +106,102 @@ export class Delegation {
 }
 
 export const stakeStateBorshSchema = [
-  [StakeState.UninitializedState, {
-    kind: 'struct',
-    fields: [],
-  }],
-  [StakeState.InitializedState, {
-    kind: 'struct',
-    fields: [
-      ['meta', Meta],
-    ],
-  }],
-  [StakeState.StakeState, {
-    kind: 'struct',
-    fields: [
-      ['meta', Meta],
-      ['stake', Stake],
-    ],
-  }],
-  [StakeState.RewardsPoolState, {
-    kind: 'struct',
-    fields: [],
-  }],
-  [Meta, {
-    kind: 'struct',
-    fields: [
-      ['rentExemptReserve', 'u64'],
-      ['authorized', Authorized],
-      ['lockup', Lockup],
-    ],
-  }],
-  [Authorized, {
-    kind: 'struct',
-    fields: [
-      ['staker', deserializePublicKey],
-      ['withdrawer', deserializePublicKey],
-    ],
-  }],
-  [Lockup, {
-    kind: 'struct',
-    fields: [
-      ['unixTimestamp', 'u64'],
-      ['epoch', 'u64'],
-      ['custodian', deserializePublicKey],
-    ],
-  }],
-  [Stake, {
-    kind: 'struct',
-    fields: [
-      ['delegation', Delegation],
-      ['creditsObserved', 'u64'],
-    ],
-  }],
-  [Delegation, {
-    kind: 'struct',
-    fields: [
-      ['voterPubkey', deserializePublicKey],
-      ['stake', 'u64'],
-      ['activationEpoch', 'u64'],
-      ['deactivationEpoch', 'u64'],
-      ['warmupCooldownRate', deserializeF64],
-    ],
-  }],
-  [StakeState, {
-    kind: 'enum',
-    values: [
-      ['Uninitialized', StakeState.UninitializedState],
-      ['Initialized', StakeState.InitializedState],
-      ['Stake', StakeState.StakeState],
-      ['RewardsPool', StakeState.RewardsPoolState],
-    ],
-  }],
+  [
+    StakeState.UninitializedState,
+    {
+      kind: 'struct',
+      fields: [],
+    },
+  ],
+  [
+    StakeState.InitializedState,
+    {
+      kind: 'struct',
+      fields: [['meta', Meta]],
+    },
+  ],
+  [
+    StakeState.StakeState,
+    {
+      kind: 'struct',
+      fields: [
+        ['meta', Meta],
+        ['stake', Stake],
+      ],
+    },
+  ],
+  [
+    StakeState.RewardsPoolState,
+    {
+      kind: 'struct',
+      fields: [],
+    },
+  ],
+  [
+    Meta,
+    {
+      kind: 'struct',
+      fields: [
+        ['rentExemptReserve', 'u64'],
+        ['authorized', Authorized],
+        ['lockup', Lockup],
+      ],
+    },
+  ],
+  [
+    Authorized,
+    {
+      kind: 'struct',
+      fields: [
+        ['staker', deserializePublicKey],
+        ['withdrawer', deserializePublicKey],
+      ],
+    },
+  ],
+  [
+    Lockup,
+    {
+      kind: 'struct',
+      fields: [
+        ['unixTimestamp', 'u64'],
+        ['epoch', 'u64'],
+        ['custodian', deserializePublicKey],
+      ],
+    },
+  ],
+  [
+    Stake,
+    {
+      kind: 'struct',
+      fields: [
+        ['delegation', Delegation],
+        ['creditsObserved', 'u64'],
+      ],
+    },
+  ],
+  [
+    Delegation,
+    {
+      kind: 'struct',
+      fields: [
+        ['voterPubkey', deserializePublicKey],
+        ['stake', 'u64'],
+        ['activationEpoch', 'u64'],
+        ['deactivationEpoch', 'u64'],
+        ['warmupCooldownRate', deserializeF64],
+      ],
+    },
+  ],
+  [
+    StakeState,
+    {
+      kind: 'enum',
+      values: [
+        ['Uninitialized', StakeState.UninitializedState],
+        ['Initialized', StakeState.InitializedState],
+        ['Stake', StakeState.StakeState],
+        ['RewardsPool', StakeState.RewardsPoolState],
+      ],
+    },
+  ],
 ] as const

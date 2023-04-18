@@ -10,13 +10,13 @@ module.exports = {
         test: /\.[jt]sx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
-      }
+      },
     ],
   },
   resolve: {
     extensions: ['.ts', '.js', '.json'],
     fallback: {
-      fs: false
+      fs: false,
     },
   },
   output: {
@@ -27,9 +27,7 @@ module.exports = {
       type: 'this',
     },
   },
-  plugins: [
-    new NodePolyfillPlugin(),
-  ],
+  plugins: [new NodePolyfillPlugin()],
   optimization: {
     minimize: true,
     minimizer: [

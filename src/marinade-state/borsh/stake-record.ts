@@ -13,13 +13,16 @@ export class StakeRecord {
 }
 
 export const stakeRecordBorshSchema = [
-  [StakeRecord, {
-    kind: 'struct',
-    fields: [
-      ['stakeAccount', deserializePublicKey],
-      ['lastUpdateDelegatedLamports', 'u64'],
-      ['lastUpdateEpoch', 'u64'],
-      ['isEmergencyUnstaking', 'u8'],
-    ],
-  }],
+  [
+    StakeRecord,
+    {
+      kind: 'struct',
+      fields: [
+        ['stakeAccount', deserializePublicKey],
+        ['lastUpdateDelegatedLamports', 'u64'],
+        ['lastUpdateEpoch', 'u64'],
+        ['isEmergencyUnstaking', 'u8'],
+      ],
+    },
+  ],
 ] as const

@@ -1,38 +1,65 @@
 import { BN, Provider, utils, web3 } from '@coral-xyz/anchor'
-import { createAssociatedTokenAccountInstruction, getAccount, TokenError } from '@solana/spl-token'
+import {
+  createAssociatedTokenAccountInstruction,
+  getAccount,
+  TokenError,
+} from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 
-export const SYSTEM_PROGRAM_ID = new web3.PublicKey('11111111111111111111111111111111')
-export const STAKE_PROGRAM_ID = new web3.PublicKey('Stake11111111111111111111111111111111111111')
+export const SYSTEM_PROGRAM_ID = new web3.PublicKey(
+  '11111111111111111111111111111111'
+)
+export const STAKE_PROGRAM_ID = new web3.PublicKey(
+  'Stake11111111111111111111111111111111111111'
+)
 export const U64_MAX = new BN('ffffffffffffffff', 16)
 
-export function web3PubKeyOrNull(value: ConstructorParameters<typeof web3.PublicKey>[0] | null): web3.PublicKey | null {
+export function web3PubKeyOrNull(
+  value: ConstructorParameters<typeof web3.PublicKey>[0] | null
+): web3.PublicKey | null {
   return value === null ? null : new web3.PublicKey(value)
 }
 
-export function BNOrNull(value: ConstructorParameters<typeof BN>[0] | null): BN | null {
+export function BNOrNull(
+  value: ConstructorParameters<typeof BN>[0] | null
+): BN | null {
   return value === null ? null : new BN(value)
 }
 
-export async function getAssociatedTokenAccountAddress(mint: web3.PublicKey, owner: web3.PublicKey): Promise<web3.PublicKey> {
+export async function getAssociatedTokenAccountAddress(
+  mint: web3.PublicKey,
+  owner: web3.PublicKey
+): Promise<web3.PublicKey> {
   return utils.token.associatedAddress({ mint, owner })
 }
 
-export async function getOrCreateAssociatedTokenAccount(anchorProvider: Provider, mintAddress: web3.PublicKey, ownerAddress: web3.PublicKey, payerAddress?: web3.PublicKey): Promise<{
+export async function getOrCreateAssociatedTokenAccount(
+  anchorProvider: Provider,
+  mintAddress: web3.PublicKey,
+  ownerAddress: web3.PublicKey,
+  payerAddress?: web3.PublicKey
+): Promise<{
   associatedTokenAccountAddress: web3.PublicKey
   createAssociateTokenInstruction: web3.TransactionInstruction | null
 }> {
-  const existingTokenAccounts = await anchorProvider.connection.getTokenAccountsByOwner(ownerAddress, { mint: mintAddress })
+  const existingTokenAccounts =
+    await anchorProvider.connection.getTokenAccountsByOwner(ownerAddress, {
+      mint: mintAddress,
+    })
   const [existingTokenAccount] = existingTokenAccounts.value
 
-  const associatedTokenAccountAddress = existingTokenAccount?.pubkey ?? await getAssociatedTokenAccountAddress(mintAddress, ownerAddress)
+  const associatedTokenAccountAddress =
+    existingTokenAccount?.pubkey ??
+    (await getAssociatedTokenAccountAddress(mintAddress, ownerAddress))
   let createAssociateTokenInstruction: web3.TransactionInstruction | null = null
-
 
   try {
     await getAccount(anchorProvider.connection, associatedTokenAccountAddress)
   } catch (err) {
-    if (!(err instanceof TokenError) || err.name !== 'TokenAccountNotFoundError') {
+    if (
+      !(err instanceof TokenError) ||
+      err.name !== 'TokenAccountNotFoundError'
+    ) {
       throw err
     }
 
@@ -40,7 +67,7 @@ export async function getOrCreateAssociatedTokenAccount(anchorProvider: Provider
       payerAddress ?? ownerAddress,
       associatedTokenAccountAddress,
       ownerAddress,
-      mintAddress,
+      mintAddress
     )
   }
 
@@ -50,15 +77,25 @@ export async function getOrCreateAssociatedTokenAccount(anchorProvider: Provider
   }
 }
 
-export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeAccountAddress: web3.PublicKey): Promise<ParsedStakeAccountInfo> {
-  const { value: stakeAccountInfo } = await anchorProvider.connection.getParsedAccountInfo(stakeAccountAddress)
+export async function getParsedStakeAccountInfo(
+  anchorProvider: Provider,
+  stakeAccountAddress: web3.PublicKey
+): Promise<ParsedStakeAccountInfo> {
+  const { value: stakeAccountInfo } =
+    await anchorProvider.connection.getParsedAccountInfo(stakeAccountAddress)
 
   if (!stakeAccountInfo) {
-    throw new Error(`Failed to find the stake account ${stakeAccountAddress.toBase58()}`)
+    throw new Error(
+      `Failed to find the stake account ${stakeAccountAddress.toBase58()}`
+    )
   }
 
   if (!stakeAccountInfo.owner.equals(STAKE_PROGRAM_ID)) {
-    throw new Error(`${stakeAccountAddress.toBase58()} is not a stake account because owner is ${stakeAccountInfo.owner}`)
+    throw new Error(
+      `${stakeAccountAddress.toBase58()} is not a stake account because owner is ${
+        stakeAccountInfo.owner
+      }`
+    )
   }
 
   if (!stakeAccountInfo.data || stakeAccountInfo.data instanceof Buffer) {
@@ -67,22 +104,35 @@ export async function getParsedStakeAccountInfo(anchorProvider: Provider, stakeA
 
   const { parsed: parsedData } = stakeAccountInfo.data
 
-  const activationEpoch = BNOrNull(parsedData?.info?.stake?.delegation?.activationEpoch ?? null)
-  const deactivationEpoch = BNOrNull(parsedData?.info?.stake?.delegation?.deactivationEpoch ?? null)
+  const activationEpoch = BNOrNull(
+    parsedData?.info?.stake?.delegation?.activationEpoch ?? null
+  )
+  const deactivationEpoch = BNOrNull(
+    parsedData?.info?.stake?.delegation?.deactivationEpoch ?? null
+  )
   const lockup = parsedData?.info?.meta?.lockup
   const balanceLamports = BNOrNull(stakeAccountInfo.lamports)
-  const stakedLamports = BNOrNull(parsedData?.info?.stake?.delegation.stake ?? null)
+  const stakedLamports = BNOrNull(
+    parsedData?.info?.stake?.delegation.stake ?? null
+  )
 
   return {
     address: stakeAccountAddress,
     ownerAddress: stakeAccountInfo.owner,
-    authorizedStakerAddress: web3PubKeyOrNull(parsedData?.info?.meta?.authorized?.staker ?? null),
-    authorizedWithdrawerAddress: web3PubKeyOrNull(parsedData?.info?.meta?.authorized?.withdrawer ?? null),
-    voterAddress: web3PubKeyOrNull(parsedData?.info?.stake?.delegation?.voter ?? null),
+    authorizedStakerAddress: web3PubKeyOrNull(
+      parsedData?.info?.meta?.authorized?.staker ?? null
+    ),
+    authorizedWithdrawerAddress: web3PubKeyOrNull(
+      parsedData?.info?.meta?.authorized?.withdrawer ?? null
+    ),
+    voterAddress: web3PubKeyOrNull(
+      parsedData?.info?.stake?.delegation?.voter ?? null
+    ),
     activationEpoch,
     deactivationEpoch,
     isCoolingDown: deactivationEpoch ? !deactivationEpoch.eq(U64_MAX) : false,
-    isLockedUp: lockup?.custodian && lockup?.custodian !== "" && lockup?.epoch > 0,
+    isLockedUp:
+      lockup?.custodian && lockup?.custodian !== '' && lockup?.epoch > 0,
     balanceLamports,
     stakedLamports,
   }
@@ -103,7 +153,7 @@ export async function getEpochInfo(
     0
   )
 
-  const avgSlotDuration = sampleSeconds / sampleSlots * 1000
+  const avgSlotDuration = (sampleSeconds / sampleSlots) * 1000
 
   const slotsRemainingInEpoch = epochInfo.slotsInEpoch - epochInfo.slotIndex
   const msUntilEpochEnd = avgSlotDuration * slotsRemainingInEpoch

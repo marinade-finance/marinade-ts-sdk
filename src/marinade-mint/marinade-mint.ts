@@ -6,13 +6,17 @@ export class MarinadeMint {
   private constructor(
     private readonly anchorProvider: Provider,
     public readonly address: web3.PublicKey
-  ) { }
+  ) {}
 
-  static build(anchorProvider: Provider, mintAddress: web3.PublicKey): MarinadeMint {
+  static build(
+    anchorProvider: Provider,
+    mintAddress: web3.PublicKey
+  ): MarinadeMint {
     return new MarinadeMint(anchorProvider, mintAddress)
   }
 
-  mintInfo = (): Promise<Mint> => getMint(this.anchorProvider.connection, this.address)
+  mintInfo = (): Promise<Mint> =>
+    getMint(this.anchorProvider.connection, this.address)
 
   /**
    * Returns Total supply as a number with decimals
@@ -20,8 +24,11 @@ export class MarinadeMint {
    * @returns
    */
   async totalSupply(mintInfoCached?: Mint): Promise<number> {
-    const mintInfo = mintInfoCached ?? await this.mintInfo()
-    return tokenBalanceToNumber(new BN(mintInfo.supply.toString()), mintInfo.decimals)
+    const mintInfo = mintInfoCached ?? (await this.mintInfo())
+    return tokenBalanceToNumber(
+      new BN(mintInfo.supply.toString()),
+      mintInfo.decimals
+    )
   }
 
   /**
@@ -30,5 +37,4 @@ export class MarinadeMint {
   async tokenBalance(mintInfoCached?: Mint): Promise<number> {
     return this.totalSupply(mintInfoCached)
   }
-
 }

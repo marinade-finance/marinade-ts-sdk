@@ -22,7 +22,8 @@ export function solToLamports(amountSol: number): BN {
 
 describe('conversion', () => {
   describe('withDecimalPoint', () => {
-    [
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;[
       { bn: 0, decimals: 4, expectedResult: '0.0000' },
       { bn: 30, decimals: 4, expectedResult: '0.0030' },
       { bn: 3141592, decimals: 6, expectedResult: '3.141592' },
@@ -36,7 +37,8 @@ describe('conversion', () => {
   })
 
   describe('tokenBalanceToNumber', () => {
-    [
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;[
       { bn: 1, decimals: 6, expectedResult: 1e-6 },
       { bn: 1000000, decimals: 6, expectedResult: 1 },
       { bn: 1000001, decimals: 6, expectedResult: 1.000001 },
@@ -57,7 +59,8 @@ describe('conversion', () => {
   })
 
   describe('solToLamports', () => {
-    [
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;[
       { amountSol: 0, expectedResult: new BN(0) },
       { amountSol: 0.1, expectedResult: new BN(1e8) },
       { amountSol: 1000.123456789, expectedResult: new BN('1000123456789') },
