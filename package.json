@@ -17,6 +17,7 @@
   "scripts": {
     "build": "rm -fr dist; npx tsc -b -verbose; npx webpack",
     "clean": "gts clean",
+    "prepare": "husky install",
     "pretest": "npm run lint",
     "test": "npm run test:unit",
     "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
@@ -51,18 +52,38 @@
     "@typescript-eslint/eslint-plugin": "^5.59.0",
     "@typescript-eslint/parser": "^5.59.0",
     "eslint": "^8.38.0",
+    "gts": "^3.1.1",
+    "husky": "^8.0.3",
     "jest": "^29.5.0",
     "jest-each": "^29.5.0",
+    "lint-staged": "^13.2.1",
     "node-polyfill-webpack-plugin": "^2.0.1",
     "terser-webpack-plugin": "^5.3.7",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
     "webpack": "^5.79.0",
-    "webpack-cli": "^5.0.1",
-    "gts": "^3.1.1"
+    "webpack-cli": "^5.0.1"
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "lint-staged": {
+    "src/**/*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings=0",
+      "prettier --write"
+    ],
+    "src/**/*.{json,css,scss,md}": [
+      "prettier --write"
+    ],
+    "test/**/*.{js,jsx,ts,tsx}": [
+      "eslint --max-warnings=0",
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "commit-msg": "[[ -n $HUSKY_BYPASS ]] || commitlint -E HUSKY_GIT_PARAMS"
+    }
   }
 }
