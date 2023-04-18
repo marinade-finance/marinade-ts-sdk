@@ -2,6 +2,10 @@ import { Marinade, MarinadeConfig, MarinadeUtils, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
 import assert from 'assert'
 import { AnchorProvider } from '@coral-xyz/anchor'
+import {
+  DirectedStakeSdk,
+  findVoteRecords,
+} from '@marinade.finance/directed-stake-sdk'
 
 const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 
@@ -87,6 +91,140 @@ describe('Marinade Finance', () => {
         transaction
       )
       console.log('Deposit tx:', transactionSignature)
+    })
+
+    it('deposit SOL and direct the stake', async () => {
+      const validatorVoteAddress = new web3.PublicKey(
+        '5MMCR4NbTZqjthjLGywmeT66iwE9J9f7kjtxzJjwfUx2'
+      )
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      const directedStakeSdk = new DirectedStakeSdk({
+        connection: TestWorld.CONNECTION,
+        wallet: {
+          signTransaction: async () =>
+            new Promise(() => new web3.Transaction()),
+          signAllTransactions: async () =>
+            new Promise(() => [new web3.Transaction()]),
+          publicKey: TestWorld.SDK_USER.publicKey,
+        },
+      })
+
+      const { transaction } = await marinade.deposit(
+        MarinadeUtils.solToLamports(0.01),
+        { directToValidatorVoteAddress: validatorVoteAddress }
+      )
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
+        transaction,
+        [],
+        { commitment: 'finalized' }
+      )
+      console.log(
+        'Deposit tx:',
+        transactionSignature,
+        transaction.instructions.length
+      )
+
+      const voteRecord = (
+        await findVoteRecords({
+          sdk: directedStakeSdk,
+          owner: TestWorld.SDK_USER.publicKey,
+        })
+      )[0]
+
+      expect(voteRecord.account.validatorVote).toEqual(validatorVoteAddress)
+    })
+
+    it('deposit SOL and redirect the stake', async () => {
+      const validatorVoteAddress2 = new web3.PublicKey(
+        '5ZWgXcyqrrNpQHCme5SdC5hCeYb2o3fEJhF7Gok3bTVN'
+      )
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      const directedStakeSdk = new DirectedStakeSdk({
+        connection: TestWorld.CONNECTION,
+        wallet: {
+          signTransaction: async () =>
+            new Promise(() => new web3.Transaction()),
+          signAllTransactions: async () =>
+            new Promise(() => [new web3.Transaction()]),
+          publicKey: TestWorld.SDK_USER.publicKey,
+        },
+      })
+
+      const { transaction } = await marinade.deposit(
+        MarinadeUtils.solToLamports(0.01),
+        { directToValidatorVoteAddress: validatorVoteAddress2 }
+      )
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
+        transaction,
+        [],
+        { commitment: 'finalized' }
+      )
+      console.log(
+        'Deposit tx:',
+        transactionSignature,
+        transaction.instructions.length
+      )
+
+      const voteRecord = (
+        await findVoteRecords({
+          sdk: directedStakeSdk,
+          owner: TestWorld.SDK_USER.publicKey,
+        })
+      )[0]
+
+      expect(voteRecord?.account.validatorVote).toEqual(validatorVoteAddress2)
+    })
+
+    it('deposit SOL and undirect the stake', async () => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      const directedStakeSdk = new DirectedStakeSdk({
+        connection: TestWorld.CONNECTION,
+        wallet: {
+          signTransaction: async () =>
+            new Promise(() => new web3.Transaction()),
+          signAllTransactions: async () =>
+            new Promise(() => [new web3.Transaction()]),
+          publicKey: TestWorld.SDK_USER.publicKey,
+        },
+      })
+
+      const { transaction } = await marinade.deposit(
+        MarinadeUtils.solToLamports(0.01)
+      )
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
+        transaction,
+        [],
+        { commitment: 'finalized' }
+      )
+      console.log(
+        'Deposit tx:',
+        transactionSignature,
+        transaction.instructions.length
+      )
+
+      const voteRecord = (
+        await findVoteRecords({
+          sdk: directedStakeSdk,
+          owner: TestWorld.SDK_USER.publicKey,
+        })
+      )[0]
+
+      expect(voteRecord).toBeUndefined()
     })
   })
 
