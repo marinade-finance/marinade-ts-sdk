@@ -228,6 +228,7 @@ describe('Marinade Finance', () => {
     })
   })
 
+  // expected the `deposit SOL` test to be called before
   describe('liquidUnstake', () => {
     it('unstakes SOL', async () => {
       const config = new MarinadeConfig({
@@ -288,6 +289,79 @@ describe('Marinade Finance', () => {
       expect(simulatedSlot).toBeGreaterThanOrEqual(executedSlot)
       expect(unitsConsumed).toBeGreaterThan(0) // something has been processed
       console.log('Liquidate stake account tx logs:', logs)
+    })
+  })
+
+  // expecting this test to be called after the `deposit SOL` is executed
+  describe('order unstake and claim', () => {
+    let ticketAccount: web3.PublicKey | undefined
+
+    it('order unstake', async () => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      const { transaction, ticketAccountKeypair } = await marinade.orderUnstake(
+        MarinadeUtils.solToLamports(0.1)
+      )
+      ticketAccount = ticketAccountKeypair.publicKey
+      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
+        transaction,
+        [ticketAccountKeypair]
+      )
+      console.log('Order unstake tx:', transactionSignature)
+
+      const tickets = await marinade.getDelayedUnstakeTickets(
+        TestWorld.SDK_USER.publicKey
+      )
+      const ticketKeys: web3.PublicKey[] = []
+      for (const [key] of tickets) {
+        ticketKeys.push(key)
+      }
+      expect(
+        ticketKeys.filter(v => v.equals(ticketAccountKeypair.publicKey))
+      ).toHaveLength(1)
+    })
+
+    it('try to claim tickets after expiration', async () => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+      const tickets = await marinade.getDelayedUnstakeTickets(
+        TestWorld.SDK_USER.publicKey
+      )
+      for (const [key, value] of tickets) {
+        if (value.ticketDue) {
+          const { transaction } = await marinade.claim(key)
+          await TestWorld.PROVIDER.sendAndConfirm(transaction)
+        }
+      }
+    })
+
+    it('claim', async () => {
+      assert(ticketAccount !== undefined)
+
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+
+      const { transaction } = await marinade.claim(ticketAccount)
+      try {
+        // expecting error as the ticket is not expired yet
+        await TestWorld.PROVIDER.sendAndConfirm(transaction)
+        fail('should not be able to claim')
+      } catch (e) {
+        if (!(e as Error).message.includes('custom program error: 0x1103')) {
+          console.log('Claim ticket failed with unexpected error', e)
+          throw e
+        }
+      }
     })
   })
 })

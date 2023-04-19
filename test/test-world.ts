@@ -16,7 +16,9 @@ export const SDK_USER = web3.Keypair.fromSecretKey(
 console.log('SDK User', SDK_USER.publicKey.toBase58())
 
 export const PROVIDER_URL = 'https://api.devnet.solana.com'
-export const CONNECTION = new web3.Connection(PROVIDER_URL)
+export const CONNECTION = new web3.Connection(PROVIDER_URL, {
+  commitment: 'confirmed',
+})
 export const PROVIDER = new AnchorProvider(CONNECTION, new Wallet(SDK_USER), {
   commitment: 'confirmed' /*, skipPreflight: true*/,
 })

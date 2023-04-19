@@ -2,6 +2,7 @@ import { MarinadeConfig } from './config/marinade-config'
 import { AnchorProvider, BN, Provider, web3 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
+  createAccount,
   getAssociatedTokenAccountAddress,
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
@@ -17,7 +18,10 @@ import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
-import { TicketAccount } from './marinade-state/borsh/ticket-account'
+import {
+  TICKET_ACCOUNT_SIZE,
+  TicketAccount,
+} from './marinade-state/borsh/ticket-account'
 import {
   computeMsolAmount,
   ParsedStakeAccountInfo,
@@ -634,5 +638,82 @@ export class Marinade {
     return this.marinadeFinanceProgram.getEstimatedUnstakeTicketDueDate(
       marinadeState
     )
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Order Unstake to create a ticket which can be claimed later (with {@link claim}).
+   *
+   * @param {BN} msolAmount - The amount of mSOL in lamports to order for unstaking
+   */
+  async orderUnstake(msolAmount: BN): Promise<MarinadeResult.OrderUnstake> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+    const marinadeState = await this.getMarinadeState()
+
+    const associatedMSolTokenAccountAddress =
+      await getAssociatedTokenAccountAddress(
+        marinadeState.mSolMintAddress,
+        ownerAddress
+      )
+    const ticketAccountKeypair = web3.Keypair.generate()
+    const { createAccountInstruction } = await createAccount({
+      anchorProvider: this.provider,
+      programId: this.marinadeFinanceProgram.programAddress,
+      address: ticketAccountKeypair.publicKey,
+      payer: ownerAddress,
+      space: TICKET_ACCOUNT_SIZE,
+    })
+
+    const program = this.marinadeFinanceProgram
+    const orderUnstakeInstruction =
+      await program.orderUnstakeInstructionBuilder({
+        msolAmount,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+        newTicketAccount: ticketAccountKeypair.publicKey,
+      })
+
+    const transaction = new web3.Transaction().add(
+      createAccountInstruction,
+      orderUnstakeInstruction
+    )
+
+    return {
+      ticketAccountKeypair,
+      transaction,
+      associatedMSolTokenAccountAddress,
+    }
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * claim a ticket (created by {@link orderUnstake} beforehand).
+   * Claimed SOLs will be sent to {@link MarinadeConfig.publicKey}.
+   *
+   * @param {web3.PublicKey} ticketAccount - Address of the ticket account for SOLs being claimed from
+   */
+  async claim(ticketAccount: web3.PublicKey): Promise<MarinadeResult.Claim> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+    const marinadeState = await this.getMarinadeState()
+
+    const program = this.marinadeFinanceProgram
+    const claimInstruction = await program.claimInstructionBuilder({
+      marinadeState,
+      ticketAccount,
+      transferSolTo: ownerAddress,
+    })
+
+    const transaction = new web3.Transaction().add(claimInstruction)
+
+    return {
+      transaction,
+    }
   }
 }
