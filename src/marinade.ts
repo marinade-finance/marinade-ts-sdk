@@ -14,7 +14,7 @@ import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
-import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN } from './util'
+import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN, solToLamports } from './util'
 import { getStakePoolAccount, StakePool, withdrawStake } from '@solana/spl-stake-pool'
 
 export function calcLamportsWithdrawAmount(
@@ -404,6 +404,7 @@ export class Marinade {
   async liquidateStakePoolToken(stakePoolTokenAddress: web3.PublicKey, amountToLiquidate: number): Promise<MarinadeResult.LiquidateStakePoolToken> {
     const marinadeState = await this.getMarinadeState()
     const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
     const lookupTable = await this.getLookupTable()
     if (!lookupTable) {
       throw new Error('Failed to load the lookup table')
@@ -422,9 +423,9 @@ export class Marinade {
     const stakePool = await getStakePoolAccount(this.provider.connection, stakePoolTokenAddress)
     const solValue = calcLamportsWithdrawAmount(
       stakePool.account.data,
-      new BN(amountToLiquidate)
+      solToLamports(amountToLiquidate)
     )
-    const mSolAmountToReceive = solValue.toNumber() / marinadeState.mSolPrice
+    const mSolAmountToReceive = computeMsolAmount(solValue.sub(new BN(rent)), marinadeState)
 
     instructions.push(...withdrawTx.instructions)
 
@@ -464,7 +465,7 @@ export class Marinade {
     })
 
     const liquidUnstakeInstruction = await this.marinadeFinanceProgram.liquidUnstakeInstructionBuilder({
-      amountLamports: new BN(mSolAmountToReceive),
+      amountLamports: mSolAmountToReceive,
       marinadeState,
       ownerAddress,
       associatedMSolTokenAccountAddress,
@@ -478,6 +479,7 @@ export class Marinade {
       instructions,
     }).compileToV0Message([lookupTable])
     const transaction = new web3.VersionedTransaction(transactionMessage)
+    transaction.sign(withdrawTx.signers)
 
     return {
       transaction,
