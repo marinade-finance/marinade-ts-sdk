@@ -220,10 +220,9 @@ export class Marinade {
   }
 
   /**
-   * Adds directed stake voting instructions to the given instructions array for the specified validator.
-   * If the vote address is left at undefined the standard delegation strategy is used.
+   * Creates necessary directed stake voting instructions for the specified validator.
+   * If the vote address is left undefined the standard delegation strategy is used.
    *
-   * @param {web3.TransactionInstruction} amountLamports - The instruction array to add the instruction to
    * @param {web3.PublicKey} validatorVoteAddress - The vote address to identify the validator
    */
   private async createDirectedStakeVoteIx(
