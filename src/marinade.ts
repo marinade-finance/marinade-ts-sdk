@@ -148,14 +148,11 @@ export class Marinade {
     }
 
     const addLiquidityInstruction =
-      this.marinadeFinanceProgram.addLiquidityInstruction({
+      await this.marinadeFinanceProgram.addLiquidityInstructionBuilder({
+        marinadeState,
+        associatedLPTokenAccountAddress,
+        ownerAddress,
         amountLamports,
-        accounts:
-          await this.marinadeFinanceProgram.addLiquidityInstructionAccounts({
-            marinadeState,
-            associatedLPTokenAccountAddress,
-            ownerAddress,
-          }),
       })
 
     transaction.add(addLiquidityInstruction)
@@ -202,15 +199,12 @@ export class Marinade {
     }
 
     const removeLiquidityInstruction =
-      this.marinadeFinanceProgram.removeLiquidityInstruction({
+      await this.marinadeFinanceProgram.removeLiquidityInstructionBuilder({
         amountLamports,
-        accounts:
-          await this.marinadeFinanceProgram.removeLiquidityInstructionAccounts({
-            marinadeState,
-            ownerAddress,
-            associatedLPTokenAccountAddress,
-            associatedMSolTokenAccountAddress,
-          }),
+        marinadeState,
+        ownerAddress,
+        associatedLPTokenAccountAddress,
+        associatedMSolTokenAccountAddress,
       })
 
     transaction.add(removeLiquidityInstruction)

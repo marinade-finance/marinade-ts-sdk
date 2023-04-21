@@ -6,12 +6,8 @@ import {
 } from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 
-export const SYSTEM_PROGRAM_ID = new web3.PublicKey(
-  '11111111111111111111111111111111'
-)
-export const STAKE_PROGRAM_ID = new web3.PublicKey(
-  'Stake11111111111111111111111111111111111111'
-)
+export const SYSTEM_PROGRAM_ID = web3.SystemProgram.programId
+export const STAKE_PROGRAM_ID = web3.StakeProgram.programId
 export const U64_MAX = new BN('ffffffffffffffff', 16)
 
 export function web3PubKeyOrNull(
