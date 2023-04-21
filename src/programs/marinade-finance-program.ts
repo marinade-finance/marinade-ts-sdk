@@ -291,4 +291,74 @@ export class MarinadeFinanceProgram {
       validatorIndex,
       accounts: await this.depositStakeAccountInstructionAccounts(accountsArgs),
     })
+
+  claimInstructionAccounts = async ({
+    marinadeState,
+    ticketAccount,
+    transferSolTo,
+  }: {
+    marinadeState: MarinadeState
+    ticketAccount: web3.PublicKey
+    transferSolTo: web3.PublicKey
+  }): Promise<MarinadeFinanceIdl.Instruction.Claim.Accounts> => ({
+    state: marinadeState.marinadeStateAddress,
+    reservePda: await marinadeState.reserveAddress(),
+    ticketAccount,
+    transferSolTo,
+    clock: web3.SYSVAR_CLOCK_PUBKEY,
+    systemProgram: SYSTEM_PROGRAM_ID,
+  })
+
+  claimInstruction = ({
+    accounts,
+  }: {
+    accounts: MarinadeFinanceIdl.Instruction.Claim.Accounts
+  }): web3.TransactionInstruction =>
+    this.program.instruction.claim({ accounts })
+
+  claimInstructionBuilder = async ({
+    ...accountsArgs
+  }: Parameters<this['claimInstructionAccounts']>[0]) =>
+    this.claimInstruction({
+      accounts: await this.claimInstructionAccounts(accountsArgs),
+    })
+
+  orderUnstakeAccounts = async ({
+    marinadeState,
+    ownerAddress,
+    associatedMSolTokenAccountAddress,
+    newTicketAccount,
+  }: {
+    marinadeState: MarinadeState
+    ownerAddress: web3.PublicKey
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    newTicketAccount: web3.PublicKey
+  }): Promise<MarinadeFinanceIdl.Instruction.OrderUnstake.Accounts> => ({
+    state: marinadeState.marinadeStateAddress,
+    msolMint: marinadeState.mSolMintAddress,
+    burnMsolFrom: associatedMSolTokenAccountAddress,
+    burnMsolAuthority: ownerAddress,
+    newTicketAccount,
+    rent: web3.SYSVAR_RENT_PUBKEY,
+    clock: web3.SYSVAR_CLOCK_PUBKEY,
+    tokenProgram: TOKEN_PROGRAM_ID,
+  })
+
+  orderUnstakeInstruction = ({
+    accounts,
+    msolAmount,
+  }: {
+    accounts: MarinadeFinanceIdl.Instruction.OrderUnstake.Accounts
+    msolAmount: BN
+  }): web3.TransactionInstruction =>
+    this.program.instruction.orderUnstake(msolAmount, { accounts })
+
+  orderUnstakeInstructionBuilder = async ({
+    msolAmount,
+    ...accountsArgs
+  }: { msolAmount: BN } & Parameters<this['orderUnstakeAccounts']>[0]) =>
+    this.orderUnstakeInstruction({
+      accounts: await this.orderUnstakeAccounts(accountsArgs),
+      msolAmount,
+    })
 }
