@@ -2,7 +2,6 @@ import { MarinadeConfig } from './config/marinade-config'
 import { AnchorProvider, BN, Provider, web3 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
-  createAccount,
   getAssociatedTokenAccountAddress,
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
@@ -659,12 +658,16 @@ export class Marinade {
         ownerAddress
       )
     const ticketAccountKeypair = web3.Keypair.generate()
-    const { createAccountInstruction } = await createAccount({
-      anchorProvider: this.provider,
-      programId: this.marinadeFinanceProgram.programAddress,
-      address: ticketAccountKeypair.publicKey,
-      payer: ownerAddress,
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        TICKET_ACCOUNT_SIZE
+      )
+    const createAccountInstruction = web3.SystemProgram.createAccount({
+      fromPubkey: ownerAddress,
+      newAccountPubkey: ticketAccountKeypair.publicKey,
+      lamports: rent,
       space: TICKET_ACCOUNT_SIZE,
+      programId: this.marinadeFinanceProgram.programAddress,
     })
 
     const program = this.marinadeFinanceProgram

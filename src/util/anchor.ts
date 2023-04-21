@@ -170,31 +170,3 @@ export async function getEpochInfo(
     slotsRemainingInEpoch,
   }
 }
-
-export async function createAccount({
-  anchorProvider,
-  programId,
-  address,
-  payer,
-  space,
-}: {
-  anchorProvider: Provider
-  programId: web3.PublicKey
-  address: web3.PublicKey
-  payer: web3.PublicKey
-  space: number
-}): Promise<{
-  createAccountInstruction: web3.TransactionInstruction
-}> {
-  const rent =
-    await anchorProvider.connection.getMinimumBalanceForRentExemption(space)
-
-  const createAccountInstruction = web3.SystemProgram.createAccount({
-    fromPubkey: payer,
-    newAccountPubkey: address,
-    lamports: rent,
-    space: space,
-    programId,
-  })
-  return { createAccountInstruction }
-}
