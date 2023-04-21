@@ -1,6 +1,5 @@
-import { web3 } from '@project-serum/anchor'
+import { BN, web3 } from '@coral-xyz/anchor'
 import { deserializePublicKey } from './common'
-import BN from 'bn.js'
 
 export class TicketAccount {
   stateAddress!: web3.PublicKey
@@ -16,13 +15,16 @@ export class TicketAccount {
 }
 
 export const ticketAccountBorshSchema = [
-  [TicketAccount, {
-    kind: 'struct',
-    fields: [
-      ['stateAddress', deserializePublicKey],
-      ['beneficiary', deserializePublicKey],
-      ['lamportsAmount', 'u64'],
-      ['createdEpoch', 'u64'],
-    ],
-  }],
+  [
+    TicketAccount,
+    {
+      kind: 'struct',
+      fields: [
+        ['stateAddress', deserializePublicKey],
+        ['beneficiary', deserializePublicKey],
+        ['lamportsAmount', 'u64'],
+        ['createdEpoch', 'u64'],
+      ],
+    },
+  ],
 ] as const

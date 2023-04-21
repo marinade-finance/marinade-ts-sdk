@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 import { deserializePublicKey } from './common'
 
 export class StakeRecord {
@@ -13,13 +13,16 @@ export class StakeRecord {
 }
 
 export const stakeRecordBorshSchema = [
-  [StakeRecord, {
-    kind: 'struct',
-    fields: [
-      ['stakeAccount', deserializePublicKey],
-      ['lastUpdateDelegatedLamports', 'u64'],
-      ['lastUpdateEpoch', 'u64'],
-      ['isEmergencyUnstaking', 'u8'],
-    ],
-  }],
+  [
+    StakeRecord,
+    {
+      kind: 'struct',
+      fields: [
+        ['stakeAccount', deserializePublicKey],
+        ['lastUpdateDelegatedLamports', 'u64'],
+        ['lastUpdateEpoch', 'u64'],
+        ['isEmergencyUnstaking', 'u8'],
+      ],
+    },
+  ],
 ] as const

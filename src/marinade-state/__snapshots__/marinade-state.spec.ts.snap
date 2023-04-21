@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`MarinadeState getStakeStates 1`] = `
-Array [
+[
   StakeState {
     "Stake": StakeState {
       "meta": Meta {
@@ -23,7 +23,7 @@ Array [
           "deactivationEpoch": "ffffffffffffffff",
           "stake": "8272040b",
           "voterPubkey": "5MMCR4NbTZqjthjLGywmeT66iwE9J9f7kjtxzJjwfUx2",
-          "warmupCooldownRate": Object {
+          "warmupCooldownRate": {
             "value": 0.25,
           },
         },

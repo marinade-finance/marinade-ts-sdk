@@ -5,4 +5,4 @@ export { MarinadeReferralPartnerState } from './marinade-referral-state/marinade
 export { MarinadeState } from './marinade-state/marinade-state'
 export { MarinadeMint } from './marinade-mint/marinade-mint'
 export * as MarinadeUtils from './util/index'
-export { Wallet, BN, web3, Provider } from '@project-serum/anchor'
+export { Wallet, BN, web3, Provider } from '@coral-xyz/anchor'

@@ -1,7 +1,7 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 export const enum ErrorMessage {
-  NO_PUBLIC_KEY = `User's public key must be provided in the configuration!`,
+  NO_PUBLIC_KEY = "User's public key must be provided in the configuration!",
 }
 
 export namespace MarinadeResult {
@@ -45,4 +45,15 @@ export interface DepositOptions {
    * The address of the owner account for the associated mSOL account.
    */
   mintToOwnerAddress?: web3.PublicKey
+  /**
+   * The vote address of the validator to direct your stake to.
+   */
+  directToValidatorVoteAddress?: web3.PublicKey
+}
+
+export interface DepositStakeAccountOptions {
+  /**
+   * The vote address of the validator to direct your stake to.
+   */
+  directToValidatorVoteAddress?: web3.PublicKey
 }

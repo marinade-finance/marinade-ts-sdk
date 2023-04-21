@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 export namespace MarinadeReferralIdl {
   export namespace Instruction {
@@ -100,6 +100,13 @@ export namespace MarinadeReferralIdl {
         newAdminAccount: web3.PublicKey
         newForeman1: web3.PublicKey
         newForeman2: web3.PublicKey
+      }
+    }
+    export namespace AdminRecognizeDeposit {
+      export type Accounts = {
+        signer: web3.PublicKey
+        globalState: web3.PublicKey
+        referralState: web3.PublicKey
       }
     }
   }

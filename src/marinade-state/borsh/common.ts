@@ -1,14 +1,16 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 export function deserializePublicKey({ publicKey }: { publicKey: Buffer }) {
   return new web3.PublicKey(publicKey)
 }
 
-export function deserializeF64({ bytes }: { bytes: Buffer }): { value: number } {
+export function deserializeF64({ bytes }: { bytes: Buffer }): {
+  value: number
+} {
   const buffer = new ArrayBuffer(8)
   const view = new DataView(buffer)
   const bytesArray = [...new Uint8Array(bytes)]
-  bytesArray.forEach(function(byte, index) {
+  bytesArray.forEach((byte, index) => {
     view.setUint8(index, byte)
   })
 
@@ -16,16 +18,18 @@ export function deserializeF64({ bytes }: { bytes: Buffer }): { value: number } 
 }
 
 export const commonBorshSchema = [
-  [deserializePublicKey, {
-    kind: 'struct',
-    fields: [
-      ['publicKey', [32]],
-    ],
-  }],
-  [deserializeF64, {
-    kind: 'struct',
-    fields: [
-      ['bytes', [8]],
-    ],
-  }],
+  [
+    deserializePublicKey,
+    {
+      kind: 'struct',
+      fields: [['publicKey', [32]]],
+    },
+  ],
+  [
+    deserializeF64,
+    {
+      kind: 'struct',
+      fields: [['bytes', [8]]],
+    },
+  ],
 ] as const

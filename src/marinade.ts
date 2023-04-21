@@ -1,27 +1,44 @@
 import { MarinadeConfig } from './config/marinade-config'
-import { BN, Provider, Wallet, web3 } from '@project-serum/anchor'
+import { AnchorProvider, BN, Provider, web3 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
   getAssociatedTokenAccountAddress,
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
 } from './util/anchor'
-import { DepositOptions, ErrorMessage, MarinadeResult } from './marinade.types'
+import {
+  DepositOptions,
+  DepositStakeAccountOptions,
+  ErrorMessage,
+  MarinadeResult,
+} from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
 import { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'
 import { MarinadeReferralGlobalState } from './marinade-referral-state/marinade-referral-global-state'
 import { assertNotNullAndReturn } from './util/assert'
 import { TicketAccount } from './marinade-state/borsh/ticket-account'
-import { computeMsolAmount, ParsedStakeAccountInfo, proportionalBN } from './util'
+import {
+  computeMsolAmount,
+  ParsedStakeAccountInfo,
+  proportionalBN,
+} from './util'
+import {
+  DirectedStakeSdk,
+  findVoteRecords,
+  withCreateVote,
+  withRemoveVote,
+  withUpdateVote,
+} from '@marinade.finance/directed-stake-sdk'
+import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 export class Marinade {
-  constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) { }
+  constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) {}
 
-  readonly provider: Provider = new Provider(
+  readonly provider: Provider = new AnchorProvider(
     this.config.connection,
-    new Wallet(web3.Keypair.generate()),
-    { commitment: 'confirmed' },
+    new NodeWallet(web3.Keypair.generate()),
+    { commitment: 'confirmed' }
   )
 
   /**
@@ -29,7 +46,7 @@ export class Marinade {
    */
   readonly marinadeFinanceProgram = new MarinadeFinanceProgram(
     this.config.marinadeFinanceProgramId,
-    this.provider,
+    this.provider
   )
 
   /**
@@ -39,15 +56,19 @@ export class Marinade {
     this.config.marinadeReferralProgramId,
     this.provider,
     this.config.referralCode,
-    this,
+    this
   )
 
   private isReferralProgram(): boolean {
-    return this.config.referralCode != null
+    return this.config.referralCode !== null
   }
 
-  private provideReferralOrMainProgram(): MarinadeFinanceProgram | MarinadeReferralProgram {
-    return this.isReferralProgram() ? this.marinadeReferralProgram : this.marinadeFinanceProgram
+  private provideReferralOrMainProgram():
+    | MarinadeFinanceProgram
+    | MarinadeReferralProgram {
+    return this.isReferralProgram()
+      ? this.marinadeReferralProgram
+      : this.marinadeFinanceProgram
   }
 
   /**
@@ -60,7 +81,9 @@ export class Marinade {
   /**
    * Fetch the Marinade referral partner's state
    */
-  async getReferralPartnerState(referralCode?: web3.PublicKey): Promise<MarinadeReferralPartnerState> {
+  async getReferralPartnerState(
+    referralCode?: web3.PublicKey
+  ): Promise<MarinadeReferralPartnerState> {
     return MarinadeReferralPartnerState.fetch(this, referralCode)
   }
 
@@ -81,16 +104,16 @@ export class Marinade {
         filters: [
           {
             dataSize:
-                this.marinadeReferralProgram.program.account.referralState.size +
-                20 +
-                96, // number of bytes,
+              this.marinadeReferralProgram.program.account.referralState.size +
+              20 +
+              96, // number of bytes,
           },
         ],
       }
     )
-    const codes = accounts.map((acc) => acc.pubkey)
+    const codes = accounts.map(acc => acc.pubkey)
     return await Promise.all(
-      codes.map((referralCode) => this.getReferralPartnerState(referralCode))
+      codes.map(referralCode => this.getReferralPartnerState(referralCode))
     )
   }
 
@@ -101,27 +124,36 @@ export class Marinade {
    * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
    */
   async addLiquidity(amountLamports: BN): Promise<MarinadeResult.AddLiquidity> {
-    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     const {
       associatedTokenAccountAddress: associatedLPTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.lpMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.lpMintAddress,
+      ownerAddress
+    )
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const addLiquidityInstruction = this.marinadeFinanceProgram.addLiquidityInstruction({
-      amountLamports,
-      accounts: await this.marinadeFinanceProgram.addLiquidityInstructionAccounts({
-        marinadeState,
-        associatedLPTokenAccountAddress,
-        ownerAddress,
-      }),
-    })
+    const addLiquidityInstruction =
+      this.marinadeFinanceProgram.addLiquidityInstruction({
+        amountLamports,
+        accounts:
+          await this.marinadeFinanceProgram.addLiquidityInstructionAccounts({
+            marinadeState,
+            associatedLPTokenAccountAddress,
+            ownerAddress,
+          }),
+      })
 
     transaction.add(addLiquidityInstruction)
 
@@ -137,31 +169,46 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of LP tokens burned
    */
-  async removeLiquidity(amountLamports: BN): Promise<MarinadeResult.RemoveLiquidity> {
-    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+  async removeLiquidity(
+    amountLamports: BN
+  ): Promise<MarinadeResult.RemoveLiquidity> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
-    const associatedLPTokenAccountAddress = await getAssociatedTokenAccountAddress(marinadeState.lpMintAddress, ownerAddress)
+    const associatedLPTokenAccountAddress =
+      await getAssociatedTokenAccountAddress(
+        marinadeState.lpMintAddress,
+        ownerAddress
+      )
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      ownerAddress
+    )
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
     }
 
-    const removeLiquidityInstruction = this.marinadeFinanceProgram.removeLiquidityInstruction({
-      amountLamports,
-      accounts: await this.marinadeFinanceProgram.removeLiquidityInstructionAccounts({
-        marinadeState,
-        ownerAddress,
-        associatedLPTokenAccountAddress,
-        associatedMSolTokenAccountAddress,
-      }),
-    })
+    const removeLiquidityInstruction =
+      this.marinadeFinanceProgram.removeLiquidityInstruction({
+        amountLamports,
+        accounts:
+          await this.marinadeFinanceProgram.removeLiquidityInstructionAccounts({
+            marinadeState,
+            ownerAddress,
+            associatedLPTokenAccountAddress,
+            associatedMSolTokenAccountAddress,
+          }),
+      })
 
     transaction.add(removeLiquidityInstruction)
 
@@ -173,22 +220,95 @@ export class Marinade {
   }
 
   /**
+   * Creates necessary directed stake voting instructions for the specified validator.
+   * If the vote address is left undefined the standard delegation strategy is used.
+   *
+   * @param {web3.PublicKey} validatorVoteAddress - The vote address to identify the validator
+   */
+  private async createDirectedStakeVoteIx(
+    validatorVoteAddress?: web3.PublicKey
+  ): Promise<web3.TransactionInstruction | undefined> {
+    const owner = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+    const directedStakeSdk = new DirectedStakeSdk({
+      connection: this.config.connection,
+      wallet: {
+        signTransaction: async () => new Promise(() => new web3.Transaction()),
+        signAllTransactions: async () =>
+          new Promise(() => [new web3.Transaction()]),
+        publicKey: owner,
+      },
+    })
+    const voteRecord = (
+      await findVoteRecords({
+        sdk: directedStakeSdk,
+        owner,
+      })
+    )[0]
+
+    if (!voteRecord) {
+      if (validatorVoteAddress) {
+        return (
+          await withCreateVote({
+            sdk: directedStakeSdk,
+            validatorVote: validatorVoteAddress,
+          })
+        ).instruction
+      }
+      return
+    }
+
+    if (validatorVoteAddress) {
+      return (
+        await withUpdateVote({
+          sdk: directedStakeSdk,
+          validatorVote: validatorVoteAddress,
+          voteRecord: voteRecord.publicKey,
+        })
+      ).instruction
+    }
+
+    return (
+      await withRemoveVote({
+        sdk: directedStakeSdk,
+        voteRecord: voteRecord.publicKey,
+      })
+    ).instruction
+  }
+
+  /**
    * Returns a transaction with the instructions to
    * Stake SOL in exchange for mSOL
    *
    * @param {BN} amountLamports - The amount lamports staked
-   * @param {DepositOptions=} options - Additional deposit options
+   * @param {DepositOptions} options - Additional deposit options
    */
-  async deposit(amountLamports: BN, options: DepositOptions = {}): Promise<MarinadeResult.Deposit> {
-    const feePayer = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
-    const mintToOwnerAddress = assertNotNullAndReturn(options.mintToOwnerAddress ?? this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+  async deposit(
+    amountLamports: BN,
+    options: DepositOptions = {}
+  ): Promise<MarinadeResult.Deposit> {
+    const feePayer = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+    const mintToOwnerAddress = assertNotNullAndReturn(
+      options.mintToOwnerAddress ?? this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, mintToOwnerAddress, feePayer)
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      mintToOwnerAddress,
+      feePayer
+    )
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
@@ -204,6 +324,13 @@ export class Marinade {
 
     transaction.add(depositInstruction)
 
+    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
+      options.directToValidatorVoteAddress
+    )
+    if (directedStakeInstruction) {
+      transaction.add(directedStakeInstruction)
+    }
+
     return {
       associatedMSolTokenAccountAddress,
       transaction,
@@ -216,15 +343,28 @@ export class Marinade {
    *
    * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
    */
-  async liquidUnstake(amountLamports: BN, associatedMSolTokenAccountAddress?: web3.PublicKey): Promise<MarinadeResult.LiquidUnstake> {
-    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+  async liquidUnstake(
+    amountLamports: BN,
+    associatedMSolTokenAccountAddress?: web3.PublicKey
+  ): Promise<MarinadeResult.LiquidUnstake> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
     const marinadeState = await this.getMarinadeState()
     const transaction = new web3.Transaction()
 
     if (!associatedMSolTokenAccountAddress) {
-      const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
-      const createAssociateTokenInstruction = associatedTokenAccountInfos.createAssociateTokenInstruction
-      associatedMSolTokenAccountAddress = associatedTokenAccountInfos.associatedTokenAccountAddress
+      const associatedTokenAccountInfos =
+        await getOrCreateAssociatedTokenAccount(
+          this.provider,
+          marinadeState.mSolMintAddress,
+          ownerAddress
+        )
+      const createAssociateTokenInstruction =
+        associatedTokenAccountInfos.createAssociateTokenInstruction
+      associatedMSolTokenAccountAddress =
+        associatedTokenAccountInfos.associatedTokenAccountAddress
 
       if (createAssociateTokenInstruction) {
         transaction.add(createAssociateTokenInstruction)
@@ -232,12 +372,13 @@ export class Marinade {
     }
 
     const program = this.provideReferralOrMainProgram()
-    const liquidUnstakeInstruction = await program.liquidUnstakeInstructionBuilder({
-      amountLamports,
-      marinadeState,
-      ownerAddress,
-      associatedMSolTokenAccountAddress,
-    })
+    const liquidUnstakeInstruction =
+      await program.liquidUnstakeInstructionBuilder({
+        amountLamports,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+      })
 
     transaction.add(liquidUnstakeInstruction)
 
@@ -253,15 +394,29 @@ export class Marinade {
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
-  async depositStakeAccount(stakeAccountAddress: web3.PublicKey): Promise<MarinadeResult.DepositStakeAccount> {
-    const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
+  async depositStakeAccount(
+    stakeAccountAddress: web3.PublicKey,
+    options: DepositStakeAccountOptions = {}
+  ): Promise<MarinadeResult.DepositStakeAccount> {
+    const stakeAccountInfo = await getParsedStakeAccountInfo(
+      this.provider,
+      stakeAccountAddress
+    )
     const marinadeState = await this.getMarinadeState()
-    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
-    return this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState)
+    return this.depositStakeAccountByAccount(
+      stakeAccountInfo,
+      rent,
+      marinadeState,
+      options
+    )
   }
-
 
   /**
    * Returns a transaction with the instructions to
@@ -271,16 +426,37 @@ export class Marinade {
    * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
    * @param {number} rent - Rent needed for a stake account
    * @param {MarinadeState} marinadeState - Marinade State needed for retrieving validator info
+   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
-  async depositStakeAccountByAccount(stakeAccountInfo: ParsedStakeAccountInfo, rent: number, marinadeState: MarinadeState): Promise<MarinadeResult.DepositStakeAccount> {
-    const ownerAddress = assertNotNullAndReturn(this.config.publicKey, ErrorMessage.NO_PUBLIC_KEY)
+  async depositStakeAccountByAccount(
+    stakeAccountInfo: ParsedStakeAccountInfo,
+    rent: number,
+    marinadeState: MarinadeState,
+    options: DepositStakeAccountOptions = {}
+  ): Promise<MarinadeResult.DepositStakeAccount> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
     const transaction = new web3.Transaction()
     const currentEpoch = await this.provider.connection.getEpochInfo()
 
-    const { authorizedWithdrawerAddress, voterAddress, activationEpoch, isCoolingDown, stakedLamports, balanceLamports } = stakeAccountInfo
+    const {
+      authorizedWithdrawerAddress,
+      voterAddress,
+      activationEpoch,
+      isCoolingDown,
+      isLockedUp,
+      stakedLamports,
+      balanceLamports,
+    } = stakeAccountInfo
 
     if (!authorizedWithdrawerAddress) {
       throw new Error('Withdrawer address is not available!')
+    }
+
+    if (isLockedUp) {
+      throw new Error('The stake account is locked up!')
     }
 
     if (!activationEpoch || !voterAddress) {
@@ -288,11 +464,18 @@ export class Marinade {
     }
 
     if (isCoolingDown) {
-      throw new Error('The stake is cooling down!')
+      transaction.add(
+        web3.StakeProgram.delegate({
+          stakePubkey: stakeAccountInfo.address,
+          authorizedPubkey: ownerAddress,
+          votePubkey: voterAddress,
+        })
+      )
     }
 
     if (stakedLamports && balanceLamports?.gt(stakedLamports)) {
-      const lamportsToWithdraw = balanceLamports.sub(stakedLamports).toNumber() - rent
+      const lamportsToWithdraw =
+        balanceLamports.sub(stakedLamports).toNumber() - rent
       if (lamportsToWithdraw > 0)
         transaction.add(
           web3.StakeProgram.withdraw({
@@ -307,36 +490,57 @@ export class Marinade {
     const waitEpochs = 2
     const earliestDepositEpoch = activationEpoch.addn(waitEpochs)
     if (earliestDepositEpoch.gtn(currentEpoch.epoch)) {
-      throw new Error(`Deposited stake ${stakeAccountInfo.address} is not activated yet. Wait for #${earliestDepositEpoch} epoch`)
+      throw new Error(
+        `Deposited stake ${stakeAccountInfo.address} is not activated yet. Wait for #${earliestDepositEpoch} epoch`
+      )
     }
 
     const { validatorRecords } = await marinadeState.getValidatorRecords()
-    const validatorLookupIndex = validatorRecords.findIndex(({ validatorAccount }) => validatorAccount.equals(voterAddress))
-    const validatorIndex = validatorLookupIndex === -1 ? marinadeState.state.validatorSystem.validatorList.count : validatorLookupIndex
+    const validatorLookupIndex = validatorRecords.findIndex(
+      ({ validatorAccount }) => validatorAccount.equals(voterAddress)
+    )
+    const validatorIndex =
+      validatorLookupIndex === -1
+        ? marinadeState.state.validatorSystem.validatorList.count
+        : validatorLookupIndex
 
-    const duplicationFlag = await marinadeState.validatorDuplicationFlag(voterAddress)
+    const duplicationFlag = await marinadeState.validatorDuplicationFlag(
+      voterAddress
+    )
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
       createAssociateTokenInstruction,
-    } = await getOrCreateAssociatedTokenAccount(this.provider, marinadeState.mSolMintAddress, ownerAddress)
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      ownerAddress
+    )
 
     if (createAssociateTokenInstruction) {
       transaction.add(createAssociateTokenInstruction)
     }
 
     const program = this.provideReferralOrMainProgram()
-    const depositStakeAccountInstruction = await program.depositStakeAccountInstructionBuilder({
-      validatorIndex,
-      marinadeState,
-      duplicationFlag,
-      authorizedWithdrawerAddress,
-      associatedMSolTokenAccountAddress,
-      ownerAddress,
-      stakeAccountAddress: stakeAccountInfo.address,
-    })
+    const depositStakeAccountInstruction =
+      await program.depositStakeAccountInstructionBuilder({
+        validatorIndex,
+        marinadeState,
+        duplicationFlag,
+        authorizedWithdrawerAddress,
+        associatedMSolTokenAccountAddress,
+        ownerAddress,
+        stakeAccountAddress: stakeAccountInfo.address,
+      })
 
     transaction.add(depositStakeAccountInstruction)
+
+    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
+      options.directToValidatorVoteAddress
+    )
+    if (directedStakeInstruction) {
+      transaction.add(directedStakeInstruction)
+    }
 
     return {
       associatedMSolTokenAccountAddress,
@@ -355,23 +559,53 @@ export class Marinade {
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
    */
-  async liquidateStakeAccount(stakeAccountAddress: web3.PublicKey, mSolToKeep?: BN): Promise<MarinadeResult.LiquidateStakeAccount> {
-    const stakeAccountInfo = await getParsedStakeAccountInfo(this.provider, stakeAccountAddress)
-    const rent = await this.provider.connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
+  async liquidateStakeAccount(
+    stakeAccountAddress: web3.PublicKey,
+    mSolToKeep?: BN
+  ): Promise<MarinadeResult.LiquidateStakeAccount> {
+    const stakeAccountInfo = await getParsedStakeAccountInfo(
+      this.provider,
+      stakeAccountAddress
+    )
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
     const marinadeState = await this.getMarinadeState()
 
-    const { transaction: depositTx, associatedMSolTokenAccountAddress, voterAddress } = 
-      await this.depositStakeAccountByAccount(stakeAccountInfo, rent, marinadeState)
+    const {
+      transaction: depositTx,
+      associatedMSolTokenAccountAddress,
+      voterAddress,
+    } = await this.depositStakeAccountByAccount(
+      stakeAccountInfo,
+      rent,
+      marinadeState
+    )
 
-    let mSolAmountToReceive = computeMsolAmount((stakeAccountInfo.stakedLamports ?? new BN(0)), marinadeState)
+    let mSolAmountToReceive = computeMsolAmount(
+      stakeAccountInfo.stakedLamports ?? new BN(0),
+      marinadeState
+    )
     // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
     if (this.isReferralProgram()) {
-      const partnerOperationFee = (await this.marinadeReferralProgram.getReferralStateData()).operationDepositStakeAccountFee
-      mSolAmountToReceive = mSolAmountToReceive.sub(proportionalBN(mSolAmountToReceive, new BN(partnerOperationFee), new BN(10_000)))
+      const partnerOperationFee = (
+        await this.marinadeReferralProgram.getReferralStateData()
+      ).operationDepositStakeAccountFee
+      mSolAmountToReceive = mSolAmountToReceive.sub(
+        proportionalBN(
+          mSolAmountToReceive,
+          new BN(partnerOperationFee),
+          new BN(10_000)
+        )
+      )
     }
 
     const unstakeAmountMSol = mSolAmountToReceive.sub(mSolToKeep ?? new BN(0))
-    const { transaction: unstakeTx } = await this.liquidUnstake(unstakeAmountMSol, associatedMSolTokenAccountAddress)
+    const { transaction: unstakeTx } = await this.liquidUnstake(
+      unstakeAmountMSol,
+      associatedMSolTokenAccountAddress
+    )
 
     return {
       transaction: depositTx.add(unstakeTx),
@@ -382,10 +616,12 @@ export class Marinade {
 
   /**
    * Retrieve user's ticket accounts
-   * 
+   *
    * @param {web3.PublicKey} beneficiary - The owner of the ticket accounts
    */
-  async getDelayedUnstakeTickets(beneficiary: web3.PublicKey): Promise<Map<web3.PublicKey, TicketAccount>> {
+  async getDelayedUnstakeTickets(
+    beneficiary: web3.PublicKey
+  ): Promise<Map<web3.PublicKey, TicketAccount>> {
     return this.marinadeFinanceProgram.getDelayedUnstakeTickets(beneficiary)
   }
 
@@ -395,6 +631,8 @@ export class Marinade {
    */
   async getEstimatedUnstakeTicketDueDate() {
     const marinadeState = await this.getMarinadeState()
-    return this.marinadeFinanceProgram.getEstimatedUnstakeTicketDueDate(marinadeState)
+    return this.marinadeFinanceProgram.getEstimatedUnstakeTicketDueDate(
+      marinadeState
+    )
   }
 }

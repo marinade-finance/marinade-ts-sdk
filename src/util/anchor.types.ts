@@ -1,4 +1,4 @@
-import { BN, web3 } from '@project-serum/anchor'
+import { BN, web3 } from '@coral-xyz/anchor'
 
 export interface ParsedStakeAccountInfo {
   address: web3.PublicKey
@@ -9,6 +9,7 @@ export interface ParsedStakeAccountInfo {
   activationEpoch: BN | null
   deactivationEpoch: BN | null
   isCoolingDown: boolean
+  isLockedUp: boolean
   balanceLamports: BN | null
   stakedLamports: BN | null
 }

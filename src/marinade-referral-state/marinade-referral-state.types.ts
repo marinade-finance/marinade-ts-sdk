@@ -1,4 +1,4 @@
-import { web3, BN } from '@project-serum/anchor'
+import { web3, BN } from '@coral-xyz/anchor'
 
 export const enum ProgramDerivedAddressSeed {
   GLOBAL_STATE_SEED = 'mrp_initialize',
@@ -17,7 +17,7 @@ export namespace MarinadeReferralStateResponse {
 
   export interface ReferralState {
     partnerName: string
-    validatorVoteKey: web3.PublicKey|null
+    validatorVoteKey: web3.PublicKey | null
     keepSelfStakePct: number
     partnerAccount: web3.PublicKey
     msolTokenPartnerAccount: web3.PublicKey

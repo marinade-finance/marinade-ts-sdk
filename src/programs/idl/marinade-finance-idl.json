@@ -595,7 +595,7 @@
       ]
     },
     {
-      "name": "setLpParams",
+      "name": "configLp",
       "accounts": [
         {
           "name": "state",
@@ -610,20 +610,10 @@
       ],
       "args": [
         {
-          "name": "minFee",
+          "name": "params",
           "type": {
-            "defined": "Fee"
+            "defined": "ConfigLpParams"
           }
-        },
-        {
-          "name": "maxFee",
-          "type": {
-            "defined": "Fee"
-          }
-        },
-        {
-          "name": "liquidityTarget",
-          "type": "u64"
         }
       ]
     },
@@ -1130,6 +1120,95 @@
       ]
     },
     {
+      "name": "partialUnstake",
+      "accounts": [
+        {
+          "name": "state",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "validatorManagerAuthority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "validatorList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeList",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "stakeDepositAuthority",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reservePda",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "splitStakeAccount",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "splitStakeRentPayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "clock",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeHistory",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "stakeProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "stakeIndex",
+          "type": "u32"
+        },
+        {
+          "name": "validatorIndex",
+          "type": "u32"
+        },
+        {
+          "name": "desiredUnstakeAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "mergeStakes",
       "accounts": [
         {
@@ -1450,6 +1529,44 @@
       }
     },
     {
+      "name": "ConfigLpParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "minFee",
+            "type": {
+              "option": {
+                "defined": "Fee"
+              }
+            }
+          },
+          {
+            "name": "maxFee",
+            "type": {
+              "option": {
+                "defined": "Fee"
+              }
+            }
+          },
+          {
+            "name": "liquidityTarget",
+            "type": {
+              "option": "u64"
+            }
+          },
+          {
+            "name": "treasuryCut",
+            "type": {
+              "option": {
+                "defined": "Fee"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
       "name": "ConfigMarinadeParams",
       "type": {
         "kind": "struct",
@@ -1720,165 +1837,148 @@
           }
         ]
       }
+    }
+  ],
+  "errors": [
+    {
+      "code": 300,
+      "name": "WrongReserveOwner",
+      "msg": "Wrong reserve owner. Must be a system account"
     },
     {
-      "name": "CommonError",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "InvalidProgramId",
-            "fields": [
-              "publicKey"
-            ]
-          },
-          {
-            "name": "UnexpectedAccount",
-            "fields": [
-              "publicKey"
-            ]
-          },
-          {
-            "name": "CalculationFailure"
-          },
-          {
-            "name": "AccountWithLockup"
-          },
-          {
-            "name": "NumberTooLow",
-            "fields": [
-              "u64",
-              "u64"
-            ]
-          },
-          {
-            "name": "NumberTooHigh",
-            "fields": [
-              "u64",
-              "u64"
-            ]
-          },
-          {
-            "name": "FeeTooHigh",
-            "fields": [
-              {
-                "defined": "Fee"
-              }
-            ]
-          },
-          {
-            "name": "FeesWrongWayRound",
-            "fields": [
-              {
-                "defined": "Fee"
-              },
-              {
-                "defined": "Fee"
-              }
-            ]
-          },
-          {
-            "name": "LiquidityTargetTooLow"
-          },
-          {
-            "name": "TicketNotDue",
-            "fields": [
-              "u64"
-            ]
-          },
-          {
-            "name": "TicketNotReady"
-          },
-          {
-            "name": "WrongBeneficiary"
-          },
-          {
-            "name": "InsufficientLiquidity"
-          },
-          {
-            "name": "InvalidValidator"
-          }
-        ]
-      }
+      "code": 301,
+      "name": "NonEmptyReserveData",
+      "msg": "Reserve must have no data, but has data"
     },
     {
-      "name": "InitializeError",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "WrongReserveOwner",
-            "fields": [
-              "publicKey"
-            ]
-          },
-          {
-            "name": "NonEmptyReserveData",
-            "fields": [
-              {
-                "defined": "usize"
-              }
-            ]
-          },
-          {
-            "name": "InvalidInitialReserveLamports",
-            "fields": [
-              "u64"
-            ]
-          },
-          {
-            "name": "ZeroValidatorChunkSize"
-          },
-          {
-            "name": "TooBigValidatorChunkSize",
-            "fields": [
-              "u32"
-            ]
-          },
-          {
-            "name": "ZeroCreditChunkSize"
-          },
-          {
-            "name": "TooBigCreditChunkSize",
-            "fields": [
-              "u32"
-            ]
-          },
-          {
-            "name": "TooLowCreditFee",
-            "fields": [
-              "u64"
-            ]
-          },
-          {
-            "name": "InvalidMintAuthority",
-            "fields": [
-              {
-                "name": "expected",
-                "type": "publicKey"
-              },
-              {
-                "name": "got",
-                "type": "publicKey"
-              }
-            ]
-          },
-          {
-            "name": "MintHasInitialSupply",
-            "fields": [
-              "u64"
-            ]
-          },
-          {
-            "name": "InvalidOwnerFeeState",
-            "fields": [
-              {
-                "defined": "spl_token::state::AccountState"
-              }
-            ]
-          }
-        ]
-      }
+      "code": 302,
+      "name": "InvalidInitialReserveLamports",
+      "msg": "Invalid initial reserve lamports"
+    },
+    {
+      "code": 303,
+      "name": "ZeroValidatorChunkSize",
+      "msg": "Zero validator chunk size"
+    },
+    {
+      "code": 304,
+      "name": "TooBigValidatorChunkSize",
+      "msg": "Too big validator chunk size"
+    },
+    {
+      "code": 305,
+      "name": "ZeroCreditChunkSize",
+      "msg": "Zero credit chunk size"
+    },
+    {
+      "code": 306,
+      "name": "TooBigCreditChunkSize",
+      "msg": "Too big credit chunk size"
+    },
+    {
+      "code": 307,
+      "name": "TooLowCreditFee",
+      "msg": "Too low credit fee"
+    },
+    {
+      "code": 308,
+      "name": "InvalidMintAuthority",
+      "msg": "Invalid mint authority"
+    },
+    {
+      "code": 309,
+      "name": "MintHasInitialSupply",
+      "msg": "Non empty initial mint supply"
+    },
+    {
+      "code": 310,
+      "name": "InvalidOwnerFeeState",
+      "msg": "Invalid owner fee state"
+    },
+    {
+      "code": 6416,
+      "name": "InvalidProgramId",
+      "msg": "1910 Invalid program id. For using program from another account please update id in the code"
+    },
+    {
+      "code": 65440,
+      "name": "UnexpectedAccount",
+      "msg": "FFA0 Unexpected account"
+    },
+    {
+      "code": 51919,
+      "name": "CalculationFailure",
+      "msg": "CACF Calculation failure"
+    },
+    {
+      "code": 45994,
+      "name": "AccountWithLockup",
+      "msg": "B3AA You can't deposit a stake-account with lockup"
+    },
+    {
+      "code": 8192,
+      "name": "NumberTooLow",
+      "msg": "2000 Number too low"
+    },
+    {
+      "code": 8193,
+      "name": "NumberTooHigh",
+      "msg": "2001 Number too high"
+    },
+    {
+      "code": 4352,
+      "name": "FeeTooHigh",
+      "msg": "1100 Fee too high"
+    },
+    {
+      "code": 4353,
+      "name": "FeesWrongWayRound",
+      "msg": "1101 Min fee > max fee"
+    },
+    {
+      "code": 4354,
+      "name": "LiquidityTargetTooLow",
+      "msg": "1102 Liquidity target too low"
+    },
+    {
+      "code": 4355,
+      "name": "TicketNotDue",
+      "msg": "1103 Ticket not due. Wait more epochs"
+    },
+    {
+      "code": 4356,
+      "name": "TicketNotReady",
+      "msg": "1104 Ticket not ready. Wait a few hours and try again"
+    },
+    {
+      "code": 4357,
+      "name": "WrongBeneficiary",
+      "msg": "1105 Wrong Ticket Beneficiary"
+    },
+    {
+      "code": 4358,
+      "name": "StakeAccountNotUpdatedYet",
+      "msg": "1106 Stake Account not updated yet"
+    },
+    {
+      "code": 4359,
+      "name": "StakeNotDelegated",
+      "msg": "1107 Stake Account not delegated"
+    },
+    {
+      "code": 4360,
+      "name": "StakeAccountIsEmergencyUnstaking",
+      "msg": "1108 Stake Account is emergency unstaking"
+    },
+    {
+      "code": 4505,
+      "name": "InsufficientLiquidity",
+      "msg": "1199 Insufficient Liquidity in the Liquidity Pool"
+    },
+    {
+      "code": 47825,
+      "name": "InvalidValidator",
+      "msg": "BAD1 Invalid validator"
     }
   ]
 }

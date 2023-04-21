@@ -1,4 +1,4 @@
-import { BN } from '@project-serum/anchor'
+import { BN } from '@coral-xyz/anchor'
 import { MarinadeState } from '../marinade-state/marinade-state'
 
 /**
@@ -11,7 +11,13 @@ import { MarinadeState } from '../marinade-state/marinade-state'
  * @param {BN} lamportsAvailable
  * @param {BN} lamportsToObtain
  */
-export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints: number, lpLiquidityTarget: BN, lamportsAvailable: BN, lamportsToObtain: BN): number {
+export function unstakeNowFeeBp(
+  lpMinFeeBasisPoints: number,
+  lpMaxFeeBasisPoints: number,
+  lpLiquidityTarget: BN,
+  lamportsAvailable: BN,
+  lamportsToObtain: BN
+): number {
   // if trying to get more than existing
   if (lamportsToObtain.gte(lamportsAvailable)) {
     return lpMaxFeeBasisPoints
@@ -21,11 +27,12 @@ export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints
   // if GTE target => min fee
   if (lamportsAfter.gte(lpLiquidityTarget)) {
     return lpMinFeeBasisPoints
-  }
-  else {
+  } else {
     const delta = lpMaxFeeBasisPoints - lpMinFeeBasisPoints
-    return lpMaxFeeBasisPoints
-      - proportionalBN(new BN(delta), lamportsAfter, lpLiquidityTarget).toNumber()
+    return (
+      lpMaxFeeBasisPoints -
+      proportionalBN(new BN(delta), lamportsAfter, lpLiquidityTarget).toNumber()
+    )
   }
 }
 
@@ -33,7 +40,7 @@ export function unstakeNowFeeBp(lpMinFeeBasisPoints: number, lpMaxFeeBasisPoints
  * Returns `amount` * `numerator` / `denominator`.
  * BN library proves to not be as accurate as desired.
  * BN was kept to minimize the change. To be replaced entirely by BigNumber.
- * String is the safest way to convert between them 
+ * String is the safest way to convert between them
  *
  * @param {BN} amount
  * @param {BN} numerator
@@ -43,7 +50,9 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
   if (denominator.isZero()) {
     return amount
   }
-  const result = BigInt(amount.toString()) * BigInt(numerator.toString()) / BigInt(denominator.toString())
+  const result =
+    (BigInt(amount.toString()) * BigInt(numerator.toString())) /
+    BigInt(denominator.toString())
   return new BN(result.toString())
 }
 
@@ -53,10 +62,25 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
  * @param {BN} solAmount
  * @param {MarinadeState} marinadeState
  */
-export function computeMsolAmount(solAmount: BN, marinadeState: MarinadeState): BN {
-  const total_cooling_down = marinadeState.state.stakeSystem.delayedUnstakeCoolingDown.add(marinadeState.state.emergencyCoolingDown)
-  const total_lamports_under_control = marinadeState.state.validatorSystem.totalActiveBalance.add(total_cooling_down).add(marinadeState.state.availableReserveBalance)
-  const total_virtual_staked_lamports = total_lamports_under_control.sub(marinadeState.state.circulatingTicketBalance)
+export function computeMsolAmount(
+  solAmount: BN,
+  marinadeState: MarinadeState
+): BN {
+  const total_cooling_down =
+    marinadeState.state.stakeSystem.delayedUnstakeCoolingDown.add(
+      marinadeState.state.emergencyCoolingDown
+    )
+  const total_lamports_under_control =
+    marinadeState.state.validatorSystem.totalActiveBalance
+      .add(total_cooling_down)
+      .add(marinadeState.state.availableReserveBalance)
+  const total_virtual_staked_lamports = total_lamports_under_control.sub(
+    marinadeState.state.circulatingTicketBalance
+  )
 
-  return proportionalBN(solAmount, marinadeState.state.msolSupply, total_virtual_staked_lamports)
+  return proportionalBN(
+    solAmount,
+    marinadeState.state.msolSupply,
+    total_virtual_staked_lamports
+  )
 }

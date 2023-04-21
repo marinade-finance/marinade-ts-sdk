@@ -1,5 +1,4 @@
-import { web3 } from '@project-serum/anchor'
-import BN from 'bn.js'
+import { BN, web3 } from '@coral-xyz/anchor'
 import { deserializePublicKey } from './common'
 
 export class ValidatorRecord {
@@ -15,14 +14,17 @@ export class ValidatorRecord {
 }
 
 export const validatorRecordBorshSchema = [
-  [ValidatorRecord, {
-    kind: 'struct',
-    fields: [
-      ['validatorAccount', deserializePublicKey],
-      ['activeBalance', 'u64'],
-      ['score', 'u32'],
-      ['lastStakeDeltaEpoch', 'u64'],
-      ['duplicationFlagBumpSeed', 'u8'],
-    ],
-  }],
+  [
+    ValidatorRecord,
+    {
+      kind: 'struct',
+      fields: [
+        ['validatorAccount', deserializePublicKey],
+        ['activeBalance', 'u64'],
+        ['score', 'u32'],
+        ['lastStakeDeltaEpoch', 'u64'],
+        ['duplicationFlagBumpSeed', 'u8'],
+      ],
+    },
+  ],
 ] as const

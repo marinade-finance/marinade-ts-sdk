@@ -1,4 +1,4 @@
-import { web3 } from '@project-serum/anchor'
+import { web3 } from '@coral-xyz/anchor'
 
 export namespace MarinadeFinanceIdl {
   export namespace Instruction {
@@ -134,7 +134,7 @@ export namespace MarinadeFinanceIdl {
         tokenProgram: web3.PublicKey
       }
     }
-    export namespace SetLpParams {
+    export namespace ConfigLp {
       export type Accounts = {
         state: web3.PublicKey
         adminAuthority: web3.PublicKey
@@ -226,6 +226,24 @@ export namespace MarinadeFinanceIdl {
         stakeAccount: web3.PublicKey
         stakeDepositAuthority: web3.PublicKey
         clock: web3.PublicKey
+        stakeProgram: web3.PublicKey
+      }
+    }
+    export namespace PartialUnstake {
+      export type Accounts = {
+        state: web3.PublicKey
+        validatorManagerAuthority: web3.PublicKey
+        validatorList: web3.PublicKey
+        stakeList: web3.PublicKey
+        stakeAccount: web3.PublicKey
+        stakeDepositAuthority: web3.PublicKey
+        reservePda: web3.PublicKey
+        splitStakeAccount: web3.PublicKey
+        splitStakeRentPayer: web3.PublicKey
+        clock: web3.PublicKey
+        rent: web3.PublicKey
+        stakeHistory: web3.PublicKey
+        systemProgram: web3.PublicKey
         stakeProgram: web3.PublicKey
       }
     }
