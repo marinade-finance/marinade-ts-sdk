@@ -24,9 +24,6 @@
     "test:integration": "jest --preset ts-jest --testTimeout 90000 --runInBand --roots '<rootDir>/test'",
     "lint": "gts lint",
     "lint:fix": "gts fix",
-    "gen:idl:marinade-finance": "./scripts/idl2ts.js < ./src/programs/idl/marinade-finance-idl.json > ./src/programs/idl/marinade-finance-idl.ts",
-    "gen:idl:marinade-referral": "./scripts/idl2ts.js < ./src/programs/idl/marinade-referral-idl.json > ./src/programs/idl/marinade-referral-idl.ts",
-    "gen:idl": "npm run gen:idl:marinade-finance && npm run gen:idl:marinade-referral",
     "prepack": "npm run test && npm run build"
   },
   "keywords": [
