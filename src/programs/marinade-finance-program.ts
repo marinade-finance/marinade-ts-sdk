@@ -1,5 +1,4 @@
-import bs58 from 'bs58'
-import { BN, Program, web3, Provider } from '@coral-xyz/anchor'
+import { BN, Program, web3, Provider, IdlTypes } from '@coral-xyz/anchor'
 import { MarinadeState } from '../marinade-state/marinade-state'
 import {
   STAKE_PROGRAM_ID,
@@ -9,14 +8,17 @@ import {
   estimateTicketDateInfo,
 } from '../util'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { MARINADE_BORSH_SCHEMA } from '../marinade-state/borsh'
-import { deserializeUnchecked } from 'borsh'
 import { TicketAccount } from '../marinade-state/borsh/ticket-account'
 import * as mariandeFinance from './idl/types/marinade_finance'
 
 const MarinadeFinanceIDL = mariandeFinance.IDL
 type MarinadeFinance = mariandeFinance.MarinadeFinance
 export type MarinadeFinanceProgramType = Program<MarinadeFinance>
+
+export type ValidatorRecordAnchorType =
+  IdlTypes<mariandeFinance.MarinadeFinance>['ValidatorRecord']
+export type StateRecordAnchorType =
+  IdlTypes<mariandeFinance.MarinadeFinance>['StakeRecord']
 
 export class MarinadeFinanceProgram {
   constructor(
@@ -35,17 +37,9 @@ export class MarinadeFinanceProgram {
   async getDelayedUnstakeTickets(
     beneficiary?: web3.PublicKey
   ): Promise<Map<web3.PublicKey, TicketAccount>> {
-    const discriminator = bs58.encode(Uint8Array.from([0x85, 0x4d, 0x12, 0x62]))
-
-    const filters = [
+    const filters: web3.GetProgramAccountsFilter[] = [
       {
         dataSize: 88,
-      },
-      {
-        memcmp: {
-          offset: 0,
-          bytes: discriminator,
-        },
       },
     ]
 
@@ -58,31 +52,24 @@ export class MarinadeFinanceProgram {
       })
     }
 
-    const ticketAccountInfos =
-      await this.anchorProvider.connection.getProgramAccounts(
-        this.programAddress,
-        { filters }
-      )
+    const ticketAccounts = await this.program.account.ticketAccountData.all(
+      filters
+    )
     const epochInfo = await getEpochInfo(this.anchorProvider.connection)
 
     return new Map(
-      ticketAccountInfos.map(ticketAccountInfo => {
-        const { data } = ticketAccountInfo.account
-        const ticketAccount = deserializeUnchecked(
-          MARINADE_BORSH_SCHEMA,
-          TicketAccount,
-          data.slice(8, data.length)
-        )
-
+      ticketAccounts.map(ticketAccount => {
+        const ticketAccountdata = ticketAccount.account
+        const ticketAcconuntPubkey = ticketAccount.publicKey
         const ticketDateInfo = getTicketDateInfo(
           epochInfo,
-          ticketAccount.createdEpoch.toNumber(),
+          ticketAccountdata.createdEpoch.toNumber(),
           Date.now()
         )
 
         return [
-          ticketAccountInfo.pubkey,
-          { ...ticketAccount, ...ticketDateInfo },
+          ticketAcconuntPubkey,
+          { ...ticketAccountdata, ...ticketDateInfo },
         ]
       })
     )
