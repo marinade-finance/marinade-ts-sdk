@@ -9,13 +9,8 @@ module.exports = {
     rules: [
       {
         test: /\.[jt]sx?$/,
-        use: {
-          loader: 'ts-loader',
-          options: {
-            allowTsInNodeModules: true,
-          },
-        },
-        exclude: /node_modules(?!\/@marinade\.finance\/directed-stake-sdk)/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
       },
     ],
   },
