@@ -26,9 +26,9 @@ jobs:
       - name: Install build and pack
         timeout-minutes: 5
         run: |
-          npm ci --no-color --no-progress
-          npm run build
-          npm pack
+          CI=true pnpm install
+          pnpm build
+          pnpm pack
         env:
           CI: true
       - uses: ncipollo/release-action@v1
