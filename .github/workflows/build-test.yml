@@ -17,10 +17,14 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
       - name: Install, build and test
         timeout-minutes: 5
         run: |
-          CI=true pnpm install
+          pnpm install
           pnpm build
           pnpm test
         env:
