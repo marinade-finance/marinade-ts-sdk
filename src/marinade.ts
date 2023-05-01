@@ -1,5 +1,11 @@
 import { MarinadeConfig } from './config/marinade-config'
-import { AnchorProvider, BN, Provider, web3 } from '@coral-xyz/anchor'
+import {
+  AnchorProvider,
+  BN,
+  ProgramAccount,
+  Provider,
+  web3,
+} from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
   getAssociatedTokenAccountAddress,
@@ -27,8 +33,11 @@ import {
   proportionalBN,
 } from './util'
 import {
+  DEFAULT_DIRECTED_STAKE_ROOT,
   DirectedStakeSdk,
+  DirectedStakeVoteRecord,
   findVoteRecords,
+  voteRecordAddress,
   withCreateVote,
   withRemoveVote,
   withUpdateVote,
@@ -43,6 +52,16 @@ export class Marinade {
     new NodeWallet(web3.Keypair.generate()),
     { commitment: 'confirmed' }
   )
+
+  private directedStakeSdk = new DirectedStakeSdk({
+    connection: this.config.connection,
+    wallet: {
+      signTransaction: async () => new Promise(() => new web3.Transaction()),
+      signAllTransactions: async () =>
+        new Promise(() => [new web3.Transaction()]),
+      publicKey: this.config.publicKey ?? web3.PublicKey.default,
+    },
+  })
 
   /**
    * The main Marinade Program
@@ -118,6 +137,31 @@ export class Marinade {
     return await Promise.all(
       codes.map(referralCode => this.getReferralPartnerState(referralCode))
     )
+  }
+
+  /**
+   * Fetches the voteRecord of a given user
+   *
+   * @param {web3.PublicKey} userPublicKey - The PublicKey of the user
+   */
+  async getUsersVoteRecord(userPublicKey: web3.PublicKey): Promise<{
+    voteRecord: ProgramAccount<DirectedStakeVoteRecord> | undefined
+    address: web3.PublicKey
+  }> {
+    const address = voteRecordAddress({
+      root: new web3.PublicKey(DEFAULT_DIRECTED_STAKE_ROOT),
+      owner: userPublicKey,
+    }).address
+
+    const voteRecords = await findVoteRecords({
+      sdk: this.directedStakeSdk,
+      owner: userPublicKey,
+    })
+
+    return {
+      voteRecord: voteRecords.length === 1 ? voteRecords[0] : undefined,
+      address,
+    }
   }
 
   /**
@@ -229,27 +273,13 @@ export class Marinade {
       this.config.publicKey,
       ErrorMessage.NO_PUBLIC_KEY
     )
-    const directedStakeSdk = new DirectedStakeSdk({
-      connection: this.config.connection,
-      wallet: {
-        signTransaction: async () => new Promise(() => new web3.Transaction()),
-        signAllTransactions: async () =>
-          new Promise(() => [new web3.Transaction()]),
-        publicKey: owner,
-      },
-    })
-    const voteRecord = (
-      await findVoteRecords({
-        sdk: directedStakeSdk,
-        owner,
-      })
-    )[0]
+    const { voteRecord } = await this.getUsersVoteRecord(owner)
 
     if (!voteRecord) {
       if (validatorVoteAddress) {
         return (
           await withCreateVote({
-            sdk: directedStakeSdk,
+            sdk: this.directedStakeSdk,
             validatorVote: validatorVoteAddress,
           })
         ).instruction
@@ -260,7 +290,7 @@ export class Marinade {
     if (validatorVoteAddress) {
       return (
         await withUpdateVote({
-          sdk: directedStakeSdk,
+          sdk: this.directedStakeSdk,
           validatorVote: validatorVoteAddress,
           voteRecord: voteRecord.publicKey,
         })
@@ -269,7 +299,7 @@ export class Marinade {
 
     return (
       await withRemoveVote({
-        sdk: directedStakeSdk,
+        sdk: this.directedStakeSdk,
         voteRecord: voteRecord.publicKey,
       })
     ).instruction
