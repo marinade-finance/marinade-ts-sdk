@@ -4,15 +4,18 @@ import { Marinade } from '../marinade'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
 import { bounds, STAKE_PROGRAM_ID } from '../util'
 import * as StateHelper from '../util/state-helpers'
-import { MARINADE_BORSH_SCHEMA } from './borsh/marinade-borsh'
 import { StakeRecord } from './borsh/stake-record'
-import { StakeState } from './borsh/stake-state'
+import { STAKE_STATE_BORSH_SCHEMA, StakeState } from './borsh/stake-state'
 import { ValidatorRecord } from './borsh/validator-record'
 import {
   ProgramDerivedAddressSeed,
   MarinadeStateResponse,
 } from './marinade-state.types'
 import { StakeInfo } from './borsh/stake-info'
+import {
+  ValidatorRecordAnchorType,
+  StateRecordAnchorType,
+} from '../programs/marinade-finance-program'
 
 export class MarinadeState {
   // @todo rework args
@@ -161,10 +164,9 @@ export class MarinadeState {
       validatorRecords: Array.from(
         { length: validatorList.count },
         (_, index) => {
-          return deserializeUnchecked(
-            MARINADE_BORSH_SCHEMA,
-            ValidatorRecord,
-            validators.data.slice(...recordBounds(index))
+          return this.marinade.marinadeFinanceProgram.program.coder.types.decode<ValidatorRecordAnchorType>(
+            'ValidatorRecord',
+            validators.data.subarray(...recordBounds(index))
           )
         }
       ),
@@ -192,10 +194,9 @@ export class MarinadeState {
 
     return {
       stakeRecords: Array.from({ length: stakeList.count }, (_, index) => {
-        return deserializeUnchecked(
-          MARINADE_BORSH_SCHEMA,
-          StakeRecord,
-          stakes.data.slice(...recordBounds(index))
+        return this.marinade.marinadeFinanceProgram.program.coder.types.decode<StateRecordAnchorType>(
+          'StakeRecord',
+          stakes.data.subarray(...recordBounds(index))
         )
       }),
       capacity: (stakes.data.length - 8) / stakeList.itemSize,
@@ -221,18 +222,22 @@ export class MarinadeState {
 
     return stakeAccountInfos.map(stakeAccountInfo => {
       const { data } = stakeAccountInfo.account
-      // The data's first 4 bytes are: u8 0x0 0x0 0x0 but borsh uses only the first byte to find the enum's value index.
-      // The next 3 bytes are unused and we need to get rid of them (or somehow fix the BORSH schema?)
-      const adjustedData = Buffer.concat([
-        data.slice(0, 1), // the first byte indexing the enum
-        data.slice(4, data.length), // the first byte indexing the enum
-      ])
-      return deserializeUnchecked(
-        MARINADE_BORSH_SCHEMA,
-        StakeState,
-        adjustedData
-      )
+      return this.deserializeStakeState(data)
     })
+  }
+
+  private deserializeStakeState(data: Buffer): StakeState {
+    // The data's first 4 bytes are: u8 0x0 0x0 0x0 but borsh uses only the first byte to find the enum's value index.
+    // The next 3 bytes are unused and we need to get rid of them (or somehow fix the BORSH schema?)
+    const adjustedData = Buffer.concat([
+      data.subarray(0, 1), // the first byte indexing the enum
+      data.subarray(4, data.length), // the first byte indexing the enum
+    ])
+    return deserializeUnchecked(
+      STAKE_STATE_BORSH_SCHEMA,
+      StakeState,
+      adjustedData
+    )
   }
 
   /**
@@ -259,19 +264,10 @@ export class MarinadeState {
 
       stakeInfos.push(
         ...accountInfos.map((accountInfo, index) => {
-          const adjustedData = Buffer.concat([
-            accountInfo?.data.slice(0, 1), // the first byte indexing the enum
-            accountInfo?.data.slice(4, accountInfo?.data.length), // the first byte indexing the enum
-          ])
-
           return new StakeInfo({
             index: processed + index,
             record: stakeRecords[processed + index],
-            stake: deserializeUnchecked(
-              MARINADE_BORSH_SCHEMA,
-              StakeState,
-              adjustedData
-            ),
+            stake: this.deserializeStakeState(accountInfo?.data),
             balance: new BN(accountInfo.lamports),
           })
         })

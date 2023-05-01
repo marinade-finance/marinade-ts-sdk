@@ -1,9 +1,10 @@
 {
-  "version": "0.0.0",
+  "version": "0.2.0",
   "name": "marinade_referral",
   "instructions": [
     {
       "name": "deposit",
+      "docs": ["deposit SOL"],
       "accounts": [
         {
           "name": "state",
@@ -85,6 +86,7 @@
     },
     {
       "name": "depositStakeAccount",
+      "docs": ["deposit stake account"],
       "accounts": [
         {
           "name": "state",
@@ -186,6 +188,7 @@
     },
     {
       "name": "liquidUnstake",
+      "docs": ["liquid-unstake mSOL"],
       "accounts": [
         {
           "name": "state",
@@ -262,6 +265,7 @@
     },
     {
       "name": "initialize",
+      "docs": ["Admin", "create global state"],
       "accounts": [
         {
           "name": "adminAccount",
@@ -302,6 +306,7 @@
     },
     {
       "name": "initReferralAccount",
+      "docs": ["create referral state"],
       "accounts": [
         {
           "name": "globalState",
@@ -348,6 +353,7 @@
     },
     {
       "name": "updateReferral",
+      "docs": ["update referral state"],
       "accounts": [
         {
           "name": "globalState",
@@ -384,6 +390,7 @@
     },
     {
       "name": "updateOperationFees",
+      "docs": ["update referral operation fees"],
       "accounts": [
         {
           "name": "globalState",
@@ -430,6 +437,9 @@
     },
     {
       "name": "changeAuthority",
+      "docs": [
+        "update partner, authority and beneficiary account based on the new partner"
+      ],
       "accounts": [
         {
           "name": "globalState",
@@ -461,6 +471,7 @@
     },
     {
       "name": "adminRecognizeDeposit",
+      "docs": ["deposit SOL"],
       "accounts": [
         {
           "name": "signer",
@@ -488,7 +499,8 @@
   ],
   "accounts": [
     {
-      "name": "globalState",
+      "name": "GlobalState",
+      "docs": ["marinade-referral-program PDA"],
       "type": {
         "kind": "struct",
         "fields": [
@@ -520,7 +532,8 @@
       }
     },
     {
-      "name": "referralState",
+      "name": "ReferralState",
+      "docs": ["referral PDA"],
       "type": {
         "kind": "struct",
         "fields": [
@@ -530,6 +543,9 @@
           },
           {
             "name": "validatorVoteKey",
+            "docs": [
+              "set value if this referral-account is a stake-account-as-collateral partner record"
+            ],
             "type": {
               "option": "publicKey"
             }
@@ -638,86 +654,62 @@
       }
     }
   ],
-  "errors": [
+  "types": [
     {
-      "code": 300,
-      "name": "AccessDenied",
-      "msg": "Access denied"
-    },
-    {
-      "code": 301,
-      "name": "Paused",
-      "msg": "Paused"
-    },
-    {
-      "code": 302,
-      "name": "TransferNotAvailable",
-      "msg": "Transfer is not available yet"
-    },
-    {
-      "code": 303,
-      "name": "InvalidPartnerAccountOwner",
-      "msg": "Invalid partner account owner"
-    },
-    {
-      "code": 304,
-      "name": "InvalidPartnerAccountMint",
-      "msg": "Invalid partner account mint"
-    },
-    {
-      "code": 305,
-      "name": "PartnerNameTooLong",
-      "msg": "Partner name too long"
-    },
-    {
-      "code": 306,
-      "name": "NotInitializedMintAccount",
-      "msg": "Mint account is not initialized"
-    },
-    {
-      "code": 307,
-      "name": "ReferralOperationFeeOverMax",
-      "msg": "Referral operation fee was set over the maximum permitted amount"
-    },
-    {
-      "code": 308,
-      "name": "NotAllowedForStakeAsCollateralPartner",
-      "msg": "Not allowed for stake-as-collateral-partners"
-    },
-    {
-      "code": 309,
-      "name": "KeepPctOutOfRange",
-      "msg": "Keep_pct out of valid range"
-    },
-    {
-      "code": 310,
-      "name": "MaxKeepPctOutOfRange",
-      "msg": "Max Keep_pct out of valid range, cannot go over 100%"
-    },
-    {
-      "code": 311,
-      "name": "MinMaxKeepPctOutOfRange",
-      "msg": "Min Keep-pct is bounded by value of Max Keep_pct"
-    },
-    {
-      "code": 312,
-      "name": "StakeAccountMustBeDelegatedToPartnerValidator",
-      "msg": "Stake-account must be delegated to partner validator"
-    },
-    {
-      "code": 313,
-      "name": "StakeAccountAuthMustBePartnerAccount",
-      "msg": "Stake-account authority must be partner account"
-    },
-    {
-      "code": 314,
-      "name": "OnlyAllowedForStakeAsCollateralPartner",
-      "msg": "Only allowed for stake-as-collateral-partners"
-    },
-    {
-      "code": 315,
-      "name": "InvalidGlobalAccount",
-      "msg": "Invalid Global Account"
+      "name": "ReferralError",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "AccessDenied"
+          },
+          {
+            "name": "Paused"
+          },
+          {
+            "name": "TransferNotAvailable"
+          },
+          {
+            "name": "InvalidPartnerAccountOwner"
+          },
+          {
+            "name": "InvalidPartnerAccountMint"
+          },
+          {
+            "name": "PartnerNameTooLong"
+          },
+          {
+            "name": "NotInitializedMintAccount"
+          },
+          {
+            "name": "ReferralOperationFeeOverMax"
+          },
+          {
+            "name": "NotAllowedForStakeAsCollateralPartner"
+          },
+          {
+            "name": "KeepPctOutOfRange"
+          },
+          {
+            "name": "MaxKeepPctOutOfRange"
+          },
+          {
+            "name": "MinMaxKeepPctOutOfRange"
+          },
+          {
+            "name": "StakeAccountMustBeDelegatedToPartnerValidator"
+          },
+          {
+            "name": "StakeAccountAuthMustBePartnerAccount"
+          },
+          {
+            "name": "OnlyAllowedForStakeAsCollateralPartner"
+          },
+          {
+            "name": "InvalidGlobalAccount"
+          }
+        ]
+      }
     }
   ]
 }

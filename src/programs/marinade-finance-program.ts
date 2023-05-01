@@ -1,7 +1,4 @@
-import bs58 from 'bs58'
-import { BN, Program, web3, Provider, Idl } from '@coral-xyz/anchor'
-import { MarinadeFinanceIdl } from './idl/marinade-finance-idl'
-import * as marinadeFinanceIdlSchema from './idl/marinade-finance-idl.json'
+import { BN, Program, web3, Provider, IdlTypes } from '@coral-xyz/anchor'
 import { MarinadeState } from '../marinade-state/marinade-state'
 import {
   STAKE_PROGRAM_ID,
@@ -11,9 +8,17 @@ import {
   estimateTicketDateInfo,
 } from '../util'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
-import { MARINADE_BORSH_SCHEMA } from '../marinade-state/borsh'
-import { deserializeUnchecked } from 'borsh'
 import { TicketAccount } from '../marinade-state/borsh/ticket-account'
+import * as mariandeFinance from './idl/types/marinade_finance'
+
+const MarinadeFinanceIDL = mariandeFinance.IDL
+type MarinadeFinance = mariandeFinance.MarinadeFinance
+export type MarinadeFinanceProgramType = Program<MarinadeFinance>
+
+export type ValidatorRecordAnchorType =
+  IdlTypes<mariandeFinance.MarinadeFinance>['ValidatorRecord']
+export type StateRecordAnchorType =
+  IdlTypes<mariandeFinance.MarinadeFinance>['StakeRecord']
 
 export class MarinadeFinanceProgram {
   constructor(
@@ -21,9 +26,9 @@ export class MarinadeFinanceProgram {
     public readonly anchorProvider: Provider
   ) {}
 
-  get program(): Program {
-    return new Program(
-      marinadeFinanceIdlSchema as Idl,
+  get program(): MarinadeFinanceProgramType {
+    return new Program<MarinadeFinance>(
+      MarinadeFinanceIDL,
       this.programAddress,
       this.anchorProvider
     )
@@ -32,17 +37,9 @@ export class MarinadeFinanceProgram {
   async getDelayedUnstakeTickets(
     beneficiary?: web3.PublicKey
   ): Promise<Map<web3.PublicKey, TicketAccount>> {
-    const discriminator = bs58.encode(Uint8Array.from([0x85, 0x4d, 0x12, 0x62]))
-
-    const filters = [
+    const filters: web3.GetProgramAccountsFilter[] = [
       {
         dataSize: 88,
-      },
-      {
-        memcmp: {
-          offset: 0,
-          bytes: discriminator,
-        },
       },
     ]
 
@@ -55,31 +52,24 @@ export class MarinadeFinanceProgram {
       })
     }
 
-    const ticketAccountInfos =
-      await this.anchorProvider.connection.getProgramAccounts(
-        this.programAddress,
-        { filters }
-      )
+    const ticketAccounts = await this.program.account.ticketAccountData.all(
+      filters
+    )
     const epochInfo = await getEpochInfo(this.anchorProvider.connection)
 
     return new Map(
-      ticketAccountInfos.map(ticketAccountInfo => {
-        const { data } = ticketAccountInfo.account
-        const ticketAccount = deserializeUnchecked(
-          MARINADE_BORSH_SCHEMA,
-          TicketAccount,
-          data.slice(8, data.length)
-        )
-
+      ticketAccounts.map(ticketAccount => {
+        const ticketAccountdata = ticketAccount.account
+        const ticketAcconuntPubkey = ticketAccount.publicKey
         const ticketDateInfo = getTicketDateInfo(
           epochInfo,
-          ticketAccount.createdEpoch.toNumber(),
+          ticketAccountdata.createdEpoch.toNumber(),
           Date.now()
         )
 
         return [
-          ticketAccountInfo.pubkey,
-          { ...ticketAccount, ...ticketDateInfo },
+          ticketAcconuntPubkey,
+          { ...ticketAccountdata, ...ticketDateInfo },
         ]
       })
     )
@@ -95,158 +85,125 @@ export class MarinadeFinanceProgram {
     )
   }
 
-  addLiquidityInstructionAccounts = async ({
+  addLiquidityInstructionBuilder = async ({
     marinadeState,
     ownerAddress,
     associatedLPTokenAccountAddress,
+    amountLamports,
   }: {
     marinadeState: MarinadeState
     ownerAddress: web3.PublicKey
     associatedLPTokenAccountAddress: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.AddLiquidity.Accounts> => ({
-    state: marinadeState.marinadeStateAddress,
-    lpMint: marinadeState.lpMintAddress,
-    lpMintAuthority: await marinadeState.lpMintAuthority(),
-    liqPoolMsolLeg: marinadeState.mSolLeg,
-    liqPoolSolLegPda: await marinadeState.solLeg(),
-    transferFrom: ownerAddress,
-    mintTo: associatedLPTokenAccountAddress,
-    systemProgram: SYSTEM_PROGRAM_ID,
-    tokenProgram: TOKEN_PROGRAM_ID,
-  })
-
-  addLiquidityInstruction = ({
-    accounts,
-    amountLamports,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.AddLiquidity.Accounts
     amountLamports: BN
-  }): web3.TransactionInstruction =>
-    this.program.instruction.addLiquidity(amountLamports, { accounts })
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .addLiquidity(amountLamports)
+      .accountsStrict({
+        state: marinadeState.marinadeStateAddress,
+        lpMint: marinadeState.lpMintAddress,
+        lpMintAuthority: await marinadeState.lpMintAuthority(),
+        liqPoolMsolLeg: marinadeState.mSolLeg,
+        liqPoolSolLegPda: await marinadeState.solLeg(),
+        transferFrom: ownerAddress,
+        mintTo: associatedLPTokenAccountAddress,
+        systemProgram: SYSTEM_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction()
 
-  removeLiquidityInstructionAccounts = async ({
+  removeLiquidityInstructionBuilder = async ({
     marinadeState,
     ownerAddress,
     associatedLPTokenAccountAddress,
     associatedMSolTokenAccountAddress,
+    amountLamports,
   }: {
     marinadeState: MarinadeState
     ownerAddress: web3.PublicKey
     associatedLPTokenAccountAddress: web3.PublicKey
     associatedMSolTokenAccountAddress: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.RemoveLiquidity.Accounts> => ({
-    state: marinadeState.marinadeStateAddress,
-    lpMint: marinadeState.lpMintAddress,
-    burnFrom: associatedLPTokenAccountAddress,
-    burnFromAuthority: ownerAddress,
-    liqPoolSolLegPda: await marinadeState.solLeg(),
-    transferSolTo: ownerAddress,
-    transferMsolTo: associatedMSolTokenAccountAddress,
-    liqPoolMsolLeg: marinadeState.mSolLeg,
-    liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
-    systemProgram: SYSTEM_PROGRAM_ID,
-    tokenProgram: TOKEN_PROGRAM_ID,
-  })
-
-  removeLiquidityInstruction = ({
-    accounts,
-    amountLamports,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.RemoveLiquidity.Accounts
     amountLamports: BN
-  }): web3.TransactionInstruction =>
-    this.program.instruction.removeLiquidity(amountLamports, { accounts })
-
-  liquidUnstakeInstructionAccounts = async ({
-    marinadeState,
-    ownerAddress,
-    associatedMSolTokenAccountAddress,
-  }: {
-    marinadeState: MarinadeState
-    ownerAddress: web3.PublicKey
-    associatedMSolTokenAccountAddress: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.LiquidUnstake.Accounts> => ({
-    state: marinadeState.marinadeStateAddress,
-    msolMint: marinadeState.mSolMintAddress,
-    liqPoolMsolLeg: marinadeState.mSolLeg,
-    liqPoolSolLegPda: await marinadeState.solLeg(),
-    getMsolFrom: associatedMSolTokenAccountAddress,
-    getMsolFromAuthority: ownerAddress,
-    transferSolTo: ownerAddress,
-    treasuryMsolAccount: marinadeState.treasuryMsolAccount,
-    systemProgram: SYSTEM_PROGRAM_ID,
-    tokenProgram: TOKEN_PROGRAM_ID,
-  })
-
-  liquidUnstakeInstruction = ({
-    accounts,
-    amountLamports,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.LiquidUnstake.Accounts
-    amountLamports: BN
-  }): web3.TransactionInstruction =>
-    this.program.instruction.liquidUnstake(amountLamports, { accounts })
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .removeLiquidity(amountLamports)
+      .accountsStrict({
+        state: marinadeState.marinadeStateAddress,
+        lpMint: marinadeState.lpMintAddress,
+        burnFrom: associatedLPTokenAccountAddress,
+        burnFromAuthority: ownerAddress,
+        liqPoolSolLegPda: await marinadeState.solLeg(),
+        transferSolTo: ownerAddress,
+        transferMsolTo: associatedMSolTokenAccountAddress,
+        liqPoolMsolLeg: marinadeState.mSolLeg,
+        liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
+        systemProgram: SYSTEM_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction()
 
   liquidUnstakeInstructionBuilder = async ({
+    marinadeState,
+    ownerAddress,
+    associatedMSolTokenAccountAddress,
     amountLamports,
-    ...accountsArgs
-  }: { amountLamports: BN } & Parameters<
-    this['liquidUnstakeInstructionAccounts']
-  >[0]) =>
-    this.liquidUnstakeInstruction({
-      amountLamports,
-      accounts: await this.liquidUnstakeInstructionAccounts(accountsArgs),
-    })
+  }: {
+    marinadeState: MarinadeState
+    ownerAddress: web3.PublicKey
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    amountLamports: BN
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .liquidUnstake(amountLamports)
+      .accountsStrict({
+        state: marinadeState.marinadeStateAddress,
+        msolMint: marinadeState.mSolMintAddress,
+        liqPoolMsolLeg: marinadeState.mSolLeg,
+        liqPoolSolLegPda: await marinadeState.solLeg(),
+        getMsolFrom: associatedMSolTokenAccountAddress,
+        getMsolFromAuthority: ownerAddress,
+        transferSolTo: ownerAddress,
+        treasuryMsolAccount: marinadeState.treasuryMsolAccount,
+        systemProgram: SYSTEM_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction()
 
-  depositInstructionAccounts = async ({
+  depositInstructionBuilder = async ({
     marinadeState,
     transferFrom,
     associatedMSolTokenAccountAddress,
+    amountLamports,
   }: {
     marinadeState: MarinadeState
     transferFrom: web3.PublicKey
     associatedMSolTokenAccountAddress: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.Deposit.Accounts> => ({
-    reservePda: await marinadeState.reserveAddress(),
-    state: marinadeState.marinadeStateAddress,
-    msolMint: marinadeState.mSolMintAddress,
-    msolMintAuthority: await marinadeState.mSolMintAuthority(),
-    liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
-    liqPoolMsolLeg: marinadeState.mSolLeg,
-    liqPoolSolLegPda: await marinadeState.solLeg(),
-    mintTo: associatedMSolTokenAccountAddress,
-    transferFrom,
-    systemProgram: SYSTEM_PROGRAM_ID,
-    tokenProgram: TOKEN_PROGRAM_ID,
-  })
-
-  depositInstruction = ({
-    accounts,
-    amountLamports,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.Deposit.Accounts
     amountLamports: BN
-  }): web3.TransactionInstruction =>
-    this.program.instruction.deposit(amountLamports, { accounts })
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .deposit(amountLamports)
+      .accountsStrict({
+        reservePda: await marinadeState.reserveAddress(),
+        state: marinadeState.marinadeStateAddress,
+        msolMint: marinadeState.mSolMintAddress,
+        msolMintAuthority: await marinadeState.mSolMintAuthority(),
+        liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
+        liqPoolMsolLeg: marinadeState.mSolLeg,
+        liqPoolSolLegPda: await marinadeState.solLeg(),
+        mintTo: associatedMSolTokenAccountAddress,
+        transferFrom,
+        systemProgram: SYSTEM_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction()
 
-  depositInstructionBuilder = async ({
-    amountLamports,
-    ...accountsArgs
-  }: { amountLamports: BN } & Parameters<
-    this['depositInstructionAccounts']
-  >[0]) =>
-    this.depositInstruction({
-      amountLamports,
-      accounts: await this.depositInstructionAccounts(accountsArgs),
-    })
-
-  depositStakeAccountInstructionAccounts = async ({
+  depositStakeAccountInstructionBuilder = async ({
     marinadeState,
     duplicationFlag,
     ownerAddress,
     stakeAccountAddress,
     authorizedWithdrawerAddress,
     associatedMSolTokenAccountAddress,
+    validatorIndex,
   }: {
     marinadeState: MarinadeState
     duplicationFlag: web3.PublicKey
@@ -254,45 +211,31 @@ export class MarinadeFinanceProgram {
     stakeAccountAddress: web3.PublicKey
     authorizedWithdrawerAddress: web3.PublicKey
     associatedMSolTokenAccountAddress: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.DepositStakeAccount.Accounts> => ({
-    duplicationFlag,
-    stakeAuthority: authorizedWithdrawerAddress,
-    state: marinadeState.marinadeStateAddress,
-    stakeList: marinadeState.state.stakeSystem.stakeList.account,
-    stakeAccount: stakeAccountAddress,
-    validatorList: marinadeState.state.validatorSystem.validatorList.account,
-    msolMint: marinadeState.mSolMintAddress,
-    msolMintAuthority: await marinadeState.mSolMintAuthority(),
-    mintTo: associatedMSolTokenAccountAddress,
-    rentPayer: ownerAddress,
-    clock: web3.SYSVAR_CLOCK_PUBKEY,
-    rent: web3.SYSVAR_RENT_PUBKEY,
-    systemProgram: SYSTEM_PROGRAM_ID,
-    tokenProgram: TOKEN_PROGRAM_ID,
-    stakeProgram: STAKE_PROGRAM_ID,
-  })
-
-  depositStakeAccountInstruction = ({
-    accounts,
-    validatorIndex,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.DepositStakeAccount.Accounts
     validatorIndex: number
-  }): web3.TransactionInstruction =>
-    this.program.instruction.depositStakeAccount(validatorIndex, { accounts })
+  }): Promise<web3.TransactionInstruction> =>
+    this.program.methods
+      .depositStakeAccount(validatorIndex)
+      .accountsStrict({
+        duplicationFlag,
+        stakeAuthority: authorizedWithdrawerAddress,
+        state: marinadeState.marinadeStateAddress,
+        stakeList: marinadeState.state.stakeSystem.stakeList.account,
+        stakeAccount: stakeAccountAddress,
+        validatorList:
+          marinadeState.state.validatorSystem.validatorList.account,
+        msolMint: marinadeState.mSolMintAddress,
+        msolMintAuthority: await marinadeState.mSolMintAuthority(),
+        mintTo: associatedMSolTokenAccountAddress,
+        rentPayer: ownerAddress,
+        clock: web3.SYSVAR_CLOCK_PUBKEY,
+        rent: web3.SYSVAR_RENT_PUBKEY,
+        systemProgram: SYSTEM_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        stakeProgram: STAKE_PROGRAM_ID,
+      })
+      .instruction()
 
-  depositStakeAccountInstructionBuilder = async ({
-    validatorIndex,
-    ...accountsArgs
-  }: { validatorIndex: number } & Parameters<
-    this['depositStakeAccountInstructionAccounts']
-  >[0]) =>
-    this.depositStakeAccountInstruction({
-      validatorIndex,
-      accounts: await this.depositStakeAccountInstructionAccounts(accountsArgs),
-    })
-
-  claimInstructionAccounts = async ({
+  claimInstructionBuilder = async ({
     marinadeState,
     ticketAccount,
     transferSolTo,
@@ -300,65 +243,43 @@ export class MarinadeFinanceProgram {
     marinadeState: MarinadeState
     ticketAccount: web3.PublicKey
     transferSolTo: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.Claim.Accounts> => ({
-    state: marinadeState.marinadeStateAddress,
-    reservePda: await marinadeState.reserveAddress(),
-    ticketAccount,
-    transferSolTo,
-    clock: web3.SYSVAR_CLOCK_PUBKEY,
-    systemProgram: SYSTEM_PROGRAM_ID,
-  })
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .claim()
+      .accountsStrict({
+        state: marinadeState.marinadeStateAddress,
+        reservePda: await marinadeState.reserveAddress(),
+        ticketAccount,
+        transferSolTo,
+        clock: web3.SYSVAR_CLOCK_PUBKEY,
+        systemProgram: SYSTEM_PROGRAM_ID,
+      })
+      .instruction()
 
-  claimInstruction = ({
-    accounts,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.Claim.Accounts
-  }): web3.TransactionInstruction =>
-    this.program.instruction.claim({ accounts })
-
-  claimInstructionBuilder = async ({
-    ...accountsArgs
-  }: Parameters<this['claimInstructionAccounts']>[0]) =>
-    this.claimInstruction({
-      accounts: await this.claimInstructionAccounts(accountsArgs),
-    })
-
-  orderUnstakeAccounts = async ({
+  orderUnstakeInstructionBuilder = async ({
     marinadeState,
     ownerAddress,
     associatedMSolTokenAccountAddress,
     newTicketAccount,
+    msolAmount,
   }: {
     marinadeState: MarinadeState
     ownerAddress: web3.PublicKey
     associatedMSolTokenAccountAddress: web3.PublicKey
     newTicketAccount: web3.PublicKey
-  }): Promise<MarinadeFinanceIdl.Instruction.OrderUnstake.Accounts> => ({
-    state: marinadeState.marinadeStateAddress,
-    msolMint: marinadeState.mSolMintAddress,
-    burnMsolFrom: associatedMSolTokenAccountAddress,
-    burnMsolAuthority: ownerAddress,
-    newTicketAccount,
-    rent: web3.SYSVAR_RENT_PUBKEY,
-    clock: web3.SYSVAR_CLOCK_PUBKEY,
-    tokenProgram: TOKEN_PROGRAM_ID,
-  })
-
-  orderUnstakeInstruction = ({
-    accounts,
-    msolAmount,
-  }: {
-    accounts: MarinadeFinanceIdl.Instruction.OrderUnstake.Accounts
     msolAmount: BN
-  }): web3.TransactionInstruction =>
-    this.program.instruction.orderUnstake(msolAmount, { accounts })
-
-  orderUnstakeInstructionBuilder = async ({
-    msolAmount,
-    ...accountsArgs
-  }: { msolAmount: BN } & Parameters<this['orderUnstakeAccounts']>[0]) =>
-    this.orderUnstakeInstruction({
-      accounts: await this.orderUnstakeAccounts(accountsArgs),
-      msolAmount,
-    })
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .orderUnstake(msolAmount)
+      .accountsStrict({
+        state: marinadeState.marinadeStateAddress,
+        msolMint: marinadeState.mSolMintAddress,
+        burnMsolFrom: associatedMSolTokenAccountAddress,
+        burnMsolAuthority: ownerAddress,
+        newTicketAccount,
+        rent: web3.SYSVAR_RENT_PUBKEY,
+        clock: web3.SYSVAR_CLOCK_PUBKEY,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction()
 }

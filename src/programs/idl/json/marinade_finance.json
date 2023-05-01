@@ -1,5 +1,5 @@
 {
-  "version": "0.0.0",
+  "version": "0.1.0",
   "name": "marinade_finance",
   "instructions": [
     {
@@ -1355,10 +1355,14 @@
           },
           {
             "name": "circulatingTicketCount",
+            "docs": ["count tickets for delayed-unstake"],
             "type": "u64"
           },
           {
             "name": "circulatingTicketBalance",
+            "docs": [
+              "total lamports amount of generated and not claimed yet tickets"
+            ],
             "type": "u64"
           },
           {
@@ -1410,6 +1414,244 @@
     }
   ],
   "types": [
+    {
+      "name": "LiqPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lpMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "lpMintAuthorityBumpSeed",
+            "type": "u8"
+          },
+          {
+            "name": "solLegBumpSeed",
+            "type": "u8"
+          },
+          {
+            "name": "msolLegAuthorityBumpSeed",
+            "type": "u8"
+          },
+          {
+            "name": "msolLeg",
+            "type": "publicKey"
+          },
+          {
+            "name": "lpLiquidityTarget",
+            "docs": [
+              "Liquidity target. If the Liquidity reach this amount, the fee reaches lp_min_discount_fee"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "lpMaxFee",
+            "docs": ["Liquidity pool max fee"],
+            "type": {
+              "defined": "Fee"
+            }
+          },
+          {
+            "name": "lpMinFee",
+            "docs": ["SOL/mSOL Liquidity pool min fee"],
+            "type": {
+              "defined": "Fee"
+            }
+          },
+          {
+            "name": "treasuryCut",
+            "docs": ["Treasury cut"],
+            "type": {
+              "defined": "Fee"
+            }
+          },
+          {
+            "name": "lpSupply",
+            "type": "u64"
+          },
+          {
+            "name": "lentFromSolLeg",
+            "type": "u64"
+          },
+          {
+            "name": "liquiditySolCap",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "List",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "account",
+            "type": "publicKey"
+          },
+          {
+            "name": "itemSize",
+            "type": "u32"
+          },
+          {
+            "name": "count",
+            "type": "u32"
+          },
+          {
+            "name": "newAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "copiedCount",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stakeAccount",
+            "type": "publicKey"
+          },
+          {
+            "name": "lastUpdateDelegatedLamports",
+            "type": "u64"
+          },
+          {
+            "name": "lastUpdateEpoch",
+            "type": "u64"
+          },
+          {
+            "name": "isEmergencyUnstaking",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "StakeSystem",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "stakeList",
+            "type": {
+              "defined": "List"
+            }
+          },
+          {
+            "name": "delayedUnstakeCoolingDown",
+            "type": "u64"
+          },
+          {
+            "name": "stakeDepositBumpSeed",
+            "type": "u8"
+          },
+          {
+            "name": "stakeWithdrawBumpSeed",
+            "type": "u8"
+          },
+          {
+            "name": "slotsForStakeDelta",
+            "docs": [
+              "set by admin, how much slots before the end of the epoch, stake-delta can start"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "lastStakeDeltaEpoch",
+            "docs": [
+              "Marks the start of stake-delta operations, meaning that if somebody starts a delayed-unstake ticket",
+              "after this var is set with epoch_num the ticket will have epoch_created = current_epoch+1",
+              "(the user must wait one more epoch, because their unstake-delta will be execute in this epoch)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "minStake",
+            "type": "u64"
+          },
+          {
+            "name": "extraStakeDeltaRuns",
+            "docs": [
+              "can be set by validator-manager-auth to allow a second run of stake-delta to stake late stakers in the last minute of the epoch",
+              "so we maximize user's rewards"
+            ],
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidatorRecord",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "validatorAccount",
+            "docs": ["Validator vote pubkey"],
+            "type": "publicKey"
+          },
+          {
+            "name": "activeBalance",
+            "docs": ["Validator total balance in lamports"],
+            "type": "u64"
+          },
+          {
+            "name": "score",
+            "type": "u32"
+          },
+          {
+            "name": "lastStakeDeltaEpoch",
+            "type": "u64"
+          },
+          {
+            "name": "duplicationFlagBumpSeed",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValidatorSystem",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "validatorList",
+            "type": {
+              "defined": "List"
+            }
+          },
+          {
+            "name": "managerAuthority",
+            "type": "publicKey"
+          },
+          {
+            "name": "totalValidatorScore",
+            "type": "u32"
+          },
+          {
+            "name": "totalActiveBalance",
+            "docs": ["sum of all active lamports staked"],
+            "type": "u64"
+          },
+          {
+            "name": "autoAddValidatorEnabled",
+            "docs": [
+              "allow & auto-add validator when a user deposits a stake-account of a non-listed validator"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
     {
       "name": "Fee",
       "type": {
@@ -1625,360 +1867,96 @@
       }
     },
     {
-      "name": "LiqPool",
+      "name": "CommonError",
       "type": {
-        "kind": "struct",
-        "fields": [
+        "kind": "enum",
+        "variants": [
           {
-            "name": "lpMint",
-            "type": "publicKey"
+            "name": "WrongReserveOwner"
           },
           {
-            "name": "lpMintAuthorityBumpSeed",
-            "type": "u8"
+            "name": "NonEmptyReserveData"
           },
           {
-            "name": "solLegBumpSeed",
-            "type": "u8"
+            "name": "InvalidInitialReserveLamports"
           },
           {
-            "name": "msolLegAuthorityBumpSeed",
-            "type": "u8"
+            "name": "ZeroValidatorChunkSize"
           },
           {
-            "name": "msolLeg",
-            "type": "publicKey"
+            "name": "TooBigValidatorChunkSize"
           },
           {
-            "name": "lpLiquidityTarget",
-            "type": "u64"
+            "name": "ZeroCreditChunkSize"
           },
           {
-            "name": "lpMaxFee",
-            "type": {
-              "defined": "Fee"
-            }
+            "name": "TooBigCreditChunkSize"
           },
           {
-            "name": "lpMinFee",
-            "type": {
-              "defined": "Fee"
-            }
+            "name": "TooLowCreditFee"
           },
           {
-            "name": "treasuryCut",
-            "type": {
-              "defined": "Fee"
-            }
+            "name": "InvalidMintAuthority"
           },
           {
-            "name": "lpSupply",
-            "type": "u64"
+            "name": "MintHasInitialSupply"
           },
           {
-            "name": "lentFromSolLeg",
-            "type": "u64"
+            "name": "InvalidOwnerFeeState"
           },
           {
-            "name": "liquiditySolCap",
-            "type": "u64"
+            "name": "InvalidProgramId"
+          },
+          {
+            "name": "UnexpectedAccount"
+          },
+          {
+            "name": "CalculationFailure"
+          },
+          {
+            "name": "AccountWithLockup"
+          },
+          {
+            "name": "NumberTooLow"
+          },
+          {
+            "name": "NumberTooHigh"
+          },
+          {
+            "name": "FeeTooHigh"
+          },
+          {
+            "name": "FeesWrongWayRound"
+          },
+          {
+            "name": "LiquidityTargetTooLow"
+          },
+          {
+            "name": "TicketNotDue"
+          },
+          {
+            "name": "TicketNotReady"
+          },
+          {
+            "name": "WrongBeneficiary"
+          },
+          {
+            "name": "StakeAccountNotUpdatedYet"
+          },
+          {
+            "name": "StakeNotDelegated"
+          },
+          {
+            "name": "StakeAccountIsEmergencyUnstaking"
+          },
+          {
+            "name": "InsufficientLiquidity"
+          },
+          {
+            "name": "InvalidValidator"
           }
         ]
       }
-    },
-    {
-      "name": "List",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "account",
-            "type": "publicKey"
-          },
-          {
-            "name": "itemSize",
-            "type": "u32"
-          },
-          {
-            "name": "count",
-            "type": "u32"
-          },
-          {
-            "name": "newAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "copiedCount",
-            "type": "u32"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakeRecord",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stakeAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "lastUpdateDelegatedLamports",
-            "type": "u64"
-          },
-          {
-            "name": "lastUpdateEpoch",
-            "type": "u64"
-          },
-          {
-            "name": "isEmergencyUnstaking",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "StakeSystem",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "stakeList",
-            "type": {
-              "defined": "List"
-            }
-          },
-          {
-            "name": "delayedUnstakeCoolingDown",
-            "type": "u64"
-          },
-          {
-            "name": "stakeDepositBumpSeed",
-            "type": "u8"
-          },
-          {
-            "name": "stakeWithdrawBumpSeed",
-            "type": "u8"
-          },
-          {
-            "name": "slotsForStakeDelta",
-            "type": "u64"
-          },
-          {
-            "name": "lastStakeDeltaEpoch",
-            "type": "u64"
-          },
-          {
-            "name": "minStake",
-            "type": "u64"
-          },
-          {
-            "name": "extraStakeDeltaRuns",
-            "type": "u32"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ValidatorRecord",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "validatorAccount",
-            "type": "publicKey"
-          },
-          {
-            "name": "activeBalance",
-            "type": "u64"
-          },
-          {
-            "name": "score",
-            "type": "u32"
-          },
-          {
-            "name": "lastStakeDeltaEpoch",
-            "type": "u64"
-          },
-          {
-            "name": "duplicationFlagBumpSeed",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ValidatorSystem",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "validatorList",
-            "type": {
-              "defined": "List"
-            }
-          },
-          {
-            "name": "managerAuthority",
-            "type": "publicKey"
-          },
-          {
-            "name": "totalValidatorScore",
-            "type": "u32"
-          },
-          {
-            "name": "totalActiveBalance",
-            "type": "u64"
-          },
-          {
-            "name": "autoAddValidatorEnabled",
-            "type": "u8"
-          }
-        ]
-      }
-    }
-  ],
-  "errors": [
-    {
-      "code": 300,
-      "name": "WrongReserveOwner",
-      "msg": "Wrong reserve owner. Must be a system account"
-    },
-    {
-      "code": 301,
-      "name": "NonEmptyReserveData",
-      "msg": "Reserve must have no data, but has data"
-    },
-    {
-      "code": 302,
-      "name": "InvalidInitialReserveLamports",
-      "msg": "Invalid initial reserve lamports"
-    },
-    {
-      "code": 303,
-      "name": "ZeroValidatorChunkSize",
-      "msg": "Zero validator chunk size"
-    },
-    {
-      "code": 304,
-      "name": "TooBigValidatorChunkSize",
-      "msg": "Too big validator chunk size"
-    },
-    {
-      "code": 305,
-      "name": "ZeroCreditChunkSize",
-      "msg": "Zero credit chunk size"
-    },
-    {
-      "code": 306,
-      "name": "TooBigCreditChunkSize",
-      "msg": "Too big credit chunk size"
-    },
-    {
-      "code": 307,
-      "name": "TooLowCreditFee",
-      "msg": "Too low credit fee"
-    },
-    {
-      "code": 308,
-      "name": "InvalidMintAuthority",
-      "msg": "Invalid mint authority"
-    },
-    {
-      "code": 309,
-      "name": "MintHasInitialSupply",
-      "msg": "Non empty initial mint supply"
-    },
-    {
-      "code": 310,
-      "name": "InvalidOwnerFeeState",
-      "msg": "Invalid owner fee state"
-    },
-    {
-      "code": 6416,
-      "name": "InvalidProgramId",
-      "msg": "1910 Invalid program id. For using program from another account please update id in the code"
-    },
-    {
-      "code": 65440,
-      "name": "UnexpectedAccount",
-      "msg": "FFA0 Unexpected account"
-    },
-    {
-      "code": 51919,
-      "name": "CalculationFailure",
-      "msg": "CACF Calculation failure"
-    },
-    {
-      "code": 45994,
-      "name": "AccountWithLockup",
-      "msg": "B3AA You can't deposit a stake-account with lockup"
-    },
-    {
-      "code": 8192,
-      "name": "NumberTooLow",
-      "msg": "2000 Number too low"
-    },
-    {
-      "code": 8193,
-      "name": "NumberTooHigh",
-      "msg": "2001 Number too high"
-    },
-    {
-      "code": 4352,
-      "name": "FeeTooHigh",
-      "msg": "1100 Fee too high"
-    },
-    {
-      "code": 4353,
-      "name": "FeesWrongWayRound",
-      "msg": "1101 Min fee > max fee"
-    },
-    {
-      "code": 4354,
-      "name": "LiquidityTargetTooLow",
-      "msg": "1102 Liquidity target too low"
-    },
-    {
-      "code": 4355,
-      "name": "TicketNotDue",
-      "msg": "1103 Ticket not due. Wait more epochs"
-    },
-    {
-      "code": 4356,
-      "name": "TicketNotReady",
-      "msg": "1104 Ticket not ready. Wait a few hours and try again"
-    },
-    {
-      "code": 4357,
-      "name": "WrongBeneficiary",
-      "msg": "1105 Wrong Ticket Beneficiary"
-    },
-    {
-      "code": 4358,
-      "name": "StakeAccountNotUpdatedYet",
-      "msg": "1106 Stake Account not updated yet"
-    },
-    {
-      "code": 4359,
-      "name": "StakeNotDelegated",
-      "msg": "1107 Stake Account not delegated"
-    },
-    {
-      "code": 4360,
-      "name": "StakeAccountIsEmergencyUnstaking",
-      "msg": "1108 Stake Account is emergency unstaking"
-    },
-    {
-      "code": 4505,
-      "name": "InsufficientLiquidity",
-      "msg": "1199 Insufficient Liquidity in the Liquidity Pool"
-    },
-    {
-      "code": 47825,
-      "name": "InvalidValidator",
-      "msg": "BAD1 Invalid validator"
     }
   ]
 }

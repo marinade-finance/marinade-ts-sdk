@@ -1,28 +1,12 @@
-import { web3 } from '@coral-xyz/anchor'
-import { deserializePublicKey } from './common'
+import { BN, web3 } from '@coral-xyz/anchor'
 
 export class StakeRecord {
   stakeAccount!: web3.PublicKey
-  lastUpdateDelegatedLamports!: number
-  lastUpdateEpoch!: number
+  lastUpdateDelegatedLamports!: BN
+  lastUpdateEpoch!: BN
   isEmergencyUnstaking!: number
 
   constructor(args: StakeRecord) {
     Object.assign(this, args)
   }
 }
-
-export const stakeRecordBorshSchema = [
-  [
-    StakeRecord,
-    {
-      kind: 'struct',
-      fields: [
-        ['stakeAccount', deserializePublicKey],
-        ['lastUpdateDelegatedLamports', 'u64'],
-        ['lastUpdateEpoch', 'u64'],
-        ['isEmergencyUnstaking', 'u8'],
-      ],
-    },
-  ],
-] as const

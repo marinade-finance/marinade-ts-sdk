@@ -1,5 +1,9 @@
 import { BN, web3 } from '@coral-xyz/anchor'
-import { deserializeF64, deserializePublicKey } from './common'
+import {
+  deserializePublicKey,
+  deserializeF64,
+  commonBorshSchema,
+} from './common'
 
 export class StakeState {
   Uninitialized?: StakeState.UninitializedState
@@ -205,3 +209,9 @@ export const stakeStateBorshSchema = [
     },
   ],
 ] as const
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const STAKE_STATE_BORSH_SCHEMA = new Map<Function, unknown>([
+  ...commonBorshSchema,
+  ...stakeStateBorshSchema,
+])
