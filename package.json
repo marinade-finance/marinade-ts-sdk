@@ -35,7 +35,7 @@
   "license": "ISC",
   "dependencies": {
     "@coral-xyz/anchor": "^0.27.0",
-    "@marinade.finance/directed-stake-sdk": "^0.0.2",
+    "@marinade.finance/directed-stake-sdk": "^0.0.4",
     "@solana/spl-token": "^0.3.7",
     "borsh": "^0.7.0",
     "bs58": "^5.0.0"
