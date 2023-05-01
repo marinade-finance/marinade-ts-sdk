@@ -33,9 +33,11 @@ import {
   proportionalBN,
 } from './util'
 import {
+  DEFAULT_DIRECTED_STAKE_ROOT,
   DirectedStakeSdk,
   DirectedStakeVoteRecord,
   findVoteRecords,
+  voteRecordAddress,
   withCreateVote,
   withRemoveVote,
   withUpdateVote,
@@ -142,15 +144,24 @@ export class Marinade {
    *
    * @param {web3.PublicKey} userPublicKey - The PublicKey of the user
    */
-  async getUsersVoteRecord(
-    userPublicKey: web3.PublicKey
-  ): Promise<ProgramAccount<DirectedStakeVoteRecord> | undefined> {
+  async getUsersVoteRecord(userPublicKey: web3.PublicKey): Promise<{
+    voteRecord: ProgramAccount<DirectedStakeVoteRecord> | undefined
+    address: web3.PublicKey
+  }> {
+    const address = voteRecordAddress({
+      root: new web3.PublicKey(DEFAULT_DIRECTED_STAKE_ROOT),
+      owner: userPublicKey,
+    }).address
+
     const voteRecords = await findVoteRecords({
       sdk: this.directedStakeSdk,
       owner: userPublicKey,
     })
 
-    return voteRecords.length === 1 ? voteRecords[0] : undefined
+    return {
+      voteRecord: voteRecords.length === 1 ? voteRecords[0] : undefined,
+      address,
+    }
   }
 
   /**
@@ -262,7 +273,7 @@ export class Marinade {
       this.config.publicKey,
       ErrorMessage.NO_PUBLIC_KEY
     )
-    const voteRecord = await this.getUsersVoteRecord(owner)
+    const { voteRecord } = await this.getUsersVoteRecord(owner)
 
     if (!voteRecord) {
       if (validatorVoteAddress) {
