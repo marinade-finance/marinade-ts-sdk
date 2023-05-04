@@ -23,12 +23,16 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
       - name: Install build and pack
         timeout-minutes: 5
         run: |
-          npm ci --no-color --no-progress
-          npm run build
-          npm pack
+          pnpm install
+          pnpm build
+          pnpm pack
         env:
           CI: true
       - uses: ncipollo/release-action@v1
