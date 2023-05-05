@@ -4,6 +4,7 @@ import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 
 export const SYSTEM_PROGRAM_ID = new web3.PublicKey('11111111111111111111111111111111')
 export const STAKE_PROGRAM_ID = new web3.PublicKey('Stake11111111111111111111111111111111111111')
+export const TOKEN_PROGRAM_ID = new web3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
 export const U64_MAX = new BN('ffffffffffffffff', 16)
 
 export function web3PubKeyOrNull(value: ConstructorParameters<typeof web3.PublicKey>[0] | null): web3.PublicKey | null {
