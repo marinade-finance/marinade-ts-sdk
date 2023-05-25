@@ -37,13 +37,13 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.27.0",
     "@marinade.finance/directed-stake-sdk": "^0.0.4",
-    "@solana/spl-token": "^0.3.7",
-    "borsh": "^0.7.0",
-    "bs58": "^5.0.0"
+    "@solana/spl-token": "^0.3.7"
+  },
+  "peerDependencies": {
+    "borsh": "^0.7.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.1",
-    "@types/bs58": "^4.0.1",
     "@types/jest": "^29.5.1",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
