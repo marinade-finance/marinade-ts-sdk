@@ -2,10 +2,10 @@
   "name": "@marinade.finance/marinade-ts-sdk",
   "version": "5.0.0",
   "description": "Marinade SDK for Typescript",
-  "main": "dist/src/index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/marinade-finance/marinade-ts-sdk.git"
+  "repository": "https://github.com/marinade-finance/marinade-ts-sdk",
+  "author": {
+    "name": "Marinade.Finance",
+    "url": "https://marinade.finance/"
   },
   "publishConfig": {
     "access": "public"
