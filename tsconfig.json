@@ -1,13 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "lib": ["es2021"],
-    "target": "ES6",
-    "module": "CommonJS",
+    "module": "es6",
+    "target": "es6",
     "rootDir": ".",
     "outDir": "./dist",
     "moduleResolution": "node",
-    "declaration": true,
     "sourceMap": true,
     "strict": true,
     "esModuleInterop": true,
@@ -16,5 +14,13 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true
   },
+  "ts-node": {
+    // these options are overrides used only by ts-node
+    // same as the --compilerOptions flag and the TS_NODE_COMPILER_OPTIONS environment variable
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "include": ["./src/*"],
   "exclude": ["./dist", "./test"]
 }

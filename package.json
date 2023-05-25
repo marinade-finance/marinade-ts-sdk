@@ -10,13 +10,17 @@
   "publishConfig": {
     "access": "public"
   },
+  "main": "dist/cjs/src/index.js",
+  "types": "dist/esm/src/index.d.ts",
+  "module": "dist/esm/src/index.js",
   "files": [
     "dist"
   ],
-  "type": "commonjs",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "rm -fr dist; npx tsc -b -verbose; npx webpack",
+    "build": "rm -rf dist && pnpm build:node && pnpm build:browser && pnpm webpack",
+    "build:node": " npx tsc -p tsconfig.cjs.json --noEmit false",
+    "build:browser": "npx tsc -p tsconfig.esm.json --noEmit false",
     "clean": "gts clean",
     "prepare": "husky install",
     "pretest": "pnpm lint",
