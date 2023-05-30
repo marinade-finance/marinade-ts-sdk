@@ -2,21 +2,25 @@
   "name": "@marinade.finance/marinade-ts-sdk",
   "version": "5.0.0",
   "description": "Marinade SDK for Typescript",
-  "main": "dist/src/index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/marinade-finance/marinade-ts-sdk.git"
+  "repository": "https://github.com/marinade-finance/marinade-ts-sdk",
+  "author": {
+    "name": "Marinade.Finance",
+    "url": "https://marinade.finance/"
   },
   "publishConfig": {
     "access": "public"
   },
+  "main": "dist/cjs/src/index.js",
+  "types": "dist/esm/src/index.d.ts",
+  "module": "dist/esm/src/index.js",
   "files": [
     "dist"
   ],
-  "type": "commonjs",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "build": "rm -fr dist; npx tsc -b -verbose; npx webpack",
+    "build": "rm -rf dist && pnpm build:node && pnpm build:browser && pnpm webpack",
+    "build:node": " npx tsc -p tsconfig.cjs.json --noEmit false",
+    "build:browser": "npx tsc -p tsconfig.esm.json --noEmit false",
     "clean": "gts clean",
     "prepare": "husky install",
     "pretest": "pnpm lint",
@@ -37,13 +41,13 @@
   "dependencies": {
     "@coral-xyz/anchor": "^0.27.0",
     "@marinade.finance/directed-stake-sdk": "^0.0.4",
-    "@solana/spl-token": "^0.3.7",
-    "borsh": "^0.7.0",
-    "bs58": "^5.0.0"
+    "@solana/spl-token": "^0.3.7"
+  },
+  "peerDependencies": {
+    "borsh": "^0.7.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.1",
-    "@types/bs58": "^4.0.1",
     "@types/jest": "^29.5.1",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
@@ -59,8 +63,8 @@
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.2",
     "typescript": "^5.0.4",
-    "webpack": "^5.81.0",
-    "webpack-cli": "^5.0.2",
+    "webpack": "^5.83.1",
+    "webpack-cli": "^5.1.1",
     "@solana/web3.js": "^1.74.0",
     "bn.js": "^5.2.1",
     "jsbi": "^4.3.0"
