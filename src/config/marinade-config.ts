@@ -21,6 +21,10 @@ export class MarinadeConfig {
     '9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'
   )
 
+  lookupTableAddress = new web3.PublicKey(
+    'DCcQeBaCiYsEsjjmEsSYPCr9o4n174LKqXNDvQT5wVd8'
+  )
+
   connection = new web3.Connection(DEFAULT_PROVIDER_URL)
   publicKey: web3.PublicKey | null = null
 

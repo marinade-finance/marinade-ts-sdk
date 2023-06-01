@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MarinadeConfig } from './config/marinade-config'
 import {
   AnchorProvider,
@@ -8,6 +9,7 @@ import {
 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
+  STAKE_PROGRAM_ID,
   getAssociatedTokenAccountAddress,
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
@@ -17,6 +19,7 @@ import {
   DepositStakeAccountOptions,
   ErrorMessage,
   MarinadeResult,
+  ValidatorStats,
 } from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
@@ -28,9 +31,11 @@ import {
   TicketAccount,
 } from './marinade-state/borsh/ticket-account'
 import {
+  calcLamportsWithdrawAmount,
   computeMsolAmount,
   ParsedStakeAccountInfo,
   proportionalBN,
+  solToLamports,
 } from './util'
 import {
   DEFAULT_DIRECTED_STAKE_ROOT,
@@ -43,6 +48,9 @@ import {
   withUpdateVote,
 } from '@marinade.finance/directed-stake-sdk'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
+import { getStakePoolAccount, withdrawStake } from '@solana/spl-stake-pool'
+import { ValidatorAccount } from '@solana/spl-stake-pool/dist/utils'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) {}
@@ -183,8 +191,8 @@ export class Marinade {
       createAssociateTokenInstruction,
     } = await getOrCreateAssociatedTokenAccount(
       this.provider,
-      marinadeState.lpMintAddress,
-      ownerAddress
+      ownerAddress,
+      marinadeState.lpMintAddress
     )
 
     if (createAssociateTokenInstruction) {
@@ -740,6 +748,190 @@ export class Marinade {
     const transaction = new web3.Transaction().add(claimInstruction)
 
     return {
+      transaction,
+    }
+  }
+
+  selectSpecificValidator(
+    a: ValidatorAccount,
+    b: ValidatorAccount,
+    validators: Set<string>
+  ) {
+    const scoredValidatorA = a.voteAddress
+      ? validators.has(a.voteAddress.toString())
+      : false
+    const scoredValidatorB = b.voteAddress
+      ? validators.has(b.voteAddress.toString())
+      : false
+    return (
+      (scoredValidatorB ? b.lamports : 0) - (scoredValidatorA ? a.lamports : 0)
+    )
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Liquidate an amount of stake pool tokens.
+   *
+   * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
+   * @param {BN} amountToLiquidate - Amount to liquidate
+   */
+  async liquidateStakePoolToken(
+    stakePoolTokenAddress: web3.PublicKey,
+    amountToLiquidate: number,
+    validators: ValidatorStats[]
+  ): Promise<MarinadeResult.LiquidateStakePoolToken> {
+    const marinadeState = await this.getMarinadeState()
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+
+    const lookupTable = (
+      await this.config.connection.getAddressLookupTable(
+        this.config.lookupTableAddress
+      )
+    ).value
+    if (!lookupTable) {
+      throw new Error('Failed to load the lookup table')
+    }
+
+    const { blockhash: recentBlockhash } =
+      await this.config.connection.getLatestBlockhash('finalized')
+
+    const instructions: web3.TransactionInstruction[] = []
+
+    const validatorSet = new Set(
+      validators.filter(v => v.score).map(v => v.vote_account)
+    )
+    const withdrawTx = await withdrawStake(
+      this.provider.connection,
+      stakePoolTokenAddress,
+      ownerAddress,
+      amountToLiquidate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      (a: any, b: any) => this.selectSpecificValidator(a, b, validatorSet)
+    )
+
+    const stakePool = await getStakePoolAccount(
+      this.provider.connection,
+      stakePoolTokenAddress
+    )
+    const solValue = calcLamportsWithdrawAmount(
+      stakePool.account.data,
+      solToLamports(amountToLiquidate)
+    )
+
+    const withdrawalFee =
+      solValue *
+      (stakePool.account.data.stakeWithdrawalFee.numerator
+        .mul(new BN(1e6))
+        .div(stakePool.account.data.stakeWithdrawalFee.denominator)
+        .toNumber() /
+        1e6)
+    const mSolAmountToReceive = computeMsolAmount(
+      new BN(solValue - withdrawalFee),
+      marinadeState
+    )
+
+    instructions.push(...withdrawTx.instructions)
+    const withdrawTxAccounts = withdrawTx.instructions.flatMap(
+      (i: { keys: { pubkey: { toString: () => any } }[] }) =>
+        i.keys.map((k: { pubkey: { toString: () => any } }) =>
+          k.pubkey.toString()
+        )
+    )
+
+    const excludedAccounts = [
+      web3.SYSVAR_CLOCK_PUBKEY.toString(),
+      STAKE_PROGRAM_ID.toString(),
+      TOKEN_PROGRAM_ID.toString(),
+    ]
+    const uniqueAccounts = withdrawTxAccounts.filter(
+      (value: any, index: any, self: string | any[]) => {
+        return (
+          self.indexOf(value) === index &&
+          self.lastIndexOf(value) === index &&
+          !excludedAccounts.includes(value)
+        )
+      }
+    )
+
+    let originValidatorAddress = ''
+    await Promise.all(
+      uniqueAccounts.map(async (acc: web3.PublicKeyInitData) => {
+        try {
+          const accountInfo = await getParsedStakeAccountInfo(
+            this.provider,
+            new web3.PublicKey(acc)
+          )
+          if (accountInfo.voterAddress)
+            originValidatorAddress = accountInfo.voterAddress.toString()
+        } catch {
+          /* empty */
+        }
+      })
+    )
+
+    const {
+      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
+      createAssociateTokenInstruction,
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      ownerAddress
+    )
+
+    if (createAssociateTokenInstruction) {
+      instructions.push(createAssociateTokenInstruction)
+    }
+
+    const duplicationFlag = await marinadeState.validatorDuplicationFlag(
+      new web3.PublicKey(originValidatorAddress)
+    )
+    const { validatorRecords } = await marinadeState.getValidatorRecords()
+    const validatorLookupIndex = validatorRecords.findIndex(
+      ({ validatorAccount }) =>
+        validatorAccount.equals(new web3.PublicKey(originValidatorAddress))
+    )
+    const validatorIndex =
+      validatorLookupIndex === -1
+        ? marinadeState.state.validatorSystem.validatorList.count
+        : validatorLookupIndex
+
+    const depositInstruction =
+      await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
+        validatorIndex,
+        marinadeState,
+        duplicationFlag,
+        ownerAddress,
+        stakeAccountAddress: withdrawTx.signers[1].publicKey,
+        authorizedWithdrawerAddress: ownerAddress,
+        associatedMSolTokenAccountAddress,
+      })
+
+    const liquidUnstakeInstruction =
+      await this.marinadeFinanceProgram.liquidUnstakeInstructionBuilder({
+        amountLamports: mSolAmountToReceive,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+      })
+    instructions.push(depositInstruction)
+    instructions.push(liquidUnstakeInstruction)
+
+    const transactionMessage = new web3.TransactionMessage({
+      payerKey: ownerAddress,
+      recentBlockhash,
+      instructions,
+    }).compileToV0Message([lookupTable])
+    const transaction = new web3.VersionedTransaction(transactionMessage)
+    transaction.sign(withdrawTx.signers)
+
+    return {
+      associatedMSolTokenAccountAddress,
       transaction,
     }
   }

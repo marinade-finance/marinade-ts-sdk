@@ -48,6 +48,11 @@ export namespace MarinadeResult {
   export interface Claim {
     transaction: web3.Transaction
   }
+
+  export interface LiquidateStakePoolToken {
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    transaction: web3.VersionedTransaction
+  }
 }
 
 export interface DepositOptions {
@@ -66,4 +71,20 @@ export interface DepositStakeAccountOptions {
    * The vote address of the validator to direct your stake to.
    */
   directToValidatorVoteAddress?: web3.PublicKey
+}
+
+export interface ValidatorStats {
+  identity: string
+  vote_account: string
+  info_name?: string
+  info_url: string
+  info_keybase?: string
+  version: string
+  decentralizer_stake: string
+  superminority: boolean
+  credits: number
+  score: number
+  epochs_count: number
+  avg_apy?: number
+  avg_uptime_pct?: number
 }

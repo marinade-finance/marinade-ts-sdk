@@ -3,7 +3,7 @@ import {
   createAssociatedTokenAccountInstruction,
   getAccount,
   TokenError,
-} from '@solana/spl-token'
+} from '@solana/spl-token-3.x'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 
 export const SYSTEM_PROGRAM_ID = web3.SystemProgram.programId

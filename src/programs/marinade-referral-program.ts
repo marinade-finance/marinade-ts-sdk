@@ -1,5 +1,5 @@
 import { BN, Program, Provider, web3 } from '@coral-xyz/anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
 import { MarinadeState } from '../marinade-state/marinade-state'
 import { MarinadeReferralStateResponse } from '../marinade-referral-state/marinade-referral-state.types'
 import { Marinade } from '../marinade'
