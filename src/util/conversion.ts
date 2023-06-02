@@ -35,11 +35,6 @@ export function calcLamportsWithdrawAmount(
   stakePool: StakePool,
   poolTokens: BN
 ): number {
-  console.log(
-    poolTokens.toString(),
-    stakePool.totalLamports.toString(),
-    stakePool.poolTokenSupply.toString()
-  )
   const numerator = poolTokens.mul(stakePool.totalLamports)
   const denominator = stakePool.poolTokenSupply
   if (numerator.lt(denominator)) {
