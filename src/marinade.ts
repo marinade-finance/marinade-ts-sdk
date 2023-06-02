@@ -9,7 +9,6 @@ import {
 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
-  STAKE_PROGRAM_ID,
   getAssociatedTokenAccountAddress,
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
@@ -31,11 +30,9 @@ import {
   TicketAccount,
 } from './marinade-state/borsh/ticket-account'
 import {
-  calcLamportsWithdrawAmount,
   computeMsolAmount,
   ParsedStakeAccountInfo,
   proportionalBN,
-  solToLamports,
 } from './util'
 import {
   DEFAULT_DIRECTED_STAKE_ROOT,
@@ -48,9 +45,12 @@ import {
   withUpdateVote,
 } from '@marinade.finance/directed-stake-sdk'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
-import { getStakePoolAccount, withdrawStake } from '@solana/spl-stake-pool'
-import { ValidatorAccount } from '@solana/spl-stake-pool/dist/utils'
+import { withdrawStake } from '@solana/spl-stake-pool'
+import {
+  computeExpectedSOL,
+  identifyValidatorFromTx,
+  selectSpecificValidator,
+} from './util/stake-pool-helpers'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) {}
@@ -752,28 +752,12 @@ export class Marinade {
     }
   }
 
-  selectSpecificValidator(
-    a: ValidatorAccount,
-    b: ValidatorAccount,
-    validators: Set<string>
-  ) {
-    const scoredValidatorA = a.voteAddress
-      ? validators.has(a.voteAddress.toString())
-      : false
-    const scoredValidatorB = b.voteAddress
-      ? validators.has(b.voteAddress.toString())
-      : false
-    return (
-      (scoredValidatorB ? b.lamports : 0) - (scoredValidatorA ? a.lamports : 0)
-    )
-  }
-
   /**
    * Returns a transaction with the instructions to
    * Deposit an amount of stake pool tokens.
    *
    * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be deposited
-   * @param {BN} amountToDeposit - Amount to deposit
+   * @param {number} amountToDeposit - Amount to deposit
    * @param {ValidatorStats[]} validators - List of validators to prio where to take the stake from
    */
   async depositStakePoolToken(
@@ -813,47 +797,10 @@ export class Marinade {
       undefined,
       undefined,
       undefined,
-      (a: any, b: any) => this.selectSpecificValidator(a, b, validatorSet)
+      (a: any, b: any) => selectSpecificValidator(a, b, validatorSet)
     )
 
     instructions.push(...withdrawTx.instructions)
-    const withdrawTxAccounts = withdrawTx.instructions.flatMap(
-      (i: { keys: { pubkey: { toString: () => any } }[] }) =>
-        i.keys.map((k: { pubkey: { toString: () => any } }) =>
-          k.pubkey.toString()
-        )
-    )
-
-    const excludedAccounts = [
-      web3.SYSVAR_CLOCK_PUBKEY.toString(),
-      STAKE_PROGRAM_ID.toString(),
-      TOKEN_PROGRAM_ID.toString(),
-    ]
-    const uniqueAccounts = withdrawTxAccounts.filter(
-      (value: any, index: any, self: string | any[]) => {
-        return (
-          self.indexOf(value) === index &&
-          self.lastIndexOf(value) === index &&
-          !excludedAccounts.includes(value)
-        )
-      }
-    )
-
-    let originValidatorAddress = ''
-    await Promise.all(
-      uniqueAccounts.map(async (acc: web3.PublicKeyInitData) => {
-        try {
-          const accountInfo = await getParsedStakeAccountInfo(
-            this.provider,
-            new web3.PublicKey(acc)
-          )
-          if (accountInfo.voterAddress)
-            originValidatorAddress = accountInfo.voterAddress.toString()
-        } catch {
-          /* empty */
-        }
-      })
-    )
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
@@ -868,18 +815,11 @@ export class Marinade {
       instructions.push(createAssociateTokenInstruction)
     }
 
-    const duplicationFlag = await marinadeState.validatorDuplicationFlag(
-      new web3.PublicKey(originValidatorAddress)
+    const { duplicationFlag, validatorIndex } = await identifyValidatorFromTx(
+      withdrawTx.instructions,
+      this.provider,
+      marinadeState
     )
-    const { validatorRecords } = await marinadeState.getValidatorRecords()
-    const validatorLookupIndex = validatorRecords.findIndex(
-      ({ validatorAccount }) =>
-        validatorAccount.equals(new web3.PublicKey(originValidatorAddress))
-    )
-    const validatorIndex =
-      validatorLookupIndex === -1
-        ? marinadeState.state.validatorSystem.validatorList.count
-        : validatorLookupIndex
 
     const depositInstruction =
       await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
@@ -913,7 +853,7 @@ export class Marinade {
    * Liquidate an amount of stake pool tokens.
    *
    * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
-   * @param {BN} amountToLiquidate - Amount to liquidate
+   * @param {number} amountToLiquidate - Amount to liquidate
    * @param {ValidatorStats[]} validators - List of validators to prio where to take the stake from
    */
   async liquidateStakePoolToken(
@@ -953,68 +893,21 @@ export class Marinade {
       undefined,
       undefined,
       undefined,
-      (a: any, b: any) => this.selectSpecificValidator(a, b, validatorSet)
+      (a: any, b: any) => selectSpecificValidator(a, b, validatorSet)
     )
 
-    const stakePool = await getStakePoolAccount(
-      this.provider.connection,
+    const expectedSOL = await computeExpectedSOL(
+      amountToLiquidate,
+      this.config.connection,
       stakePoolTokenAddress
     )
-    const solValue = calcLamportsWithdrawAmount(
-      stakePool.account.data,
-      solToLamports(amountToLiquidate)
-    )
 
-    const withdrawalFee =
-      solValue *
-      (stakePool.account.data.stakeWithdrawalFee.numerator
-        .mul(new BN(1e6))
-        .div(stakePool.account.data.stakeWithdrawalFee.denominator)
-        .toNumber() /
-        1e6)
     const mSolAmountToReceive = computeMsolAmount(
-      new BN(solValue - withdrawalFee),
+      new BN(expectedSOL),
       marinadeState
     )
 
     instructions.push(...withdrawTx.instructions)
-    const withdrawTxAccounts = withdrawTx.instructions.flatMap(
-      (i: { keys: { pubkey: { toString: () => any } }[] }) =>
-        i.keys.map((k: { pubkey: { toString: () => any } }) =>
-          k.pubkey.toString()
-        )
-    )
-
-    const excludedAccounts = [
-      web3.SYSVAR_CLOCK_PUBKEY.toString(),
-      STAKE_PROGRAM_ID.toString(),
-      TOKEN_PROGRAM_ID.toString(),
-    ]
-    const uniqueAccounts = withdrawTxAccounts.filter(
-      (value: any, index: any, self: string | any[]) => {
-        return (
-          self.indexOf(value) === index &&
-          self.lastIndexOf(value) === index &&
-          !excludedAccounts.includes(value)
-        )
-      }
-    )
-
-    let originValidatorAddress = ''
-    await Promise.all(
-      uniqueAccounts.map(async (acc: web3.PublicKeyInitData) => {
-        try {
-          const accountInfo = await getParsedStakeAccountInfo(
-            this.provider,
-            new web3.PublicKey(acc)
-          )
-          if (accountInfo.voterAddress)
-            originValidatorAddress = accountInfo.voterAddress.toString()
-        } catch {
-          /* empty */
-        }
-      })
-    )
 
     const {
       associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
@@ -1029,18 +922,11 @@ export class Marinade {
       instructions.push(createAssociateTokenInstruction)
     }
 
-    const duplicationFlag = await marinadeState.validatorDuplicationFlag(
-      new web3.PublicKey(originValidatorAddress)
+    const { duplicationFlag, validatorIndex } = await identifyValidatorFromTx(
+      withdrawTx.instructions,
+      this.provider,
+      marinadeState
     )
-    const { validatorRecords } = await marinadeState.getValidatorRecords()
-    const validatorLookupIndex = validatorRecords.findIndex(
-      ({ validatorAccount }) =>
-        validatorAccount.equals(new web3.PublicKey(originValidatorAddress))
-    )
-    const validatorIndex =
-      validatorLookupIndex === -1
-        ? marinadeState.state.validatorSystem.validatorList.count
-        : validatorLookupIndex
 
     const depositInstruction =
       await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
