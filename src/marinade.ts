@@ -51,6 +51,7 @@ import {
   identifyValidatorFromTx,
   selectSpecificValidator,
 } from './util/stake-pool-helpers'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) {}
@@ -780,6 +781,17 @@ export class Marinade {
       throw new Error('Failed to load the lookup table')
     }
 
+    const expectedSOL = await computeExpectedSOL(
+      amountToDeposit,
+      this.config.connection,
+      stakePoolTokenAddress
+    )
+
+    // Due to our contract 1 SOL limit for Stake accounts we can't accept less than equivalent of 1 SOL
+    if (expectedSOL / LAMPORTS_PER_SOL < 1) {
+      throw new Error("Can't convert less than equivalent of 1 SOL")
+    }
+
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')
 
@@ -901,6 +913,11 @@ export class Marinade {
       this.config.connection,
       stakePoolTokenAddress
     )
+
+    // Due to our contract 1 SOL limit for Stake accounts we can't accept less than equivalent of 1 SOL
+    if (expectedSOL / LAMPORTS_PER_SOL < 1) {
+      throw new Error("Can't convert less than equivalent of 1 SOL")
+    }
 
     let mSolAmountToReceive = computeMsolAmount(
       new BN(expectedSOL),
