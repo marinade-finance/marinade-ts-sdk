@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
         # TODO: what's better place for this test base docker image?
-        image: docker.io/ochaloup/solana-test-validator:1.14.18
+        image: docker.io/ochaloup/solana-test-validator:1.14.18-2
         options: --user root
     timeout-minutes: 15
 
@@ -17,17 +17,14 @@ jobs:
         node-version: [16]
 
     steps:
-      - name: Info on AVM
+      - name: Link AVM, solana .config, check versions
         run: |
           ln -s /root/.avm $HOME/
-          avm list
+          mkdir -p $HOME/.config
+          ln -s /root/.config/solana $HOME/.config/
           avm use 0.28.0
           anchor --version
-      - name: Setup cluster and generate keypair
-        run: |
-          solana-keygen new --no-bip39-passphrase
-          solana config set --url http:localhost:8899
-          solana config get
+          solana --version
 
 
       - uses: actions/checkout@v1
@@ -39,7 +36,7 @@ jobs:
         uses: pnpm/action-setup@v2
         with:
           version: 7
-      - name: Install, build and integration tests
+      - name: Install, build and run integration tests
         timeout-minutes: 5
         run: |
           pnpm install

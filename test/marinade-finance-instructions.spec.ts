@@ -297,7 +297,6 @@ describe('Marinade Finance', () => {
         activatedAtLeastFor: 2,
       })
 
-      // Make sure stake account still exist, if this test is included
       const { transaction } = await marinade.liquidateStakeAccount(
         TestWorld.STAKE_ACCOUNT.publicKey
       )

@@ -11,7 +11,7 @@ See expected program ids and global states of the programs at
 
 ## Testing
 
-The tests consist of two parts - unit tests and integration tests.
+The tests consist of two parts - `unit tests` and `integration tests`.
 
 ### Unit testing
 
@@ -27,16 +27,19 @@ They require installation of
 [solana tool suite](https://docs.solana.com/cli/install-solana-cli-tools) and [anchor cli](https://www.anchor-lang.com/docs/installation)
 at localhost.
 
-The `solana-test-validator` is launched through `anchor` CLI tooling at the start of test execution.
+The `solana-test-validator` is launched through `anchor` CLI tooling at the start of the test execution.
 Anchor of version `0.28.0` or higher is required.
 
-The `solana-test-validator` is configured via [`Anchor.toml`](./Anchor.toml) where contract programs are loaded from `.so`
-files from [`fixtures/programs`](./fixtures/programs/).
-In the same way there are defined accounts loaded at the `solana-test-validator` start-up.
+The `solana-test-validator` is configured via [`Anchor.toml`](./Anchor.toml).
+The contract programs are loaded from `.so` files from [`fixtures/programs`](./fixtures/programs/).
+In the same way the Solana test accounts are loaded from [`fixtures/solana-accounts`](./fixtures/solana-accounts/)
+at the solana test validator start-up.
 
-**NOTE:** the `solana-test-validator` command startup arguments can be verified at `.anchor/test-ledger/validator.log`
-          after integration tests are started
+The integration tests are located at `./test/**`.
 
-For integration tests running at the Github actions there is created a Docker image
-specified by docker file at [`.github/docker`](./.github/docker/Dockerfile) that setup the solana and Anchor
-that is then used by the actions
+**NOTE:** the `solana-test-validator` command arguments can be verified at `.anchor/test-ledger/validator.log`
+          (after integration tests are started)
+
+Integration tests are expected to be run within the Github actions.
+A Docker image containing the pre-installed solana toolchain and anchor
+is pushed into Marinade docker repository as `` **TODO:**.
