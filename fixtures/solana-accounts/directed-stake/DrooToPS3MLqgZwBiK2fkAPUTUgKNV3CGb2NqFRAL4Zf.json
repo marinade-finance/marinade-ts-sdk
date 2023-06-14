@@ -1,0 +1,13 @@
+{
+  "pubkey": "DrooToPS3MLqgZwBiK2fkAPUTUgKNV3CGb2NqFRAL4Zf",
+  "account": {
+    "lamports": 1002240,
+    "data": [
+      "Lp+DJfVUBQkDAAAAAAAAAA==",
+      "base64"
+    ],
+    "owner": "dstK1PDHNoKN9MdmftRzsEbXP5T1FTBiQBm1Ee3meVd",
+    "executable": false,
+    "rentEpoch": 0
+  }
+}

@@ -1,0 +1,49 @@
+name: Integration tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+        # TODO: what's better place for this test base docker image?
+        image: docker.io/ochaloup/solana-test-validator:1.14.18
+        options: --user root
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [16]
+
+    steps:
+      - name: Info on AVM
+        run: |
+          ln -s /root/.avm $HOME/
+          avm list
+          avm use 0.28.0
+          anchor --version
+      - name: Setup cluster and generate keypair
+        run: |
+          solana-keygen new --no-bip39-passphrase
+          solana config set --url http:localhost:8899
+          solana config get
+
+
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - name: Install, build and integration tests
+        timeout-minutes: 5
+        run: |
+          pnpm install
+          pnpm build
+          pnpm test:integration
+        env:
+          CI: true

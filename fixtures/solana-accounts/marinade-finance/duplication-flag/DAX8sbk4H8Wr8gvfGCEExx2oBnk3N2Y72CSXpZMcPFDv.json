@@ -1,0 +1,13 @@
+{
+  "pubkey": "DAX8sbk4H8Wr8gvfGCEExx2oBnk3N2Y72CSXpZMcPFDv",
+  "account": {
+    "lamports": 890880,
+    "data": [
+      "",
+      "base64"
+    ],
+    "owner": "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD",
+    "executable": false,
+    "rentEpoch": 0
+  }
+}

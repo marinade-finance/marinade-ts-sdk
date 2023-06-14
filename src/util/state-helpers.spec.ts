@@ -91,7 +91,7 @@ describe('state-helpers', () => {
   describe('computeMsolAmount', () => {
     it('apply napkin math', async () => {
       const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
+        connection: TestWorld.CONNECTION_DEVNET,
         publicKey: TestWorld.SDK_USER.publicKey,
       })
       const marinade = new Marinade(config)

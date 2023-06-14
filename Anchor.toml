@@ -1,0 +1,47 @@
+# There is no contract in this repository
+# This file is used only as configuration file when starting localhost test validator
+
+[features]
+seeds = false
+skip-lint = false
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+# 'recursive' call: pnpm test:integration -> anchor test (to Anchor.toml)  -> pnpm _test:integration
+test = "pnpm _test:integration"
+
+[[test.genesis]]
+address = "MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD"
+program = "fixtures/programs/marinade_finance.so"
+
+[[test.genesis]]
+address = "MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv"
+program = "fixtures/programs/marinade_referral.so"
+
+[[test.genesis]]
+address = "dstK1PDHNoKN9MdmftRzsEbXP5T1FTBiQBm1Ee3meVd"
+program = "fixtures/programs/directed_stake.so"
+
+[test.validator]
+slots_per_epoch = "32"
+
+[[test.validator.account_dir]]
+directory = "fixtures/solana-accounts/"
+
+[[test.validator.account_dir]]
+directory = "fixtures/solana-accounts/marinade-referral"
+
+[[test.validator.account_dir]]
+directory = "fixtures/solana-accounts/marinade-finance"
+
+[[test.validator.account_dir]]
+directory = "fixtures/solana-accounts/marinade-finance/duplication-flag"
+
+[[test.validator.account_dir]]
+directory = "fixtures/solana-accounts/marinade-finance/vote-account"
+
+[[test.validator.account_dir]]
+directory = "fixtures/solana-accounts/directed-stake"

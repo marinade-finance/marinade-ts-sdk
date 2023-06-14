@@ -1,16 +1,18 @@
-import { web3 } from '@coral-xyz/anchor'
-
 import { Marinade, MarinadeConfig, MarinadeUtils } from '../src'
 import * as TestWorld from './test-world'
 
-const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2)
-
 describe('Marinade Referral', () => {
+  // adding MSOL liquidity as setup of all tests
   beforeAll(async () => {
-    await TestWorld.provideMinimumLamportsBalance(
-      TestWorld.SDK_USER.publicKey,
-      MINIMUM_LAMPORTS_BEFORE_TEST
+    const config = new MarinadeConfig({
+      connection: TestWorld.CONNECTION,
+      publicKey: TestWorld.SDK_USER.publicKey,
+    })
+    const marinade = new Marinade(config)
+    const { transaction: liqTx } = await marinade.addLiquidity(
+      MarinadeUtils.solToLamports(100)
     )
+    await TestWorld.PROVIDER.sendAndConfirm(liqTx)
   })
 
   describe('deposit', () => {
@@ -26,7 +28,9 @@ describe('Marinade Referral', () => {
         MarinadeUtils.solToLamports(1)
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
-        transaction
+        transaction,
+        [],
+        { commitment: 'confirmed' }
       )
       console.log('Deposit tx:', transactionSignature)
     })
@@ -59,9 +63,13 @@ describe('Marinade Referral', () => {
       })
       const marinade = new Marinade(config)
 
-      // Make sure stake account still exist, if this test is included
+      await TestWorld.waitForStakeAccountActivation({
+        connection: TestWorld.CONNECTION,
+        stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
+        activatedAtLeastFor: 2,
+      })
       const { transaction } = await marinade.liquidateStakeAccount(
-        new web3.PublicKey('FPFQJ7SNx2ZgpJ4nSuqzAhpofDdKMxN9sT8FDXpxGxng')
+        TestWorld.STAKE_ACCOUNT.publicKey
       )
 
       const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =

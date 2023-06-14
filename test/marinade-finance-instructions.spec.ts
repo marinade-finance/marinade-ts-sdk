@@ -7,14 +7,17 @@ import {
   findVoteRecords,
 } from '@marinade.finance/directed-stake-sdk'
 
-const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
-
 describe('Marinade Finance', () => {
   beforeAll(async () => {
-    await TestWorld.provideMinimumLamportsBalance(
-      TestWorld.SDK_USER.publicKey,
-      MINIMUM_LAMPORTS_BEFORE_TEST
+    const config = new MarinadeConfig({
+      connection: TestWorld.CONNECTION,
+      publicKey: TestWorld.SDK_USER.publicKey,
+    })
+    const marinade = new Marinade(config)
+    const { transaction: liqTx } = await marinade.addLiquidity(
+      MarinadeUtils.solToLamports(100)
     )
+    await TestWorld.PROVIDER.sendAndConfirm(liqTx)
   })
 
   describe('deposit', () => {
@@ -40,15 +43,12 @@ describe('Marinade Finance', () => {
 
     it('deposits SOL, only creates ATA when necessary', async () => {
       const newAccount = new web3.Keypair()
-      await TestWorld.provideMinimumLamportsBalance(
-        newAccount.publicKey,
-        MarinadeUtils.solToLamports(2.5)
-      )
+      await TestWorld.transferMinimumLamportsBalance(newAccount.publicKey)
 
       const provider = new AnchorProvider(
         TestWorld.CONNECTION,
         new Wallet(newAccount),
-        { commitment: 'finalized' }
+        { commitment: 'confirmed' }
       )
 
       const anotherAccount = web3.Keypair.generate()
@@ -94,9 +94,8 @@ describe('Marinade Finance', () => {
     })
 
     it('deposit SOL and direct the stake', async () => {
-      const validatorVoteAddress = new web3.PublicKey(
-        '5MMCR4NbTZqjthjLGywmeT66iwE9J9f7kjtxzJjwfUx2'
-      )
+      const validatorVoteAddress =
+        await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
         publicKey: TestWorld.SDK_USER.publicKey,
@@ -118,11 +117,17 @@ describe('Marinade Finance', () => {
         MarinadeUtils.solToLamports(0.01),
         { directToValidatorVoteAddress: validatorVoteAddress }
       )
-      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
-        transaction,
-        [],
-        { commitment: 'finalized' }
-      )
+      let transactionSignature: string
+      try {
+        transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
+          transaction,
+          [],
+          { commitment: 'confirmed' }
+        )
+      } catch (e) {
+        console.log(e)
+        throw e
+      }
       console.log(
         'Deposit tx:',
         transactionSignature,
@@ -140,9 +145,8 @@ describe('Marinade Finance', () => {
     })
 
     it('deposit SOL and redirect the stake', async () => {
-      const validatorVoteAddress2 = new web3.PublicKey(
-        '5ZWgXcyqrrNpQHCme5SdC5hCeYb2o3fEJhF7Gok3bTVN'
-      )
+      const validatorVoteAddress2 =
+        await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
       const config = new MarinadeConfig({
         connection: TestWorld.CONNECTION,
         publicKey: TestWorld.SDK_USER.publicKey,
@@ -167,7 +171,7 @@ describe('Marinade Finance', () => {
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
         [],
-        { commitment: 'finalized' }
+        { commitment: 'confirmed' }
       )
       console.log(
         'Deposit tx:',
@@ -209,7 +213,7 @@ describe('Marinade Finance', () => {
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
         [],
-        { commitment: 'finalized' }
+        { commitment: 'confirmed' }
       )
       console.log(
         'Deposit tx:',
@@ -255,9 +259,16 @@ describe('Marinade Finance', () => {
       })
       const marinade = new Marinade(config)
 
-      // Make sure stake account still exist, if this test is included
+      // for a validator could be deposited, it must be activated for at least 2 epochs
+      // i.e., "error: Deposited stake <pubkey> is not activated yet. Wait for #2 epoch"
+      await TestWorld.waitForStakeAccountActivation({
+        stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
+        connection: TestWorld.CONNECTION,
+        activatedAtLeastFor: 2,
+      })
+
       const { transaction } = await marinade.depositStakeAccount(
-        new web3.PublicKey('AtL1WfGDuyB2NvnqvuMuwJu4QwtiLyAhoczH5ESy7kNZ')
+        TestWorld.STAKE_ACCOUNT.publicKey
       )
 
       const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =
@@ -270,6 +281,7 @@ describe('Marinade Finance', () => {
     })
   })
 
+  // this tests is dependent on being called after `deposits stake account (simulate)`
   describe('liquidateStakeAccount', () => {
     it('liquidates stake account (simulate)', async () => {
       const config = new MarinadeConfig({
@@ -278,9 +290,16 @@ describe('Marinade Finance', () => {
       })
       const marinade = new Marinade(config)
 
+      // for a validator could be liquidated, it must be activated for at least 2 epochs
+      await TestWorld.waitForStakeAccountActivation({
+        stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
+        connection: TestWorld.CONNECTION,
+        activatedAtLeastFor: 2,
+      })
+
       // Make sure stake account still exist, if this test is included
       const { transaction } = await marinade.liquidateStakeAccount(
-        new web3.PublicKey('7Pi7ye5SaKMFp1J6W4kygmAYYhotwoRLTk67Z1kcCcv4')
+        TestWorld.STAKE_ACCOUNT.publicKey
       )
       const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =
         await TestWorld.simulateTransaction(transaction)
