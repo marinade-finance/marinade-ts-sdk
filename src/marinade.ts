@@ -792,9 +792,6 @@ export class Marinade {
       throw new Error("Can't convert less than equivalent of 1 SOL")
     }
 
-    const { blockhash: recentBlockhash } =
-      await this.config.connection.getLatestBlockhash('finalized')
-
     const instructions: web3.TransactionInstruction[] = []
 
     const validatorSet = new Set(
@@ -834,17 +831,22 @@ export class Marinade {
     )
 
     const depositInstruction =
-      await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
-        validatorIndex,
-        marinadeState,
-        duplicationFlag,
-        ownerAddress,
-        stakeAccountAddress: withdrawTx.signers[1].publicKey,
-        authorizedWithdrawerAddress: ownerAddress,
-        associatedMSolTokenAccountAddress,
-      })
+      await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
+        {
+          validatorIndex,
+          marinadeState,
+          duplicationFlag,
+          ownerAddress,
+          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          authorizedWithdrawerAddress: ownerAddress,
+          associatedMSolTokenAccountAddress,
+        }
+      )
 
     instructions.push(depositInstruction)
+
+    const { blockhash: recentBlockhash } =
+      await this.config.connection.getLatestBlockhash('finalized')
 
     const transactionMessage = new web3.TransactionMessage({
       payerKey: ownerAddress,
@@ -887,9 +889,6 @@ export class Marinade {
     if (!lookupTable) {
       throw new Error('Failed to load the lookup table')
     }
-
-    const { blockhash: recentBlockhash } =
-      await this.config.connection.getLatestBlockhash('finalized')
 
     const instructions: web3.TransactionInstruction[] = []
 
@@ -959,15 +958,17 @@ export class Marinade {
     )
 
     const depositInstruction =
-      await this.marinadeFinanceProgram.depositStakeAccountInstructionBuilder({
-        validatorIndex,
-        marinadeState,
-        duplicationFlag,
-        ownerAddress,
-        stakeAccountAddress: withdrawTx.signers[1].publicKey,
-        authorizedWithdrawerAddress: ownerAddress,
-        associatedMSolTokenAccountAddress,
-      })
+      await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
+        {
+          validatorIndex,
+          marinadeState,
+          duplicationFlag,
+          ownerAddress,
+          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          authorizedWithdrawerAddress: ownerAddress,
+          associatedMSolTokenAccountAddress,
+        }
+      )
 
     const liquidUnstakeInstruction =
       await this.marinadeFinanceProgram.liquidUnstakeInstructionBuilder({
@@ -978,6 +979,9 @@ export class Marinade {
       })
     instructions.push(depositInstruction)
     instructions.push(liquidUnstakeInstruction)
+
+    const { blockhash: recentBlockhash } =
+      await this.config.connection.getLatestBlockhash('finalized')
 
     const transactionMessage = new web3.TransactionMessage({
       payerKey: ownerAddress,
