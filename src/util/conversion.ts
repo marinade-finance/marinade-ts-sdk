@@ -1,4 +1,5 @@
 import { BN } from '@coral-xyz/anchor'
+import { StakePool } from '@solana/spl-stake-pool'
 
 const SOL_DECIMALS = 9
 
@@ -18,4 +19,26 @@ export function lamportsToSol(bn: BN): number {
 
 export function solToLamports(amountSol: number): BN {
   return new BN(amountSol.toFixed(SOL_DECIMALS).replace('.', ''))
+}
+
+export function divideBnToNumber(numerator: BN, denominator: BN): number {
+  if (denominator.isZero()) {
+    return 0
+  }
+  const quotient = numerator.div(denominator).toNumber()
+  const rem = numerator.umod(denominator)
+  const gcd = rem.gcd(denominator)
+  return quotient + rem.div(gcd).toNumber() / denominator.div(gcd).toNumber()
+}
+
+export function calcLamportsWithdrawAmount(
+  stakePool: StakePool,
+  poolTokens: BN
+): number {
+  const numerator = poolTokens.mul(stakePool.totalLamports)
+  const denominator = stakePool.poolTokenSupply
+  if (numerator.lt(denominator)) {
+    return 0
+  }
+  return divideBnToNumber(numerator, denominator)
 }

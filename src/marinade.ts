@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MarinadeConfig } from './config/marinade-config'
 import {
   AnchorProvider,
@@ -17,6 +18,7 @@ import {
   DepositStakeAccountOptions,
   ErrorMessage,
   MarinadeResult,
+  ValidatorStats,
 } from './marinade.types'
 import { MarinadeFinanceProgram } from './programs/marinade-finance-program'
 import { MarinadeReferralProgram } from './programs/marinade-referral-program'
@@ -43,6 +45,13 @@ import {
   withUpdateVote,
 } from '@marinade.finance/directed-stake-sdk'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
+import { withdrawStake } from '@solana/spl-stake-pool'
+import {
+  computeExpectedSOL,
+  identifyValidatorFromTx,
+  selectSpecificValidator,
+} from './util/stake-pool-helpers'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) {}
@@ -183,8 +192,8 @@ export class Marinade {
       createAssociateTokenInstruction,
     } = await getOrCreateAssociatedTokenAccount(
       this.provider,
-      marinadeState.lpMintAddress,
-      ownerAddress
+      ownerAddress,
+      marinadeState.lpMintAddress
     )
 
     if (createAssociateTokenInstruction) {
@@ -740,6 +749,258 @@ export class Marinade {
     const transaction = new web3.Transaction().add(claimInstruction)
 
     return {
+      transaction,
+    }
+  }
+
+  /**
+   * @beta
+   *
+   * Returns a transaction with the instructions to
+   * Deposit an amount of stake pool tokens.
+   *
+   * This method is in beta stage. It may be changed or removed in future versions.
+   *
+   * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be deposited
+   * @param {number} amountToDeposit - Amount to deposit
+   * @param {ValidatorStats[]} validators - List of validators to prio where to take the stake from
+   */
+  async depositStakePoolToken(
+    stakePoolTokenAddress: web3.PublicKey,
+    amountToDeposit: number,
+    validators: ValidatorStats[]
+  ): Promise<MarinadeResult.LiquidateStakePoolToken> {
+    const marinadeState = await this.getMarinadeState()
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+
+    const lookupTable = (
+      await this.config.connection.getAddressLookupTable(
+        this.config.lookupTableAddress
+      )
+    ).value
+    if (!lookupTable) {
+      throw new Error('Failed to load the lookup table')
+    }
+
+    const expectedSOL = await computeExpectedSOL(
+      amountToDeposit,
+      this.config.connection,
+      stakePoolTokenAddress
+    )
+
+    // Due to our contract 1 SOL limit for Stake accounts we can't accept less than equivalent of 1 SOL
+    if (expectedSOL / LAMPORTS_PER_SOL < 1) {
+      throw new Error("Can't convert less than equivalent of 1 SOL")
+    }
+
+    const instructions: web3.TransactionInstruction[] = []
+
+    const validatorSet = new Set(
+      validators.filter(v => v.score).map(v => v.vote_account)
+    )
+    const withdrawTx = await withdrawStake(
+      this.provider.connection,
+      stakePoolTokenAddress,
+      ownerAddress,
+      amountToDeposit,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      (a: any, b: any) => selectSpecificValidator(a, b, validatorSet)
+    )
+
+    instructions.push(...withdrawTx.instructions)
+
+    const {
+      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
+      createAssociateTokenInstruction,
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      ownerAddress
+    )
+
+    if (createAssociateTokenInstruction) {
+      instructions.push(createAssociateTokenInstruction)
+    }
+
+    const { duplicationFlag, validatorIndex } = await identifyValidatorFromTx(
+      withdrawTx.instructions,
+      this.provider,
+      marinadeState
+    )
+
+    const depositInstruction =
+      await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
+        {
+          validatorIndex,
+          marinadeState,
+          duplicationFlag,
+          ownerAddress,
+          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          authorizedWithdrawerAddress: ownerAddress,
+          associatedMSolTokenAccountAddress,
+        }
+      )
+
+    instructions.push(depositInstruction)
+
+    const { blockhash: recentBlockhash } =
+      await this.config.connection.getLatestBlockhash('finalized')
+
+    const transactionMessage = new web3.TransactionMessage({
+      payerKey: ownerAddress,
+      recentBlockhash,
+      instructions,
+    }).compileToV0Message([lookupTable])
+    const transaction = new web3.VersionedTransaction(transactionMessage)
+    transaction.sign(withdrawTx.signers)
+
+    return {
+      associatedMSolTokenAccountAddress,
+      transaction,
+    }
+  }
+
+  /**
+   * @beta
+   *
+   * Returns a transaction with the instructions to
+   * Liquidate an amount of stake pool tokens.
+   *
+   * This method is in beta stage. It may be changed or removed in future versions.
+   *
+   * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
+   * @param {number} amountToLiquidate - Amount to liquidate
+   * @param {ValidatorStats[]} validators - List of validators to prio where to take the stake from
+   */
+  async liquidateStakePoolToken(
+    stakePoolTokenAddress: web3.PublicKey,
+    amountToLiquidate: number,
+    validators: ValidatorStats[]
+  ): Promise<MarinadeResult.LiquidateStakePoolToken> {
+    const marinadeState = await this.getMarinadeState()
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+
+    const lookupTable = (
+      await this.config.connection.getAddressLookupTable(
+        this.config.lookupTableAddress
+      )
+    ).value
+    if (!lookupTable) {
+      throw new Error('Failed to load the lookup table')
+    }
+
+    const instructions: web3.TransactionInstruction[] = []
+
+    const validatorSet = new Set(
+      validators.filter(v => v.score).map(v => v.vote_account)
+    )
+    const withdrawTx = await withdrawStake(
+      this.provider.connection,
+      stakePoolTokenAddress,
+      ownerAddress,
+      amountToLiquidate,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      (a: any, b: any) => selectSpecificValidator(a, b, validatorSet)
+    )
+
+    const expectedSOL = await computeExpectedSOL(
+      amountToLiquidate,
+      this.config.connection,
+      stakePoolTokenAddress
+    )
+
+    // Due to our contract 1 SOL limit for Stake accounts we can't accept less than equivalent of 1 SOL
+    if (expectedSOL / LAMPORTS_PER_SOL < 1) {
+      throw new Error("Can't convert less than equivalent of 1 SOL")
+    }
+
+    let mSolAmountToReceive = computeMsolAmount(
+      new BN(expectedSOL),
+      marinadeState
+    )
+    // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
+    if (this.isReferralProgram()) {
+      const partnerOperationFee = (
+        await this.marinadeReferralProgram.getReferralStateData()
+      ).operationDepositStakeAccountFee
+      mSolAmountToReceive = mSolAmountToReceive.sub(
+        proportionalBN(
+          mSolAmountToReceive,
+          new BN(partnerOperationFee),
+          new BN(10_000)
+        )
+      )
+    }
+
+    instructions.push(...withdrawTx.instructions)
+
+    const {
+      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
+      createAssociateTokenInstruction,
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      ownerAddress
+    )
+
+    if (createAssociateTokenInstruction) {
+      instructions.push(createAssociateTokenInstruction)
+    }
+
+    const { duplicationFlag, validatorIndex } = await identifyValidatorFromTx(
+      withdrawTx.instructions,
+      this.provider,
+      marinadeState
+    )
+
+    const depositInstruction =
+      await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
+        {
+          validatorIndex,
+          marinadeState,
+          duplicationFlag,
+          ownerAddress,
+          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          authorizedWithdrawerAddress: ownerAddress,
+          associatedMSolTokenAccountAddress,
+        }
+      )
+
+    const liquidUnstakeInstruction =
+      await this.marinadeFinanceProgram.liquidUnstakeInstructionBuilder({
+        amountLamports: mSolAmountToReceive,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+      })
+    instructions.push(depositInstruction)
+    instructions.push(liquidUnstakeInstruction)
+
+    const { blockhash: recentBlockhash } =
+      await this.config.connection.getLatestBlockhash('finalized')
+
+    const transactionMessage = new web3.TransactionMessage({
+      payerKey: ownerAddress,
+      recentBlockhash,
+      instructions,
+    }).compileToV0Message([lookupTable])
+    const transaction = new web3.VersionedTransaction(transactionMessage)
+    transaction.sign(withdrawTx.signers)
+
+    return {
+      associatedMSolTokenAccountAddress,
       transaction,
     }
   }
