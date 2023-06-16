@@ -754,8 +754,12 @@ export class Marinade {
   }
 
   /**
+   * @beta
+   *
    * Returns a transaction with the instructions to
    * Deposit an amount of stake pool tokens.
+   *
+   * This method is in beta stage. It may be changed or removed in future versions.
    *
    * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be deposited
    * @param {number} amountToDeposit - Amount to deposit
@@ -863,8 +867,12 @@ export class Marinade {
   }
 
   /**
+   * @beta
+   *
    * Returns a transaction with the instructions to
    * Liquidate an amount of stake pool tokens.
+   *
+   * This method is in beta stage. It may be changed or removed in future versions.
    *
    * @param {web3.PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
    * @param {number} amountToLiquidate - Amount to liquidate
