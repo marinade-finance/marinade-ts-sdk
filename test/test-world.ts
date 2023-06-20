@@ -1,5 +1,5 @@
 import { AnchorProvider, BN, Wallet, web3 } from '@coral-xyz/anchor'
-import { MarinadeUtils } from '../src'
+import { Marinade, MarinadeUtils } from '../src'
 import { getParsedStakeAccountInfo } from '../src/util'
 
 export const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
@@ -236,4 +236,34 @@ export async function waitForStakeAccountActivation({
 
 export const sleep = async (ms: number) => {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+export async function addValidatorInstructionBuilder({
+  marinade,
+  validatorScore,
+  validatorVote,
+  rentPayer,
+}: {
+  marinade: Marinade
+  validatorScore: number
+  validatorVote: web3.PublicKey
+  rentPayer: web3.PublicKey
+}): Promise<web3.TransactionInstruction> {
+  const marinadeState = await marinade.getMarinadeState()
+  return await marinade.marinadeFinanceProgram.program.methods
+    .addValidator(validatorScore)
+    .accountsStrict({
+      state: marinadeState.marinadeStateAddress,
+      validatorList: marinadeState.state.validatorSystem.validatorList.account,
+      rentPayer,
+      rent: web3.SYSVAR_RENT_PUBKEY,
+      validatorVote,
+      managerAuthority: marinadeState.state.validatorSystem.managerAuthority,
+      duplicationFlag: await marinadeState.validatorDuplicationFlag(
+        validatorVote
+      ),
+      clock: web3.SYSVAR_CLOCK_PUBKEY,
+      systemProgram: web3.SystemProgram.programId,
+    })
+    .instruction()
 }

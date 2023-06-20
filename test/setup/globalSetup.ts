@@ -80,7 +80,7 @@ export default async (): Promise<void> => {
     console.log(
       `Validator vote account ${votePubkey.toBase58()} is not part of Marinade yet, adding it.`
     )
-    const addIx = await addValidatorInstructionBuilder({
+    const addIx = await TestWorld.addValidatorInstructionBuilder({
       marinade,
       validatorScore: 1000,
       rentPayer: TestWorld.PROVIDER.wallet.publicKey,
@@ -91,34 +91,4 @@ export default async (): Promise<void> => {
       TestWorld.MARINADE_STATE_ADMIN,
     ])
   }
-}
-
-async function addValidatorInstructionBuilder({
-  marinade,
-  validatorScore,
-  validatorVote,
-  rentPayer,
-}: {
-  marinade: Marinade
-  validatorScore: number
-  validatorVote: web3.PublicKey
-  rentPayer: web3.PublicKey
-}): Promise<web3.TransactionInstruction> {
-  const marinadeState = await marinade.getMarinadeState()
-  return await marinade.marinadeFinanceProgram.program.methods
-    .addValidator(validatorScore)
-    .accountsStrict({
-      state: marinadeState.marinadeStateAddress,
-      validatorList: marinadeState.state.validatorSystem.validatorList.account,
-      rentPayer,
-      rent: web3.SYSVAR_RENT_PUBKEY,
-      validatorVote,
-      managerAuthority: marinadeState.state.validatorSystem.managerAuthority,
-      duplicationFlag: await marinadeState.validatorDuplicationFlag(
-        validatorVote
-      ),
-      clock: web3.SYSVAR_CLOCK_PUBKEY,
-      systemProgram: web3.SystemProgram.programId,
-    })
-    .instruction()
 }
