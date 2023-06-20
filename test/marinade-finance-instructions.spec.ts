@@ -14,10 +14,16 @@ describe('Marinade Finance', () => {
       publicKey: TestWorld.SDK_USER.publicKey,
     })
     const marinade = new Marinade(config)
-    const { transaction: liqTx } = await marinade.addLiquidity(
-      MarinadeUtils.solToLamports(100)
-    )
-    await TestWorld.PROVIDER.sendAndConfirm(liqTx)
+    try {
+      const { transaction: liqTx } = await marinade.addLiquidity(
+        MarinadeUtils.solToLamports(100)
+      )
+      await TestWorld.PROVIDER.sendAndConfirm(liqTx)
+    } catch (err) {
+      console.log('Failure on beforeAll addLiquidity transaction')
+      console.log(err)
+      throw err
+    }
   })
 
   describe('deposit', () => {
