@@ -192,8 +192,8 @@ export class Marinade {
       createAssociateTokenInstruction,
     } = await getOrCreateAssociatedTokenAccount(
       this.provider,
-      ownerAddress,
-      marinadeState.lpMintAddress
+      marinadeState.lpMintAddress,
+      ownerAddress
     )
 
     if (createAssociateTokenInstruction) {
