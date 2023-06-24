@@ -33,6 +33,11 @@ export namespace MarinadeResult {
     mintRatio: number
   }
 
+  export interface DepositDeactivatingStakeAccount {
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    transaction: web3.Transaction
+  }
+
   export interface PartiallyDepositStakeAccount {
     associatedMSolTokenAccountAddress: web3.PublicKey
     stakeAccountKeypair: web3.Keypair

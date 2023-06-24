@@ -455,6 +455,96 @@ export class Marinade {
   }
 
   /**
+   * @beta
+   *
+   * Returns a transaction with the instructions to
+   * Deposit a deactivating stake account.
+   * Note that the stake must be deactivating and the validator must be known to Marinade
+   *
+   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   * @param {DepositStakeAccountOptions} options - Additional deposit options
+   */
+  async depositDeactivatingStakeAccount(
+    stakeAccountAddress: web3.PublicKey,
+    options: DepositStakeAccountOptions = {}
+  ): Promise<MarinadeResult.DepositDeactivatingStakeAccount> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+
+    const stakeAccountInfo = await getParsedStakeAccountInfo(
+      this.provider,
+      stakeAccountAddress
+    )
+
+    if (!stakeAccountInfo.voterAddress) {
+      throw new Error("Stake account's votes could not be fetched/parsed.")
+    }
+
+    const marinadeState = await this.getMarinadeState()
+
+    const delegateTransaction = StakeProgram.delegate({
+      stakePubkey: stakeAccountAddress,
+      authorizedPubkey: ownerAddress,
+      votePubkey: stakeAccountInfo.voterAddress,
+    })
+
+    const {
+      associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
+      createAssociateTokenInstruction,
+    } = await getOrCreateAssociatedTokenAccount(
+      this.provider,
+      marinadeState.mSolMintAddress,
+      ownerAddress
+    )
+
+    if (createAssociateTokenInstruction) {
+      delegateTransaction.instructions.push(createAssociateTokenInstruction)
+    }
+
+    const duplicationFlag = await marinadeState.validatorDuplicationFlag(
+      stakeAccountInfo.voterAddress
+    )
+    const { validatorRecords } = await marinadeState.getValidatorRecords()
+    const validatorLookupIndex = validatorRecords.findIndex(
+      ({ validatorAccount }) =>
+        validatorAccount.equals(stakeAccountInfo.voterAddress!)
+    )
+    const validatorIndex =
+      validatorLookupIndex === -1
+        ? marinadeState.state.validatorSystem.validatorList.count
+        : validatorLookupIndex
+
+    const depositInstruction =
+      await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
+        {
+          validatorIndex,
+          marinadeState,
+          duplicationFlag,
+          ownerAddress,
+          stakeAccountAddress,
+          authorizedWithdrawerAddress: ownerAddress,
+          associatedMSolTokenAccountAddress,
+        }
+      )
+
+    delegateTransaction.instructions.push(depositInstruction)
+
+    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
+      options.directToValidatorVoteAddress
+    )
+    if (directedStakeInstruction) {
+      delegateTransaction.add(directedStakeInstruction)
+    }
+
+    return {
+      transaction: delegateTransaction,
+      associatedMSolTokenAccountAddress,
+    }
+  }
+
+  /**
    * Returns a transaction with the instructions to
    * Deposit a delegated stake account.
    * Note that the stake must be fully activated and the validator must be known to Marinade
