@@ -36,6 +36,20 @@ export async function computeExpectedSOL(
   return solValue - withdrawalFee
 }
 
+export async function computeLSTValueInSOL(
+  amount: number,
+  cxn: Connection,
+  stakePoolTokenAddress: PublicKey
+) {
+  const stakePool = await getStakePoolAccount(cxn, stakePoolTokenAddress)
+  const solValue = calcLamportsWithdrawAmount(
+    stakePool.account.data,
+    solToLamports(amount)
+  )
+
+  return solValue
+}
+
 export async function identifyValidatorFromTx(
   instructions: TransactionInstruction[],
   provider: Provider,
