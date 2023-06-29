@@ -42,4 +42,4 @@ The integration tests are located at `./test/**`.
 
 Integration tests are expected to be run within the Github actions.
 A Docker image containing the pre-installed solana toolchain and anchor
-is pushed into Marinade docker repository as `` **TODO:**.
+is pushed into Marinade docker repository at `public.ecr.aws/n0y9d4d4/marinade.finance/solana-test-validator:latest`.
