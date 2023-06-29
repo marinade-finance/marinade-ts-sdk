@@ -1,0 +1,45 @@
+name: Integration tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+        image: public.ecr.aws/n0y9d4d4/marinade.finance/solana-test-validator:latest
+        options: --user root
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [16]
+
+    steps:
+      - name: Link AVM, solana .config, check versions
+        run: |
+          ln -s /root/.avm $HOME/
+          mkdir -p $HOME/.config
+          ln -s /root/.config/solana $HOME/.config/
+          avm use 0.28.0
+          anchor --version
+          solana --version
+
+
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 7
+      - name: Install, build and run integration tests
+        timeout-minutes: 5
+        run: |
+          pnpm install
+          pnpm build
+          pnpm test:integration
+        env:
+          CI: true

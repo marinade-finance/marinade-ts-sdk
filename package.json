@@ -21,8 +21,9 @@
     "prepare": "husky install",
     "pretest": "pnpm lint",
     "test": "pnpm test:unit",
-    "test:unit": "jest --preset ts-jest --roots '<rootDir>/src'",
-    "test:integration": "jest --preset ts-jest --testTimeout 90000 --runInBand --roots '<rootDir>/test'",
+    "test:unit": "jest --roots '<rootDir>/src'",
+    "test:integration": "anchor test",
+    "_test:integration": "jest --testTimeout 90000 --runInBand --globalSetup '<rootDir>/test/setup/globalSetup.ts' --roots '<rootDir>/test' -- $FILE",
     "lint": "gts lint",
     "lint:fix": "gts fix",
     "prepack": "pnpm test && pnpm build"
@@ -35,10 +36,10 @@
   ],
   "license": "ISC",
   "dependencies": {
-    "@coral-xyz/anchor": "^0.27.0",
+    "@coral-xyz/anchor": "^0.28.0",
     "@marinade.finance/directed-stake-sdk": "^0.0.4",
     "@solana/spl-stake-pool": "^0.6.5",
-    "@solana/spl-token-3.x": "npm:@solana/spl-token@^0.3.7",
+    "@solana/spl-token-3.x": "npm:@solana/spl-token@^0.3.8",
     "borsh": "^0.7.0",
     "bs58": "^5.0.0"
   },
@@ -46,6 +47,7 @@
     "@types/bn.js": "^5.1.1",
     "@types/bs58": "^4.0.1",
     "@types/jest": "^29.5.1",
+    "@jest/globals": "^29.5.0",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
@@ -59,6 +61,7 @@
     "terser-webpack-plugin": "^5.3.7",
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.2",
+    "ts-node": "^10.9.1",
     "typescript": "^5.0.4",
     "webpack": "^5.81.0",
     "webpack-cli": "^5.0.2",
@@ -67,7 +70,8 @@
     "jsbi": "^4.3.0"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=16.0.0",
+    "anchor": ">=0.28.0"
   },
   "lint-staged": {
     "src/**/*.{js,jsx,ts,tsx}": [

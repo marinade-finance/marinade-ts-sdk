@@ -5,6 +5,7 @@ import {
   TokenError,
 } from '@solana/spl-token-3.x'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
+import { Connection } from '@solana/web3.js'
 
 export const SYSTEM_PROGRAM_ID = web3.SystemProgram.programId
 export const STAKE_PROGRAM_ID = web3.StakeProgram.programId
@@ -74,11 +75,16 @@ export async function getOrCreateAssociatedTokenAccount(
 }
 
 export async function getParsedStakeAccountInfo(
-  anchorProvider: Provider,
+  providerOrConnection: Provider | web3.Connection,
   stakeAccountAddress: web3.PublicKey
 ): Promise<ParsedStakeAccountInfo> {
-  const { value: stakeAccountInfo } =
-    await anchorProvider.connection.getParsedAccountInfo(stakeAccountAddress)
+  const connection =
+    providerOrConnection instanceof Connection
+      ? providerOrConnection
+      : providerOrConnection.connection
+  const { value: stakeAccountInfo } = await connection.getParsedAccountInfo(
+    stakeAccountAddress
+  )
 
   if (!stakeAccountInfo) {
     throw new Error(

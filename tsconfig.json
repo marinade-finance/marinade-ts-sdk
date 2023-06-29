@@ -16,5 +16,5 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true
   },
-  "exclude": ["./dist", "./test"]
+  "exclude": ["./dist", "./test/**/*.spec.ts", "./node_modules", "./fixtures", "./src/**/*.spec.ts"],
 }
