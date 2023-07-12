@@ -1022,7 +1022,8 @@ export class Marinade {
   async depositStakePoolToken(
     stakePoolTokenAddress: web3.PublicKey,
     amountToDeposit: number,
-    validators: ValidatorStats[]
+    validators: ValidatorStats[],
+    options: DepositOptions = {}
   ): Promise<MarinadeResult.LiquidateStakePoolToken> {
     const marinadeState = await this.getMarinadeState()
     const ownerAddress = assertNotNullAndReturn(
@@ -1102,6 +1103,13 @@ export class Marinade {
       )
 
     instructions.push(depositInstruction)
+
+    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
+      options.directToValidatorVoteAddress
+    )
+    if (directedStakeInstruction) {
+      instructions.push(directedStakeInstruction)
+    }
 
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')
