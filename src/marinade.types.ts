@@ -40,8 +40,8 @@ export namespace MarinadeResult {
 
   export interface PartiallyDepositStakeAccount {
     associatedMSolTokenAccountAddress: web3.PublicKey
-    stakeAccountKeypair: web3.Keypair
-    voterAddress: web3.PublicKey
+    stakeAccountKeypair?: web3.Keypair
+    voterAddress?: web3.PublicKey
     transaction: web3.Transaction
   }
 

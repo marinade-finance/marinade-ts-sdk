@@ -51,7 +51,12 @@ import {
   identifyValidatorFromTx,
   selectSpecificValidator,
 } from './util/stake-pool-helpers'
-import { Keypair, LAMPORTS_PER_SOL, StakeProgram } from '@solana/web3.js'
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  StakeProgram,
+  Transaction,
+} from '@solana/web3.js'
 
 export class Marinade {
   constructor(public readonly config: MarinadeConfig = new MarinadeConfig()) {}
@@ -746,6 +751,95 @@ export class Marinade {
       associatedMSolTokenAccountAddress,
       stakeAccountKeypair: newStakeAccountKeypair,
       voterAddress,
+    }
+  }
+
+  /**
+   * @beta
+   *
+   * Generates a transaction to convert an activating stake account into mSOL,
+   * while the remaining balance continues to be staked in its native form.
+   *
+   * Requirements:
+   * - The stake's validator should be recognized by Marinade.
+   * - The transaction should be executed immediately after being generated.
+   *
+   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
+   * @param {BN} solToKeep - Amount of SOL lamports to keep as a stake account
+   * @param {DepositStakeAccountOptions} options - Additional deposit options
+   */
+  async depositActivatingStakeAccount(
+    stakeAccountAddress: web3.PublicKey,
+    solToKeep: BN,
+    options: DepositStakeAccountOptions = {}
+  ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+
+    const stakeAccountInfo = await getParsedStakeAccountInfo(
+      this.provider,
+      stakeAccountAddress
+    )
+
+    if (!stakeAccountInfo.stakedLamports) {
+      throw new Error(
+        `Stake account ${stakeAccountInfo.address} does not have staked lamports`
+      )
+    }
+
+    const lamportsToWithdraw = stakeAccountInfo.stakedLamports.sub(solToKeep)
+
+    const newStakeAccountKeypair = Keypair.generate()
+    const transaction = new Transaction()
+
+    if (solToKeep.gt(new BN(0))) {
+      const splitStakeTx = StakeProgram.split({
+        stakePubkey: stakeAccountAddress,
+        authorizedPubkey: ownerAddress,
+        splitStakePubkey: newStakeAccountKeypair.publicKey,
+        lamports: solToKeep.toNumber(),
+      })
+      transaction.add(...splitStakeTx.instructions)
+    }
+
+    const deactivateTx = StakeProgram.deactivate({
+      stakePubkey: stakeAccountAddress,
+      authorizedPubkey: ownerAddress,
+    })
+    transaction.add(...deactivateTx.instructions)
+
+    const withdrawTx = StakeProgram.withdraw({
+      stakePubkey: stakeAccountAddress,
+      authorizedPubkey: ownerAddress,
+      toPubkey: ownerAddress,
+      lamports: lamportsToWithdraw.toNumber(),
+    })
+    transaction.add(...withdrawTx.instructions)
+
+    const { transaction: depositTx, associatedMSolTokenAccountAddress } =
+      await this.deposit(lamportsToWithdraw, {
+        directToValidatorVoteAddress: options.directToValidatorVoteAddress,
+      })
+
+    if (solToKeep.gt(new BN(0))) {
+      const mergeTx = StakeProgram.merge({
+        stakePubkey: stakeAccountAddress,
+        sourceStakePubKey: newStakeAccountKeypair.publicKey,
+        authorizedPubkey: ownerAddress,
+      })
+      transaction.add(...mergeTx.instructions)
+    }
+
+    transaction.instructions.push(...depositTx.instructions)
+
+    return {
+      transaction,
+      associatedMSolTokenAccountAddress,
+      stakeAccountKeypair: solToKeep.gt(new BN(0))
+        ? newStakeAccountKeypair
+        : undefined,
     }
   }
 
