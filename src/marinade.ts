@@ -275,7 +275,7 @@ export class Marinade {
    *
    * @param {web3.PublicKey} validatorVoteAddress - The vote address to identify the validator
    */
-  private async createDirectedStakeVoteIx(
+  async createDirectedStakeVoteIx(
     validatorVoteAddress?: web3.PublicKey
   ): Promise<web3.TransactionInstruction | undefined> {
     const owner = assertNotNullAndReturn(
