@@ -838,19 +838,17 @@ export class Marinade {
       stakeAccountAddress
     )
 
-    if (
-      stakeAccountInfo.balanceLamports &&
-      stakeAccountInfo.balanceLamports?.sub(solToKeep).toNumber() < 1
-    ) {
-      throw new Error("Can't liquidate less than 1 SOL")
-    }
-
     const rent =
       await this.provider.connection.getMinimumBalanceForRentExemption(
         web3.StakeProgram.space
       )
-    const marinadeState = await this.getMarinadeState()
 
+    const stakeToLiquidate = stakeAccountInfo.stakedLamports?.sub(solToKeep)
+    if (!stakeToLiquidate || stakeToLiquidate.toNumber() < 1) {
+      throw new Error("Can't liquidate less than 1 SOL")
+    }
+
+    const marinadeState = await this.getMarinadeState()
     const newStakeAccountKeypair = Keypair.generate()
 
     const splitStakeInstruction = StakeProgram.split({
@@ -872,10 +870,7 @@ export class Marinade {
 
     depositTx.instructions.unshift(...splitStakeInstruction.instructions)
 
-    let mSolAmountToReceive = computeMsolAmount(
-      stakeAccountInfo.stakedLamports ?? new BN(0),
-      marinadeState
-    )
+    let mSolAmountToReceive = computeMsolAmount(stakeToLiquidate, marinadeState)
     // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
     if (this.isReferralProgram()) {
       const partnerOperationFee = (
@@ -890,9 +885,8 @@ export class Marinade {
       )
     }
 
-    const unstakeAmountMSol = mSolAmountToReceive.sub(solToKeep ?? new BN(0))
     const { transaction: unstakeTx } = await this.liquidUnstake(
-      unstakeAmountMSol,
+      mSolAmountToReceive,
       associatedMSolTokenAccountAddress
     )
 
