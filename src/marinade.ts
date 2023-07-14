@@ -789,7 +789,13 @@ export class Marinade {
       )
     }
 
-    const lamportsToWithdraw = stakeAccountInfo.stakedLamports.sub(solToKeep)
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
+    const lamportsToWithdraw = stakeAccountInfo.stakedLamports
+      .sub(solToKeep)
+      .add(new BN(rent))
 
     const newStakeAccountKeypair = Keypair.generate()
     const transaction = new Transaction()
@@ -822,15 +828,6 @@ export class Marinade {
       await this.deposit(lamportsToWithdraw, {
         directToValidatorVoteAddress: options.directToValidatorVoteAddress,
       })
-
-    if (solToKeep.gt(new BN(0))) {
-      const mergeTx = StakeProgram.merge({
-        stakePubkey: stakeAccountAddress,
-        sourceStakePubKey: newStakeAccountKeypair.publicKey,
-        authorizedPubkey: ownerAddress,
-      })
-      transaction.add(...mergeTx.instructions)
-    }
 
     transaction.instructions.push(...depositTx.instructions)
 
