@@ -2,6 +2,8 @@
 
 # marinade-ts-sdk
 
+TEST
+
 Marinade.finance is a liquid staking protocol built on Solana. People stake their Solana tokens with Marinade using automatic staking strategies and receive "staked SOL" tokens they can use in the world of DeFi or to swap any time back to original SOL tokens to unstake.
 
 This SDK wraps the staking protocol and allows you to start marinading from your applications.
