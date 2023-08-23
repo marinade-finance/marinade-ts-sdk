@@ -9,16 +9,16 @@ import {
 } from '../util'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
 import { TicketAccount } from '../marinade-state/borsh/ticket-account'
-import * as mariandeFinance from './idl/types/marinade_finance'
+import * as marinadeFinance from './idl/types/marinade_finance'
 
-const MarinadeFinanceIDL = mariandeFinance.IDL
-type MarinadeFinance = mariandeFinance.MarinadeFinance
+const MarinadeFinanceIDL = marinadeFinance.IDL
+type MarinadeFinance = marinadeFinance.MarinadeFinance
 export type MarinadeFinanceProgramType = Program<MarinadeFinance>
 
 export type ValidatorRecordAnchorType =
-  IdlTypes<mariandeFinance.MarinadeFinance>['ValidatorRecord']
+  IdlTypes<marinadeFinance.MarinadeFinance>['ValidatorRecord']
 export type StateRecordAnchorType =
-  IdlTypes<mariandeFinance.MarinadeFinance>['StakeRecord']
+  IdlTypes<marinadeFinance.MarinadeFinance>['StakeRecord']
 
 export class MarinadeFinanceProgram {
   constructor(
