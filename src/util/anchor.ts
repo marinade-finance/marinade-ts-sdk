@@ -117,6 +117,8 @@ export async function getParsedStakeAccountInfo(
   const stakedLamports = BNOrNull(
     parsedData?.info?.stake?.delegation.stake ?? null
   )
+  const { epoch: currentEpoch } = await connection.getEpochInfo()
+  const currentUnixTimestamp = Date.now() / 1000
 
   return {
     address: stakeAccountAddress,
@@ -134,7 +136,10 @@ export async function getParsedStakeAccountInfo(
     deactivationEpoch,
     isCoolingDown: deactivationEpoch ? !deactivationEpoch.eq(U64_MAX) : false,
     isLockedUp:
-      lockup?.custodian && lockup?.custodian !== '' && lockup?.epoch > 0,
+      lockup?.custodian &&
+      lockup?.custodian !== '' &&
+      (lockup?.epoch > currentEpoch ||
+        lockup?.unixTimestamp > currentUnixTimestamp),
     balanceLamports,
     stakedLamports,
   }
