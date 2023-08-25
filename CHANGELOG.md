@@ -1,14 +1,15 @@
 ## v5.0.4
 
-### Feat:
+### Fix:
 
-    - Add beta support to (partially) deposit activating stake accounts via `depositActivatingStakeAccount`
-    - Make `createDirectedStakeVoteIx` public so it can be used in various transactions (like when swapping LSTs via Jup)
+    - Make it possible to stake locked stake accounts that have the lock period in the past
 
 ## v5.0.3
 
 ### Feat:
 
+    - Add beta support to (partially) deposit activating stake accounts via `depositActivatingStakeAccount`
+    - Make `createDirectedStakeVoteIx` public so it can be used in various transactions (like when swapping LSTs via Jup)
     - Add setup to run integration tests on local validator within the pipeline
     - Add beta support to partially deposit stake accounts via `partiallyDepositStakeAccount`
     - Add beta support to partially liquidate stake accounts via `partiallyLiquidateStakeAccount`
