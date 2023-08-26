@@ -8,6 +8,8 @@ export const enum ProgramDerivedAddressSeed {
   LIQ_POOL_SOL_ACCOUNT = 'liq_sol',
   RESERVE_ACCOUNT = 'reserve',
   UNIQUE_VALIDATOR = 'unique_validator',
+  STAKE_WITHDRAW_SEED = 'withdraw',
+  STAKE_DEPOSIT_SEED = 'deposit',
 }
 
 export namespace MarinadeStateResponse {
@@ -80,4 +82,9 @@ export interface MarinadeStateResponse {
   minWithdraw: BN
   stakingSolCap: BN
   emergencyCoolingDown: BN
+}
+
+export interface MarinadeState extends MarinadeStateResponse {
+  address: web3.PublicKey
+  programId: web3.PublicKey
 }

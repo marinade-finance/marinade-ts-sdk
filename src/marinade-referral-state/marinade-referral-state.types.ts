@@ -45,3 +45,15 @@ export namespace MarinadeReferralStateResponse {
     accumDelayedUnstakeFee: BN
   }
 }
+
+export interface MarinadeReferralState
+  extends MarinadeReferralStateResponse.ReferralState {
+  address: web3.PublicKey
+  programId: web3.PublicKey
+}
+
+export interface MarinadeReferralGlobalState
+  extends MarinadeReferralStateResponse.GlobalState {
+  address: web3.PublicKey
+  programId: web3.PublicKey
+}

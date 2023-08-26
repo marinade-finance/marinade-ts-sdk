@@ -1,5 +1,5 @@
 import { BN } from '@coral-xyz/anchor'
-import { MarinadeState } from '../marinade-state/marinade-state'
+import { MarinadeState } from '../marinade-state/marinade-state.types'
 
 /**
  * Compute a linear fee base on liquidity amount.
@@ -62,25 +62,20 @@ export function proportionalBN(amount: BN, numerator: BN, denominator: BN): BN {
  * @param {BN} solAmount
  * @param {MarinadeState} marinadeState
  */
-export function computeMsolAmount(
-  solAmount: BN,
-  marinadeState: MarinadeState
-): BN {
-  const total_cooling_down =
-    marinadeState.state.stakeSystem.delayedUnstakeCoolingDown.add(
-      marinadeState.state.emergencyCoolingDown
-    )
-  const total_lamports_under_control =
-    marinadeState.state.validatorSystem.totalActiveBalance
-      .add(total_cooling_down)
-      .add(marinadeState.state.availableReserveBalance)
+export function computeMsolAmount(solAmount: BN, state: MarinadeState): BN {
+  const total_cooling_down = state.stakeSystem.delayedUnstakeCoolingDown.add(
+    state.emergencyCoolingDown
+  )
+  const total_lamports_under_control = state.validatorSystem.totalActiveBalance
+    .add(total_cooling_down)
+    .add(state.availableReserveBalance)
   const total_virtual_staked_lamports = total_lamports_under_control.sub(
-    marinadeState.state.circulatingTicketBalance
+    state.circulatingTicketBalance
   )
 
   return proportionalBN(
     solAmount,
-    marinadeState.state.msolSupply,
+    state.msolSupply,
     total_virtual_staked_lamports
   )
 }

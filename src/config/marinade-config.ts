@@ -13,9 +13,9 @@ export const DEFAULT_MARINADE_STATE_ADDRESS = new web3.PublicKey(
 )
 export const DEFAULT_MARINADE_REFERRAL_GLOBAL_STATE_ADDRESS =
   new web3.PublicKey('MRSh4rUNrpn7mjAq9ENHV4rvwwPKMij113ScZq3twp2')
-export const DEFAULT_STAKE_WITHDRAW_AUTH_PDA = new web3.PublicKey(
-  '9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'
-)
+// export const DEFAULT_STAKE_WITHDRAW_AUTH_PDA = new web3.PublicKey(
+//   '9eG63CdHjsfhHmobHgLtESGC8GabbmRcaSpHAZrtmhco'
+// )
 export const LOOKUP_TABLE_ADDRESS = new web3.PublicKey(
   'DCcQeBaCiYsEsjjmEsSYPCr9o4n174LKqXNDvQT5wVd8'
 )
@@ -26,10 +26,10 @@ export class MarinadeConfig {
   marinadeStateAddress = DEFAULT_MARINADE_STATE_ADDRESS
   marinadeReferralGlobalStateAddress =
     DEFAULT_MARINADE_REFERRAL_GLOBAL_STATE_ADDRESS
-  stakeWithdrawAuthPDA = DEFAULT_STAKE_WITHDRAW_AUTH_PDA
+  // stakeWithdrawAuthPDA = DEFAULT_STAKE_WITHDRAW_AUTH_PDA
   lookupTableAddress = LOOKUP_TABLE_ADDRESS
 
-  connection = new web3.Connection(DEFAULT_PROVIDER_URL)
+  url = DEFAULT_PROVIDER_URL
   publicKey: web3.PublicKey | null = null
 
   referralCode: web3.PublicKey | null = null
