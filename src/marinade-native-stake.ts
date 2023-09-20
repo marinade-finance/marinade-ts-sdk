@@ -109,7 +109,7 @@ export async function getRefNativeStakeAccountTx({
  * @param {BN} amountToUnstake - The amount to unstake in lamports
  * @returns {UnstakeSOLIxResponse} - The instructions to pay the fee for unstake and the event that should be called after fee is paid in order to trigger unstake event faster (calling this is optional, but it ensures better experience for user).
  */
-export async function getNativeUnstakeSOLIx({
+export async function getPrepareNativeUnstakeSOLIx({
   userPublicKey,
   amountToUnstake,
 }: {
