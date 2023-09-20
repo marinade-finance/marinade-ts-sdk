@@ -1,3 +1,10 @@
+## v5.0.5
+
+### Feat:
+
+    - Add support to stake into Marinade Native with or without Referral Code
+    - Add support to unstake from Marinade Native
+
 ## v5.0.4
 
 ### Fix:

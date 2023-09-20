@@ -88,6 +88,49 @@ const {
 const signature = await provider.send(transaction)
 ```
 
+### Marinade Native Staking
+
+Now you can stake into Marinade Native via the SDK with or without referral code.
+
+#### Stake without referral code
+In case of no referral code, the methods exposed in `marinade-native-stake.ts` are just a wrapper of what is already documented in the [Native Stake SDK](https://www.npmjs.com/package/@marinade.finance/native-staking-sdk).
+Note that without referral code you're getting only Transaction Instructions.
+
+#### Stake with referral code
+In order to get a referral code you must go to the [Marinade dApp](https://marinade.finance/app/earn/) to retrieve it.
+Note that with referral code you're getting Versioned Transaction.
+After having the code you can pass it to the methods mentioned below.
+
+Stake SOL to Marinade Native
+```ts
+...
+const versionedTransaction = await getRefNativeStakeSOLTx(userPublicKey, amountLamports, refCode)
+// sign and send the `transaction`
+const signature = await wallet.sendTransaction(unsignedTx, connection)
+```
+
+Deposit Stake Account to Marinade Native
+```ts
+...
+const versionedTransaction = await getRefNativeStakeAccountTx(userPublicKey, stakeAccountAddress, refCode)
+// sign and send the `transaction`
+const signature = await wallet.sendTransaction(versionedTransaction, connection)
+```
+
+#### Prepare for Unstake from Marinade Native
+In order to merge stake accounts back into one and start the unstake process you must run the command from below and pay the fee (SOL needed to merge the accounts back).
+
+```ts
+...
+const transaction = new Transaction()
+const prepareUnstakeIx = await getPrepareNativeUnstakeSOLIx(userPublicKey, amountLamports)
+transaction.add(...prepareUnstakeIx.payFees)
+// sign and send the `transaction`
+const signature = await wallet.sendTransaction(transaction, connection)
+await authIx.onPaid()
+```
+
+
 ### Liquidity pool
 
 Add liquidity to the liquidity pool and receive LP tokens:
