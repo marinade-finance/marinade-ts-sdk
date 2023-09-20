@@ -1,4 +1,5 @@
 export { Marinade } from './marinade'
+export * from './marinade-native-stake'
 export { MarinadeConfig } from './config/marinade-config'
 export * as MarinadeBorsh from './marinade-state/borsh/index'
 export { MarinadeReferralPartnerState } from './marinade-referral-state/marinade-referral-partner-state'

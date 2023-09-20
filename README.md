@@ -130,7 +130,6 @@ const signature = await wallet.sendTransaction(transaction, connection)
 await authIx.onPaid()
 ```
 
-
 ### Liquidity pool
 
 Add liquidity to the liquidity pool and receive LP tokens:
