@@ -11,11 +11,11 @@ import {
 } from './marinade-native-stake.types'
 
 /**
- * Fetches the instruction to stake SOL in Marinade Native
+ * Retrieves the instruction for staking SOL with Marinade Native.
  *
- * @param {PublicKey} userPublicKey - The PublicKey of the user
- * @param {BN} amountToStake - The amount to deposit in lamports
- * @returns {AuthStakeSOLIxResponse} - The instructions to add in transaction to stake in Marinade Native and new stake keypair
+ * @param {PublicKey} userPublicKey - The PublicKey associated with the user.
+ * @param {BN} amountToStake - The amount to be staked, in lamports.
+ * @returns {AuthStakeSOLIxResponse} - The instructions to include in the transaction for staking in Marinade Native, along with the new stake keypair.
  */
 export function getAuthNativeStakeSOLIx(
   userPublicKey: PublicKey,
@@ -29,12 +29,12 @@ export function getAuthNativeStakeSOLIx(
 }
 
 /**
- * Fetches the transaction to stake SOL in Marinade Native with refCode
+ * Retrieves the transaction for staking SOL with Marinade Native using a referral code.
  *
- * @param {PublicKey} userPublicKey - The PublicKey of the user
- * @param {BN} amountToStake - The amount to deposit in lamports
- * @param {string} mNativeRefCode - Marinade Native referral code
- * @returns {Promise<VersionedTransaction>} - The transaction to stake SOL into Marinade native using Referral Code
+ * @param {PublicKey} userPublicKey - The PublicKey associated with the user.
+ * @param {BN} amountToStake - The amount to be staked, specified in lamports.
+ * @param {string} mNativeRefCode - The Marinade Native referral code.
+ * @returns {Promise<VersionedTransaction>} - A promise that resolves to the transaction for staking SOL with Marinade Native using the referral code.
  */
 export async function getRefNativeStakeSOLTx(
   userPublicKey: PublicKey,
@@ -51,11 +51,11 @@ export async function getRefNativeStakeSOLTx(
 }
 
 /**
- * Fetches the instruction to stake Stake Account in Marinade Native
+ * Retrieves the instruction for staking a Stake Account with Marinade Native.
  *
- * @param {PublicKey} userPublicKey - The PublicKey of the user
- * @param {PublicKey[]} stakeAccounts - The stake accounts that are about to be deposited in Marinade Native
- * @returns {TransactionInstruction} - The instruction to add in transaction to stake in Marinade Native
+ * @param {PublicKey} userPublicKey - The PublicKey associated with the user.
+ * @param {PublicKey[]} stakeAccounts - The stake accounts to be used with Marinade Native.
+ * @returns {TransactionInstruction} - The instruction to include in the transaction for staking the Stake Account with Marinade Native.
  */
 export function getAuthNativeStakeAccountIx(
   userPublicKey: PublicKey,
@@ -66,12 +66,12 @@ export function getAuthNativeStakeAccountIx(
 }
 
 /**
- * Fetches the transaction to deposit Stake Account in Marinade Native with refCode
+ * Retrieves the transaction for using a Stake Account with Marinade Native via a referral code.
  *
- * @param {PublicKey} userPublicKey - The PublicKey of the user
- * @param {PublicKey} stakeAccountAddress - The stake account to be deposited into Marinade Native
- * @param {string} mNativeRefCode - Marinade Native referral code
- * @returns {Promise<VersionedTransaction>} - The transaction to deposit Stake Account into Marinade native using Referral Code
+ * @param {PublicKey} userPublicKey - The PublicKey associated with the user.
+ * @param {PublicKey} stakeAccountAddress - The address of the stake account intended to use with Marinade Native.
+ * @param {string} mNativeRefCode - The Marinade Native referral code.
+ * @returns {Promise<VersionedTransaction>} - A promise resolving to the transaction required for using the Stake Account with Marinade Native via the given referral code.
  */
 export async function getRefNativeStakeAccountTx(
   userPublicKey: PublicKey,
@@ -89,11 +89,11 @@ export async function getRefNativeStakeAccountTx(
 }
 
 /**
- * Fetches the instruction to unstake from Marinade Native
+ * Retrieves the instruction for unstaking from Marinade Native.
  *
- * @param {PublicKey} userPublicKey - The PublicKey of the user
- * @param {BN} amountToUnstake - The amount to unstake in lamports
- * @returns {UnstakeSOLIxResponse} - The instructions to pay the fee for unstake and the event that should be called after fee is paid in order to trigger unstake event faster (calling this is optional, but it ensures better experience for user).
+ * @param {PublicKey} userPublicKey - The PublicKey associated with the user.
+ * @param {BN} amountToUnstake - The amount to be unstaked, specified in lamports.
+ * @returns {UnstakeSOLIxResponse} - The instructions for paying the unstaking fee and an optional event that can be called after the fee is paid to expedite the unstaking process (calling this event is optional but enhances the user experience).
  */
 export async function getPrepareNativeUnstakeSOLIx(
   userPublicKey: PublicKey,
@@ -104,9 +104,9 @@ export async function getPrepareNativeUnstakeSOLIx(
 }
 
 /**
- * Calls the bot to rebalance user's funds (relevant especially right after the users deposits in Marinade Native, but not mandatory)
+ * Invokes the bot to rebalance the user's funds. This is particularly useful immediately following a deposit into Marinade Native, although it is not mandatory.
  *
- * @param {PublicKey} userPublicKey - The PublicKey of the user
+ * @param {PublicKey} userPublicKey - The PublicKey associated with the user.
  */
 export async function callRebalanceHint(
   userPublicKey: PublicKey
