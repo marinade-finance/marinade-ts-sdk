@@ -88,6 +88,47 @@ const {
 const signature = await provider.send(transaction)
 ```
 
+### Marinade Native Staking
+
+You can now stake assets in Marinade Native through the SDK, either with or without a referral code.
+
+#### Stake without referral code
+If you choose to stake without a referral code, the methods exposed in `marinade-native-stake.ts` serve as wrappers for those already detailed in the [Native Stake SDK](https://www.npmjs.com/package/@marinade.finance/native-staking-sdk).
+Please note that staking without a referral code will yield only Transaction Instructions.
+
+#### Stake with referral code
+To acquire a referral code, you'll need to visit the [Marinade dApp](https://marinade.finance/app/earn/) to retrieve it.
+Once you have the code, you can input it into the methods described below. Please note that the method returns a Versioned Transaction.
+
+Stake SOL to Marinade Native
+```ts
+...
+const versionedTransaction = await getRefNativeStakeSOLTx(userPublicKey, amountLamports, refCode)
+// sign and send the `transaction`
+const signature = await wallet.sendTransaction(unsignedTx, connection)
+```
+
+Deposit Stake Account to Marinade Native
+```ts
+...
+const versionedTransaction = await getRefNativeStakeAccountTx(userPublicKey, stakeAccountAddress, refCode)
+// sign and send the `transaction`
+const signature = await wallet.sendTransaction(versionedTransaction, connection)
+```
+
+#### Prepare for Unstake from Marinade Native
+To initiate the process of unstaking, you'll need to merge your stake accounts back into a single account and pay the associated fee (in SOL). To do this, execute the following command:
+
+```ts
+...
+const transaction = new Transaction()
+const prepareUnstakeIx = await getPrepareNativeUnstakeSOLIx(userPublicKey, amountLamports)
+transaction.add(...prepareUnstakeIx.payFees)
+// sign and send the `transaction`
+const signature = await wallet.sendTransaction(transaction, connection)
+await authIx.onPaid()
+```
+
 ### Liquidity pool
 
 Add liquidity to the liquidity pool and receive LP tokens:
