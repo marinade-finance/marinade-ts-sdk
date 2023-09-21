@@ -17,13 +17,10 @@ import {
  * @param {BN} amountToStake - The amount to deposit in lamports
  * @returns {AuthStakeSOLIxResponse} - The instructions to add in transaction to stake in Marinade Native and new stake keypair
  */
-export function getAuthNativeStakeSOLIx({
-  userPublicKey,
-  amountToStake,
-}: {
-  userPublicKey: PublicKey
+export function getAuthNativeStakeSOLIx(
+  userPublicKey: PublicKey,
   amountToStake: BN
-}): AuthStakeSOLIxResponse {
+): AuthStakeSOLIxResponse {
   const nativeSdk = new NativeStakingSDK()
   return nativeSdk.buildCreateAuthorizedStakeInstructions(
     userPublicKey,
@@ -39,21 +36,17 @@ export function getAuthNativeStakeSOLIx({
  * @param {string} mNativeRefCode - Marinade Native referral code
  * @returns {Promise<VersionedTransaction>} - The transaction to stake SOL into Marinade native using Referral Code
  */
-export async function getRefNativeStakeSOLTx({
-  userPublicKey,
-  amountToStake,
-  mNativeRefCode,
-}: {
-  userPublicKey: PublicKey
-  amountToStake: BN
+export async function getRefNativeStakeSOLTx(
+  userPublicKey: PublicKey,
+  amountToStake: BN,
   mNativeRefCode: string
-}): Promise<VersionedTransaction> {
+): Promise<VersionedTransaction> {
   const response = await fetch(
     `https://native-staking-referral.marinade.finance/v1/tx/deposit-sol?amount=${amountToStake.toString()}&code=${mNativeRefCode}&user=${userPublicKey.toString()}`
   )
-  const serializedTx = await response.json()
+  const result = await response.json()
 
-  const txBuffer = Buffer.from(serializedTx, 'base64')
+  const txBuffer = Buffer.from(result.serializedTx, 'base64')
   return VersionedTransaction.deserialize(txBuffer)
 }
 
@@ -64,13 +57,10 @@ export async function getRefNativeStakeSOLTx({
  * @param {PublicKey[]} stakeAccounts - The stake accounts that are about to be deposited in Marinade Native
  * @returns {TransactionInstruction} - The instruction to add in transaction to stake in Marinade Native
  */
-export function getAuthNativeStakeAccountIx({
-  userPublicKey,
-  stakeAccounts,
-}: {
-  userPublicKey: PublicKey
+export function getAuthNativeStakeAccountIx(
+  userPublicKey: PublicKey,
   stakeAccounts: PublicKey[]
-}): TransactionInstruction[] {
+): TransactionInstruction[] {
   const nativeSdk = new NativeStakingSDK()
   return nativeSdk.buildAuthorizeInstructions(userPublicKey, stakeAccounts)
 }
@@ -83,22 +73,18 @@ export function getAuthNativeStakeAccountIx({
  * @param {string} mNativeRefCode - Marinade Native referral code
  * @returns {Promise<VersionedTransaction>} - The transaction to deposit Stake Account into Marinade native using Referral Code
  */
-export async function getRefNativeStakeAccountTx({
-  userPublicKey,
-  stakeAccountAddress,
-  mNativeRefCode,
-}: {
-  userPublicKey: PublicKey
-  stakeAccountAddress: PublicKey
+export async function getRefNativeStakeAccountTx(
+  userPublicKey: PublicKey,
+  stakeAccountAddress: PublicKey,
   mNativeRefCode: string
-}): Promise<VersionedTransaction> {
+): Promise<VersionedTransaction> {
   const response = await fetch(
     `https://native-staking-referral.marinade.finance/v1/tx/deposit-stake-account?stake=${stakeAccountAddress.toString()}&code=${mNativeRefCode}&user=${userPublicKey.toString()}`
   )
 
-  const serializedTx = await response.json()
+  const result = await response.json()
 
-  const txBuffer = Buffer.from(serializedTx, 'base64')
+  const txBuffer = Buffer.from(result.serializedTx, 'base64')
   return VersionedTransaction.deserialize(txBuffer)
 }
 
@@ -109,13 +95,22 @@ export async function getRefNativeStakeAccountTx({
  * @param {BN} amountToUnstake - The amount to unstake in lamports
  * @returns {UnstakeSOLIxResponse} - The instructions to pay the fee for unstake and the event that should be called after fee is paid in order to trigger unstake event faster (calling this is optional, but it ensures better experience for user).
  */
-export async function getPrepareNativeUnstakeSOLIx({
-  userPublicKey,
-  amountToUnstake,
-}: {
-  userPublicKey: PublicKey
+export async function getPrepareNativeUnstakeSOLIx(
+  userPublicKey: PublicKey,
   amountToUnstake: BN
-}): Promise<UnstakeSOLIxResponse> {
+): Promise<UnstakeSOLIxResponse> {
   const nativeSdk = new NativeStakingSDK()
   return await nativeSdk.initPrepareForRevoke(userPublicKey, amountToUnstake)
+}
+
+/**
+ * Calls the bot to rebalance user's funds (relevant especially right after the users deposits in Marinade Native, but not mandatory)
+ *
+ * @param {PublicKey} userPublicKey - The PublicKey of the user
+ */
+export async function callRebalanceHint(
+  userPublicKey: PublicKey
+): Promise<void> {
+  const nativeSdk = new NativeStakingSDK()
+  return await nativeSdk.callRebalanceHint(userPublicKey)
 }
