@@ -1,11 +1,12 @@
-import { BN, web3 } from '@coral-xyz/anchor'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export interface ParsedStakeAccountInfo {
-  address: web3.PublicKey
-  ownerAddress: web3.PublicKey
-  authorizedStakerAddress: web3.PublicKey | null
-  authorizedWithdrawerAddress: web3.PublicKey | null
-  voterAddress: web3.PublicKey | null
+  address: PublicKey
+  ownerAddress: PublicKey
+  authorizedStakerAddress: PublicKey | null
+  authorizedWithdrawerAddress: PublicKey | null
+  voterAddress: PublicKey | null
   activationEpoch: BN | null
   deactivationEpoch: BN | null
   isCoolingDown: boolean

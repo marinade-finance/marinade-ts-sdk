@@ -1,4 +1,5 @@
-import { web3, BN } from '@coral-xyz/anchor'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export const enum ProgramDerivedAddressSeed {
   GLOBAL_STATE_SEED = 'mrp_initialize',
@@ -7,20 +8,20 @@ export const enum ProgramDerivedAddressSeed {
 
 export namespace MarinadeReferralStateResponse {
   export interface GlobalState {
-    adminAccount: web3.PublicKey
-    msolMintAccount: web3.PublicKey
-    foreman1: web3.PublicKey
-    foreman2: web3.PublicKey
+    adminAccount: PublicKey
+    msolMintAccount: PublicKey
+    foreman1: PublicKey
+    foreman2: PublicKey
     minKeepPct: number
     maxKeepPct: number
   }
 
   export interface ReferralState {
     partnerName: string
-    validatorVoteKey: web3.PublicKey | null
+    validatorVoteKey: PublicKey | null
     keepSelfStakePct: number
-    partnerAccount: web3.PublicKey
-    msolTokenPartnerAccount: web3.PublicKey
+    partnerAccount: PublicKey
+    msolTokenPartnerAccount: PublicKey
     depositSolAmount: BN
     depositSolOperations: BN
     depositStakeAccountAmount: BN
@@ -46,14 +47,14 @@ export namespace MarinadeReferralStateResponse {
   }
 }
 
-export interface MarinadeReferralState
-  extends MarinadeReferralStateResponse.ReferralState {
-  address: web3.PublicKey
-  programId: web3.PublicKey
-}
-
 export interface MarinadeReferralGlobalState
   extends MarinadeReferralStateResponse.GlobalState {
-  address: web3.PublicKey
-  programId: web3.PublicKey
+  address: PublicKey
+  programId: PublicKey
+}
+
+export interface MarinadeReferralReferralState
+  extends MarinadeReferralStateResponse.ReferralState {
+  address: PublicKey
+  programId: PublicKey
 }

@@ -1,17 +1,15 @@
-import { web3, BN } from '@coral-xyz/anchor'
 import { getMint, Mint } from '@solana/spl-token-3.x'
 import { tokenBalanceToNumber } from '../util/conversion'
+import { Connection, PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export class MarinadeMint {
   private constructor(
-    private readonly connection: web3.Connection,
-    public readonly address: web3.PublicKey
+    private readonly connection: Connection,
+    public readonly address: PublicKey
   ) {}
 
-  static build(
-    connection: web3.Connection,
-    mintAddress: web3.PublicKey
-  ): MarinadeMint {
+  static build(connection: Connection, mintAddress: PublicKey): MarinadeMint {
     return new MarinadeMint(connection, mintAddress)
   }
 

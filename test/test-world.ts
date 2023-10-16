@@ -1,12 +1,25 @@
-import { AnchorProvider, BN, Wallet, web3 } from '@coral-xyz/anchor'
-import { Marinade, MarinadeUtils } from '../src'
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
+import { MarinadeUtils, validatorDuplicationFlag } from '../src'
 import { getParsedStakeAccountInfo } from '../src/util'
+import { MarinadeFinanceProgram } from '../src/programs/marinade-finance-program'
+import { MarinadeState } from '../src/marinade-state/marinade-state.types'
+import BN from 'bn.js'
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
+  Transaction,
+  TransactionInstruction,
+} from '@solana/web3.js'
 
 export const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
 
 // 6LHBDKtwo69UKxWgY15vE3QykP4uf5DzZUgBiMzhEWpf
-export const STAKE_ACCOUNT: web3.Keypair = web3.Keypair.fromSecretKey(
+export const STAKE_ACCOUNT: Keypair = Keypair.fromSecretKey(
   new Uint8Array([
     18, 172, 235, 211, 112, 44, 110, 149, 4, 64, 227, 34, 56, 159, 198, 19, 146,
     61, 87, 180, 155, 178, 178, 146, 241, 198, 208, 91, 79, 219, 120, 107, 79,
@@ -16,7 +29,7 @@ export const STAKE_ACCOUNT: web3.Keypair = web3.Keypair.fromSecretKey(
 )
 
 // 9wmxMQ2TFxYh918RzESjiA1dUXbdRAsXBd12JA1vwWQq
-export const SDK_USER = web3.Keypair.fromSecretKey(
+export const SDK_USER = Keypair.fromSecretKey(
   new Uint8Array([
     120, 45, 242, 38, 63, 135, 84, 226, 66, 56, 76, 216, 125, 144, 38, 182, 53,
     47, 169, 251, 128, 65, 185, 237, 41, 47, 64, 53, 158, 124, 64, 2, 132, 229,
@@ -28,7 +41,7 @@ export const SDK_USER = web3.Keypair.fromSecretKey(
 console.log('SDK User', SDK_USER.publicKey.toBase58())
 
 // 2APsntHoKXCeHWfxZ49ADwc5XrdB8GGmxK34jVXRYZyV
-export const MARINADE_STATE_ADMIN = web3.Keypair.fromSecretKey(
+export const MARINADE_STATE_ADMIN = Keypair.fromSecretKey(
   new Uint8Array([
     88, 46, 254, 11, 76, 182, 135, 63, 92, 56, 112, 173, 43, 58, 65, 74, 13, 97,
     203, 36, 231, 178, 221, 92, 234, 200, 208, 114, 32, 230, 251, 217, 17, 67,
@@ -39,26 +52,26 @@ export const MARINADE_STATE_ADMIN = web3.Keypair.fromSecretKey(
 
 // used for the base tests that cannot start the localhost provider
 export const PROVIDER_URL_DEVNET = 'https://api.devnet.solana.com'
-export const CONNECTION_DEVNET = new web3.Connection(PROVIDER_URL_DEVNET, {
+export const CONNECTION_DEVNET = new Connection(PROVIDER_URL_DEVNET, {
   commitment: 'confirmed',
 })
 
 export const PROVIDER_URL = 'http://localhost:8899'
-export const CONNECTION = new web3.Connection(PROVIDER_URL, {
+export const CONNECTION = new Connection(PROVIDER_URL, {
   commitment: 'confirmed',
 })
 export const PROVIDER = new AnchorProvider(CONNECTION, new Wallet(SDK_USER), {
   commitment: 'confirmed' /*, skipPreflight: true*/,
 })
 
-export const REFERRAL_CODE = new web3.PublicKey(
+export const REFERRAL_CODE = new PublicKey(
   '2Q7u7ndBhSJpTNpDzkjvRyRvuzRLZSovkNRQ5SEUb64g'
 )
 export const PARTNER_NAME = 'marinade_ts_sdk'
 console.log('Referral partner', PARTNER_NAME, REFERRAL_CODE.toBase58())
 
 export async function airdrop(
-  to: web3.PublicKey,
+  to: PublicKey,
   amountLamports: number
 ): Promise<void> {
   const signature = await CONNECTION.requestAirdrop(to, amountLamports)
@@ -72,11 +85,11 @@ export async function airdrop(
   )
 }
 
-export const getBalanceLamports = async (account: web3.PublicKey) =>
+export const getBalanceLamports = async (account: PublicKey) =>
   CONNECTION.getBalance(account)
 
 export async function airdropMinimumLamportsBalance(
-  account: web3.PublicKey,
+  account: PublicKey,
   minimumLamportsBalance: BN
 ): Promise<void> {
   const balanceLamports = new BN(await getBalanceLamports(account))
@@ -96,20 +109,20 @@ export async function airdropMinimumLamportsBalance(
 }
 
 export async function transferMinimumLamportsBalance(
-  address: web3.PublicKey,
+  address: PublicKey,
   provider: AnchorProvider = PROVIDER,
   lamports: BN = MINIMUM_LAMPORTS_BEFORE_TEST
 ): Promise<string> {
-  const ix = web3.SystemProgram.transfer({
+  const ix = SystemProgram.transfer({
     fromPubkey: provider.publicKey, // wallet address, will sign
     toPubkey: address,
     lamports: BigInt(lamports.toString()),
   })
-  const tx = new web3.Transaction().add(ix)
+  const tx = new Transaction().add(ix)
   return await provider.sendAndConfirm(tx)
 }
 
-export async function simulateTransaction(transaction: web3.Transaction) {
+export async function simulateTransaction(transaction: Transaction) {
   const {
     context: { slot: executedSlot },
     value: { blockhash },
@@ -132,8 +145,8 @@ export async function simulateTransaction(transaction: web3.Transaction) {
   }
 }
 
-let solanaTestValidatorVotePubkey: web3.PublicKey | undefined
-export async function getSolanaTestValidatorVoteAccountPubkey(): Promise<web3.PublicKey> {
+let solanaTestValidatorVotePubkey: PublicKey | undefined
+export async function getSolanaTestValidatorVoteAccountPubkey(): Promise<PublicKey> {
   if (solanaTestValidatorVotePubkey === undefined) {
     const voteAccounts = await CONNECTION.getVoteAccounts()
     // expecting run on localhost and only one vote account is available, i.e., one validator solana-test-validator
@@ -143,7 +156,7 @@ export async function getSolanaTestValidatorVoteAccountPubkey(): Promise<web3.Pu
           ` Number of vote accounts found: ${voteAccounts.current.length}`
       )
     }
-    solanaTestValidatorVotePubkey = new web3.PublicKey(
+    solanaTestValidatorVotePubkey = new PublicKey(
       voteAccounts.current[0].votePubkey
     )
   }
@@ -168,8 +181,8 @@ export async function waitForStakeAccountActivation({
   timeoutSeconds = 30,
   activatedAtLeastFor = 0,
 }: {
-  stakeAccount?: web3.PublicKey
-  connection?: web3.Connection
+  stakeAccount?: PublicKey
+  connection?: Connection
   timeoutSeconds?: number
   activatedAtLeastFor?: number
 }) {
@@ -239,31 +252,30 @@ export const sleep = async (ms: number) => {
 }
 
 export async function addValidatorInstructionBuilder({
-  marinade,
+  program,
+  marinadeState,
   validatorScore,
   validatorVote,
   rentPayer,
 }: {
-  marinade: Marinade
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
   validatorScore: number
-  validatorVote: web3.PublicKey
-  rentPayer: web3.PublicKey
-}): Promise<web3.TransactionInstruction> {
-  const marinadeState = await marinade.getMarinadeState()
-  return await marinade.marinadeFinanceProgram.program.methods
+  validatorVote: PublicKey
+  rentPayer: PublicKey
+}): Promise<TransactionInstruction> {
+  return await program.methods
     .addValidator(validatorScore)
     .accountsStrict({
-      state: marinadeState.marinadeStateAddress,
-      validatorList: marinadeState.state.validatorSystem.validatorList.account,
+      state: marinadeState.address,
+      validatorList: marinadeState.validatorSystem.validatorList.account,
       rentPayer,
-      rent: web3.SYSVAR_RENT_PUBKEY,
+      rent: SYSVAR_RENT_PUBKEY,
       validatorVote,
-      managerAuthority: marinadeState.state.validatorSystem.managerAuthority,
-      duplicationFlag: await marinadeState.validatorDuplicationFlag(
-        validatorVote
-      ),
-      clock: web3.SYSVAR_CLOCK_PUBKEY,
-      systemProgram: web3.SystemProgram.programId,
+      managerAuthority: marinadeState.validatorSystem.managerAuthority,
+      duplicationFlag: validatorDuplicationFlag(marinadeState, validatorVote),
+      clock: SYSVAR_CLOCK_PUBKEY,
+      systemProgram: SystemProgram.programId,
     })
     .instruction()
 }

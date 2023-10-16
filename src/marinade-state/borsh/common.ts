@@ -1,7 +1,7 @@
-import { web3 } from '@coral-xyz/anchor'
+import { PublicKey } from '@solana/web3.js'
 
 export function deserializePublicKey({ publicKey }: { publicKey: Buffer }) {
-  return new web3.PublicKey(publicKey)
+  return new PublicKey(publicKey)
 }
 
 export function deserializeF64({ bytes }: { bytes: Buffer }): {

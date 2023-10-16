@@ -1,13 +1,27 @@
-import { Marinade, MarinadeUtils, web3 } from '..'
+import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js'
+import {
+  DEFAULT_PROVIDER_URL,
+  MarinadeUtils,
+  fetchMarinadeState,
+  getStakeStates,
+} from '..'
+import { marinadeFinanceProgram } from '../programs/marinade-finance-program'
+import { AnchorProvider } from '@coral-xyz/anchor'
+import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 describe('MarinadeState', () => {
   it('getStakeStates', async () => {
-    const marinade = new Marinade()
-    const state = await marinade.getMarinadeState()
+    const provider = new AnchorProvider(
+      new Connection(DEFAULT_PROVIDER_URL),
+      new NodeWallet(Keypair.generate()),
+      { commitment: 'confirmed' }
+    )
+    const marinadeProgram = marinadeFinanceProgram({ provider })
+    const marinade = await fetchMarinadeState(marinadeProgram)
 
     const accountInfos: {
-      pubkey: web3.PublicKey
-      account: web3.AccountInfo<Buffer>
+      pubkey: PublicKey
+      account: AccountInfo<Buffer>
     }[] = [
       {
         account: {
@@ -20,17 +34,15 @@ describe('MarinadeState', () => {
           owner: MarinadeUtils.STAKE_PROGRAM_ID,
           rentEpoch: 224,
         },
-        pubkey: new web3.PublicKey(
-          '6yWLeYR8RsBHGbAvUGQhsi72JEhn2sZAjY2jxjQPT5sC'
-        ),
+        pubkey: new PublicKey('6yWLeYR8RsBHGbAvUGQhsi72JEhn2sZAjY2jxjQPT5sC'),
       },
     ]
 
-    marinade.provider.connection.getProgramAccounts = jest
+    provider.connection.getProgramAccounts = jest
       .fn()
       .mockResolvedValueOnce(accountInfos)
 
-    const stakeStates = await state.getStakeStates()
+    const stakeStates = await getStakeStates(provider.connection, marinade)
 
     expect(stakeStates).toMatchSnapshot()
   })

@@ -1,14 +1,14 @@
-import { web3 } from '@coral-xyz/anchor'
 import {
-  MarinadeReferralState,
+  MarinadeReferralReferralState,
   MarinadeReferralStateResponse,
 } from './marinade-referral-state.types'
 import { MarinadeReferralProgram } from '../programs/marinade-referral-program'
+import { PublicKey } from '@solana/web3.js'
 
 export async function fetchReferralState(
   program: MarinadeReferralProgram,
-  referralCode: web3.PublicKey
-): Promise<MarinadeReferralState> {
+  referralCode: PublicKey
+): Promise<MarinadeReferralReferralState> {
   const state = (await program.account.referralState.fetch(
     referralCode
   )) as unknown as MarinadeReferralStateResponse.ReferralState
@@ -25,9 +25,9 @@ export async function fetchReferralState(
  */
 export async function getReferralPartners(
   program: MarinadeReferralProgram
-): Promise<MarinadeReferralState[]> {
+): Promise<MarinadeReferralReferralState[]> {
   const accounts = await program.provider.connection.getProgramAccounts(
-    new web3.PublicKey(program.programId),
+    new PublicKey(program.programId),
     {
       filters: [
         {
@@ -37,9 +37,9 @@ export async function getReferralPartners(
     }
   )
   return accounts.map(acc =>
-    program.coder.types.decode<MarinadeReferralState>(
+    program.coder.accounts.decode<MarinadeReferralReferralState>(
       'referralState',
       acc.account.data
     )
-  ) as MarinadeReferralState[]
+  ) as MarinadeReferralReferralState[]
 }

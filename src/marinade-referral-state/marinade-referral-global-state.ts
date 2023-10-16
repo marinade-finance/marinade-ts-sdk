@@ -1,14 +1,14 @@
-import { web3 } from '@coral-xyz/anchor'
 import {
   MarinadeReferralGlobalState,
   MarinadeReferralStateResponse,
 } from './marinade-referral-state.types'
 import { DEFAULT_MARINADE_REFERRAL_GLOBAL_STATE_ADDRESS } from '../config/marinade-config'
 import { MarinadeReferralProgram } from '../programs/marinade-referral-program'
+import { PublicKey } from '@solana/web3.js'
 
 export async function fetchReferralGlobalState(
   program: MarinadeReferralProgram,
-  referralGlobalState: web3.PublicKey = DEFAULT_MARINADE_REFERRAL_GLOBAL_STATE_ADDRESS
+  referralGlobalState: PublicKey = DEFAULT_MARINADE_REFERRAL_GLOBAL_STATE_ADDRESS
 ): Promise<MarinadeReferralGlobalState> {
   const globalState = (await program.account.globalState.fetch(
     referralGlobalState

@@ -1,4 +1,3 @@
-import { BN, web3 } from '@coral-xyz/anchor'
 import { deserializeUnchecked } from 'borsh'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
 import { bounds, STAKE_PROGRAM_ID } from '../util'
@@ -18,10 +17,12 @@ import {
   MarinadeFinanceProgram,
 } from '../programs/marinade-finance-program'
 import { DEFAULT_MARINADE_STATE_ADDRESS } from '../config/marinade-config'
+import { AccountInfo, Connection, PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export async function fetchMarinadeState(
   program: MarinadeFinanceProgram,
-  marinadeStateAddress: web3.PublicKey = DEFAULT_MARINADE_STATE_ADDRESS
+  marinadeStateAddress: PublicKey = DEFAULT_MARINADE_STATE_ADDRESS
 ): Promise<Readonly<MarinadeState>> {
   const stateResponse = (await program.account.state.fetch(
     marinadeStateAddress
@@ -33,14 +34,19 @@ export async function fetchMarinadeState(
   }
 }
 
+/**
+ * Configuration parameters for getting program derived addresses
+ * for Marinade program.
+ *
+ * @param programId The Marinade program ID.
+ * @param address The Marinade state account address.
+ */
 export type ProgramDerivedAddressConfig = {
-  programId: web3.PublicKey
-  address: web3.PublicKey
+  programId: PublicKey
+  address: PublicKey
 }
 
-export function reserveAddress(
-  config: ProgramDerivedAddressConfig
-): web3.PublicKey {
+export function reserveAddress(config: ProgramDerivedAddressConfig): PublicKey {
   return findProgramDerivedAddress({
     config,
     seed: ProgramDerivedAddressSeed.RESERVE_ACCOUNT,
@@ -49,7 +55,7 @@ export function reserveAddress(
 
 export function mSolMintAuthority(
   config: ProgramDerivedAddressConfig
-): web3.PublicKey {
+): PublicKey {
   return findProgramDerivedAddress({
     config,
     seed: ProgramDerivedAddressSeed.LIQ_POOL_MSOL_MINT_AUTHORITY,
@@ -58,7 +64,7 @@ export function mSolMintAuthority(
 
 export function mSolLegAuthority(
   config: ProgramDerivedAddressConfig
-): web3.PublicKey {
+): PublicKey {
   return findProgramDerivedAddress({
     config,
     seed: ProgramDerivedAddressSeed.LIQ_POOL_MSOL_AUTHORITY,
@@ -67,14 +73,14 @@ export function mSolLegAuthority(
 
 export function lpMintAuthority(
   config: ProgramDerivedAddressConfig
-): web3.PublicKey {
+): PublicKey {
   return findProgramDerivedAddress({
     config,
     seed: ProgramDerivedAddressSeed.LIQ_POOL_MINT_AUTHORITY,
   })
 }
 
-export function solLeg(config: ProgramDerivedAddressConfig): web3.PublicKey {
+export function solLeg(config: ProgramDerivedAddressConfig): PublicKey {
   return findProgramDerivedAddress({
     config,
     seed: ProgramDerivedAddressSeed.LIQ_POOL_SOL_ACCOUNT,
@@ -83,8 +89,8 @@ export function solLeg(config: ProgramDerivedAddressConfig): web3.PublicKey {
 
 export function validatorDuplicationFlag(
   config: ProgramDerivedAddressConfig,
-  validatorAddress: web3.PublicKey
-): web3.PublicKey {
+  validatorAddress: PublicKey
+): PublicKey {
   return findProgramDerivedAddress({
     config,
     seed: ProgramDerivedAddressSeed.UNIQUE_VALIDATOR,
@@ -95,7 +101,7 @@ export function validatorDuplicationFlag(
 export function stakeWithdrawAuthority(
   config: ProgramDerivedAddressConfig,
   nonce: number
-): web3.PublicKey {
+): PublicKey {
   return findProgramDerivedAddressWithNonce({
     config,
     seed: ProgramDerivedAddressSeed.STAKE_WITHDRAW_SEED,
@@ -111,9 +117,9 @@ export function findProgramDerivedAddress({
   config: ProgramDerivedAddressConfig
   seed: ProgramDerivedAddressSeed
   extraSeeds?: Buffer[]
-}): web3.PublicKey {
+}): PublicKey {
   const seeds = [config.address.toBuffer(), Buffer.from(seed), ...extraSeeds]
-  const [programAddress] = web3.PublicKey.findProgramAddressSync(
+  const [programAddress] = PublicKey.findProgramAddressSync(
     seeds,
     config.programId
   )
@@ -130,7 +136,7 @@ export function findProgramDerivedAddressWithNonce({
   seed: ProgramDerivedAddressSeed
   nonce: number
   extraSeeds?: Buffer[]
-}): web3.PublicKey {
+}): PublicKey {
   if (nonce > 255 || nonce < 0) {
     throw new Error(
       `Invalid nonce ${nonce}, must be a number between 0 and 255`
@@ -138,26 +144,23 @@ export function findProgramDerivedAddressWithNonce({
   }
   const seeds = [config.address.toBuffer(), Buffer.from(seed), ...extraSeeds]
   const seedsWithNonce = seeds.concat(Buffer.from([nonce]))
-  return web3.PublicKey.createProgramAddressSync(
-    seedsWithNonce,
-    config.programId
-  )
+  return PublicKey.createProgramAddressSync(seedsWithNonce, config.programId)
 }
 
 export function mSolPrice(state: MarinadeState): number {
   return state.msolPrice.toNumber() / 0x1_0000_0000
 }
 
-export function mSolMint(connection: web3.Connection, state: MarinadeState) {
+export function mSolMint(connection: Connection, state: MarinadeState) {
   return MarinadeMint.build(connection, state.msolMint)
 }
 
-export function lpMint(connection: web3.Connection, state: MarinadeState) {
+export function lpMint(connection: Connection, state: MarinadeState) {
   return MarinadeMint.build(connection, state.liqPool.lpMint)
 }
 
 export async function unstakeNowFeeBp(
-  connection: web3.Connection,
+  connection: Connection,
   config: ProgramDerivedAddressConfig,
   state: MarinadeState,
   lamportsToObtain: BN
@@ -275,7 +278,7 @@ export async function getStakeRecords(
 }
 
 export async function getStakeStates(
-  connection: web3.Connection,
+  connection: Connection,
   state: MarinadeState
 ): Promise<StakeState[]> {
   const stakeWithdrawAuthPDA = stakeWithdrawAuthority(
@@ -335,12 +338,12 @@ export async function getStakeInfos(
   // rpc.get_multiple_accounts() has a max of 100 accounts
   const BATCH_SIZE = 100
   while (processed < toProcess) {
-    const accountInfos: web3.AccountInfo<Buffer>[] =
+    const accountInfos: AccountInfo<Buffer>[] =
       (await program.provider.connection.getMultipleAccountsInfo(
         stakeRecords
           .slice(processed, processed + BATCH_SIZE)
           .map(stakeRecord => stakeRecord.stakeAccount)
-      )) as web3.AccountInfo<Buffer>[]
+      )) as AccountInfo<Buffer>[]
 
     stakeInfos.push(
       ...accountInfos.map((accountInfo, index) => {

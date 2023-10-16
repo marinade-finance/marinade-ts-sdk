@@ -1,6 +1,7 @@
-import { web3 } from '@coral-xyz/anchor'
 import * as TestWorld from '../test-world'
-import { Marinade, MarinadeConfig } from '../../src'
+import { fetchMarinadeState, getValidatorRecords } from '../../src'
+import { marinadeFinanceProgram } from '../../src/programs/marinade-finance-program'
+import { LAMPORTS_PER_SOL, StakeProgram, Transaction } from '@solana/web3.js'
 
 require('ts-node/register')
 
@@ -11,19 +12,19 @@ export default async (): Promise<void> => {
 
   // --- CREATING STAKE ACCOUNT and DELEGATE ---
   // create a stake account that will be used later in all tests
-  const tx = new web3.Transaction()
-  const ixStakeAccount = web3.StakeProgram.createAccount({
+  const tx = new Transaction()
+  const ixStakeAccount = StakeProgram.createAccount({
     authorized: {
       staker: TestWorld.PROVIDER.wallet.publicKey,
       withdrawer: TestWorld.PROVIDER.wallet.publicKey,
     },
     fromPubkey: TestWorld.PROVIDER.wallet.publicKey,
-    lamports: 2 * web3.LAMPORTS_PER_SOL,
+    lamports: 2 * LAMPORTS_PER_SOL,
     stakePubkey: TestWorld.STAKE_ACCOUNT.publicKey,
   })
   tx.add(ixStakeAccount)
   /// delegating stake account to the vote account
-  const ixDelegate = web3.StakeProgram.delegate({
+  const ixDelegate = StakeProgram.delegate({
     authorizedPubkey: TestWorld.PROVIDER.wallet.publicKey,
     stakePubkey: TestWorld.STAKE_ACCOUNT.publicKey,
     votePubkey,
@@ -55,14 +56,12 @@ export default async (): Promise<void> => {
   )
 
   // --- ADDING solana-test-validator under MARINADE ---
-  const config = new MarinadeConfig({
-    connection: TestWorld.CONNECTION,
-    publicKey: TestWorld.SDK_USER.publicKey,
+  const marinadeProgram = marinadeFinanceProgram({
+    provider: TestWorld.PROVIDER,
   })
-  const marinade = new Marinade(config)
-  const marinadeState = await marinade.getMarinadeState()
+  const marinadeState = await fetchMarinadeState(marinadeProgram)
   if (
-    !marinadeState.state.validatorSystem.managerAuthority.equals(
+    !marinadeState.validatorSystem.managerAuthority.equals(
       TestWorld.MARINADE_STATE_ADMIN.publicKey
     )
   ) {
@@ -71,7 +70,7 @@ export default async (): Promise<void> => {
     )
   }
   // check if the validator is part of Marinade already
-  const validators = await marinadeState.getValidatorRecords()
+  const validators = await getValidatorRecords(marinadeProgram, marinadeState)
   if (
     validators.validatorRecords.findIndex(
       v => v.validatorAccount.toBase58() === votePubkey.toBase58()
@@ -81,12 +80,13 @@ export default async (): Promise<void> => {
       `Validator vote account ${votePubkey.toBase58()} is not part of Marinade yet, adding it.`
     )
     const addIx = await TestWorld.addValidatorInstructionBuilder({
-      marinade,
+      program: marinadeProgram,
+      marinadeState,
       validatorScore: 1000,
       rentPayer: TestWorld.PROVIDER.wallet.publicKey,
       validatorVote: votePubkey,
     })
-    const addTx = new web3.Transaction().add(addIx)
+    const addTx = new Transaction().add(addIx)
     await TestWorld.PROVIDER.sendAndConfirm(addTx, [
       TestWorld.MARINADE_STATE_ADMIN,
     ])
