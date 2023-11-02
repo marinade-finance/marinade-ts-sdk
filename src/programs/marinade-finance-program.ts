@@ -1,4 +1,4 @@
-import { Program, Provider, IdlTypes, Wallet, BN } from '@coral-xyz/anchor'
+import { Program, Provider, IdlTypes, Wallet } from '@coral-xyz/anchor'
 import {
   AnchorProvider,
   Wallet as WalletInterface,
@@ -33,6 +33,7 @@ import {
   SYSVAR_RENT_PUBKEY,
   TransactionInstruction,
 } from '@solana/web3.js'
+import BN from 'bn.js'
 
 const MarinadeFinanceIDL = marinadeFinance.IDL
 type MarinadeFinance = marinadeFinance.MarinadeFinance

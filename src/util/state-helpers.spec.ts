@@ -1,4 +1,4 @@
-import { AnchorProvider, BN, Wallet } from '@coral-xyz/anchor'
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
 import * as TestWorld from '../../test/test-world'
 import {
   computeMsolAmount,
@@ -9,6 +9,7 @@ import { marinadeFinanceProgram } from '../programs/marinade-finance-program'
 import { DEFAULT_PROVIDER_URL, fetchMarinadeState } from '..'
 import { MarinadeState } from '../marinade-state/marinade-state.types'
 import { Connection } from '@solana/web3.js'
+import { BN } from 'bn.js'
 
 describe('state-helpers', () => {
   describe('unstakeNowFeeBp', () => {

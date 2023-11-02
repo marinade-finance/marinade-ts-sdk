@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BN } from '@coral-xyz/anchor'
+import BN from 'bn.js'
 import { getStakePoolAccount } from '@solana/spl-stake-pool'
 import { ValidatorAccount } from '@solana/spl-stake-pool/dist/utils'
 import {

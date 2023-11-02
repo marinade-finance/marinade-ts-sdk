@@ -1,4 +1,4 @@
-import { BN } from '@coral-xyz/anchor'
+import BN from 'bn.js'
 import { MarinadeState } from '../marinade-state/marinade-state.types'
 
 /**

@@ -1,4 +1,4 @@
-import { BN } from '@coral-xyz/anchor'
+import BN from 'bn.js'
 import { StakePool } from '@solana/spl-stake-pool'
 
 const SOL_DECIMALS = 9
