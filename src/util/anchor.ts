@@ -1,4 +1,4 @@
-import { Provider, utils } from '@coral-xyz/anchor'
+import { utils } from '@coral-xyz/anchor'
 import {
   createAssociatedTokenAccountInstruction,
   getAccount,
@@ -6,7 +6,6 @@ import {
 } from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 import {
-  SystemProgram,
   Connection,
   PublicKey,
   TransactionInstruction,
@@ -14,8 +13,6 @@ import {
 } from '@solana/web3.js'
 import BN from 'bn.js'
 
-export const SYSTEM_PROGRAM_ID = SystemProgram.programId
-export const STAKE_PROGRAM_ID = StakeProgram.programId
 export const U64_MAX = new BN('ffffffffffffffff', 16)
 
 export function web3PubKeyOrNull(
@@ -30,15 +27,8 @@ export function BNOrNull(
   return value === null ? null : new BN(value)
 }
 
-export async function getAssociatedTokenAccountAddress(
-  mint: PublicKey,
-  owner: PublicKey
-): Promise<PublicKey> {
-  return utils.token.associatedAddress({ mint, owner })
-}
-
 export async function getOrCreateAssociatedTokenAccount(
-  anchorProvider: Provider,
+  connection: Connection,
   mintAddress: PublicKey,
   ownerAddress: PublicKey,
   payerAddress?: PublicKey
@@ -46,19 +36,21 @@ export async function getOrCreateAssociatedTokenAccount(
   associatedTokenAccountAddress: PublicKey
   createAssociateTokenInstruction: TransactionInstruction | null
 }> {
-  const existingTokenAccounts =
-    await anchorProvider.connection.getTokenAccountsByOwner(ownerAddress, {
+  const existingTokenAccounts = await connection.getTokenAccountsByOwner(
+    ownerAddress,
+    {
       mint: mintAddress,
-    })
+    }
+  )
   const [existingTokenAccount] = existingTokenAccounts.value
 
   const associatedTokenAccountAddress =
     existingTokenAccount?.pubkey ??
-    (await getAssociatedTokenAccountAddress(mintAddress, ownerAddress))
+    utils.token.associatedAddress({ mint: mintAddress, owner: ownerAddress })
   let createAssociateTokenInstruction: TransactionInstruction | null = null
 
   try {
-    await getAccount(anchorProvider.connection, associatedTokenAccountAddress)
+    await getAccount(connection, associatedTokenAccountAddress)
   } catch (err) {
     if (
       !(err instanceof TokenError) ||
@@ -82,13 +74,9 @@ export async function getOrCreateAssociatedTokenAccount(
 }
 
 export async function getParsedStakeAccountInfo(
-  providerOrConnection: Provider | Connection,
+  connection: Connection,
   stakeAccountAddress: PublicKey
 ): Promise<ParsedStakeAccountInfo> {
-  const connection =
-    providerOrConnection instanceof Connection
-      ? providerOrConnection
-      : providerOrConnection.connection
   const { value: stakeAccountInfo } = await connection.getParsedAccountInfo(
     stakeAccountAddress
   )
@@ -99,7 +87,7 @@ export async function getParsedStakeAccountInfo(
     )
   }
 
-  if (!stakeAccountInfo.owner.equals(STAKE_PROGRAM_ID)) {
+  if (!stakeAccountInfo.owner.equals(StakeProgram.programId)) {
     throw new Error(
       `${stakeAccountAddress.toBase58()} is not a stake account because owner is ${
         stakeAccountInfo.owner

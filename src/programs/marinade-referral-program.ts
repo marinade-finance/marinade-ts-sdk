@@ -1,7 +1,6 @@
 import { AnchorProvider, Program, Provider, Wallet } from '@coral-xyz/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { MarinadeReferralReferralState } from '../marinade-referral-state/marinade-referral-state.types'
-import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
 import * as marinadeReferral from './idl/types/marinade_referral'
 import { DEFAULT_MARINADE_REFERRAL_PROGRAM_ID } from '../config/marinade-config'
 import { MarinadeState } from '../marinade-state/marinade-state.types'
@@ -18,6 +17,8 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
+  StakeProgram,
+  SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js'
 import BN from 'bn.js'
@@ -83,7 +84,7 @@ export async function liquidUnstakeInstructionBuilder({
       getMsolFromAuthority: ownerAddress,
       transferSolTo: ownerAddress,
       treasuryMsolAccount: marinadeState.treasuryMsolAccount,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
       msolTokenPartnerAccount: referralState.msolTokenPartnerAccount,
     })
@@ -119,7 +120,7 @@ export async function depositInstructionBuilder({
       liqPoolSolLegPda: solLeg(marinadeState),
       mintTo: associatedMSolTokenAccountAddress,
       transferFrom,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
       msolTokenPartnerAccount: referralState.msolTokenPartnerAccount,
     })
@@ -164,9 +165,9 @@ export async function depositStakeAccountInstructionBuilder({
       rentPayer: ownerAddress,
       clock: SYSVAR_CLOCK_PUBKEY,
       rent: SYSVAR_RENT_PUBKEY,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
-      stakeProgram: STAKE_PROGRAM_ID,
+      stakeProgram: StakeProgram.programId,
       msolTokenPartnerAccount: referralState.msolTokenPartnerAccount,
     })
     .instruction()

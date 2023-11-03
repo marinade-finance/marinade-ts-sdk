@@ -1,6 +1,6 @@
 import { deserializeUnchecked } from 'borsh'
 import { MarinadeMint } from '../marinade-mint/marinade-mint'
-import { bounds, STAKE_PROGRAM_ID } from '../util'
+import { bounds } from '../util'
 import * as StateHelper from '../util/state-helpers'
 import { StakeRecord } from './borsh/stake-record'
 import { STAKE_STATE_BORSH_SCHEMA, StakeState } from './borsh/stake-state'
@@ -17,7 +17,12 @@ import {
   MarinadeFinanceProgram,
 } from '../programs/marinade-finance-program'
 import { DEFAULT_MARINADE_STATE_ADDRESS } from '../config/marinade-config'
-import { AccountInfo, Connection, PublicKey } from '@solana/web3.js'
+import {
+  AccountInfo,
+  Connection,
+  PublicKey,
+  StakeProgram,
+} from '@solana/web3.js'
 import BN from 'bn.js'
 
 export async function fetchMarinadeState(
@@ -286,7 +291,7 @@ export async function getStakeStates(
     state.stakeSystem.stakeWithdrawBumpSeed
   )
   const stakeAccountInfos = await connection.getProgramAccounts(
-    STAKE_PROGRAM_ID,
+    StakeProgram.programId,
     {
       filters: [
         { dataSize: 200 },

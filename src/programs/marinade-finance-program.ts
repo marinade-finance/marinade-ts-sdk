@@ -6,8 +6,6 @@ import {
   Wallet,
 } from '@coral-xyz/anchor'
 import {
-  STAKE_PROGRAM_ID,
-  SYSTEM_PROGRAM_ID,
   getEpochInfo,
   getTicketDateInfo,
   estimateTicketDateInfo,
@@ -33,6 +31,8 @@ import {
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
+  StakeProgram,
+  SystemProgram,
   TransactionInstruction,
 } from '@solana/web3.js'
 import BN from 'bn.js'
@@ -156,7 +156,7 @@ export async function addLiquidityInstructionBuilder({
       liqPoolSolLegPda: solLeg(marinadeState),
       transferFrom: ownerAddress,
       mintTo: associatedLPTokenAccountAddress,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
     })
     .instruction()
@@ -189,7 +189,7 @@ export async function removeLiquidityInstructionBuilder({
       transferMsolTo: associatedMSolTokenAccountAddress,
       liqPoolMsolLeg: marinadeState.liqPool.msolLeg,
       liqPoolMsolLegAuthority: mSolLegAuthority(marinadeState),
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
     })
     .instruction()
@@ -219,7 +219,7 @@ export async function liquidUnstakeInstructionBuilder({
       getMsolFromAuthority: ownerAddress,
       transferSolTo: ownerAddress,
       treasuryMsolAccount: marinadeState.treasuryMsolAccount,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
     })
     .instruction()
@@ -250,7 +250,7 @@ export async function depositInstructionBuilder({
       liqPoolSolLegPda: solLeg(marinadeState),
       mintTo: associatedMSolTokenAccountAddress,
       transferFrom,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
     })
     .instruction()
@@ -290,9 +290,9 @@ export async function depositStakeAccountInstructionBuilder({
       rentPayer: ownerAddress,
       clock: SYSVAR_CLOCK_PUBKEY,
       rent: SYSVAR_RENT_PUBKEY,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
-      stakeProgram: STAKE_PROGRAM_ID,
+      stakeProgram: StakeProgram.programId,
     })
     .instruction()
 }
@@ -316,7 +316,7 @@ export async function claimInstructionBuilder({
       ticketAccount,
       transferSolTo,
       clock: SYSVAR_CLOCK_PUBKEY,
-      systemProgram: SYSTEM_PROGRAM_ID,
+      systemProgram: SystemProgram.programId,
     })
     .instruction()
 }

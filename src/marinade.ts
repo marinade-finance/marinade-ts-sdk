@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  getAssociatedTokenAccountAddress,
   getOrCreateAssociatedTokenAccount,
   getParsedStakeAccountInfo,
 } from './util/anchor'
@@ -59,6 +58,7 @@ import {
   liquidUnstakeInstructionBuilder as referralLiquidUnstakeInstructionBuilder,
   depositStakeAccountInstructionBuilder as referralDepositStakeAccountInstructionBuilder,
 } from './programs/marinade-referral-program'
+import { utils } from '@coral-xyz/anchor'
 
 /**
  * Returns a transaction with the instructions to
@@ -78,7 +78,7 @@ export async function addLiquidity(
     associatedTokenAccountAddress: associatedLPTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.liqPool.lpMint,
     ownerAddress
   )
@@ -117,17 +117,16 @@ export async function removeLiquidity(
 ): Promise<MarinadeResult.RemoveLiquidity> {
   const transaction = new Transaction()
 
-  const associatedLPTokenAccountAddress =
-    await getAssociatedTokenAccountAddress(
-      marinadeProgram.marinadeState.liqPool.lpMint,
-      ownerAddress
-    )
+  const associatedLPTokenAccountAddress = utils.token.associatedAddress({
+    mint: marinadeProgram.marinadeState.liqPool.lpMint,
+    owner: ownerAddress,
+  })
 
   const {
     associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.msolMint,
     ownerAddress
   )
@@ -177,7 +176,7 @@ export async function deposit(
     associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.msolMint,
     mintToOwnerAddress,
     feePayer
@@ -244,7 +243,7 @@ export async function liquidUnstake(
 
   if (!associatedMSolTokenAccountAddress) {
     const associatedTokenAccountInfos = await getOrCreateAssociatedTokenAccount(
-      marinadeProgram.provider,
+      marinadeProgram.provider.connection,
       marinadeProgram.marinadeState.msolMint,
       ownerAddress
     )
@@ -302,7 +301,7 @@ export async function depositStakeAccount(
   options: DepositStakeAccountOptions = {}
 ): Promise<MarinadeResult.DepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     stakeAccountAddress
   )
   const rent =
@@ -337,7 +336,7 @@ export async function depositDeactivatingStakeAccount(
   options: DepositStakeAccountOptions = {}
 ): Promise<MarinadeResult.DepositDeactivatingStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     stakeAccountAddress
   )
 
@@ -355,7 +354,7 @@ export async function depositDeactivatingStakeAccount(
     associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.msolMint,
     ownerAddress
   )
@@ -523,7 +522,7 @@ export async function depositStakeAccountByAccount(
     associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.msolMint,
     ownerAddress
   )
@@ -605,7 +604,7 @@ export async function partiallyDepositStakeAccount(
   options: DepositStakeAccountOptions = {}
 ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     stakeAccountAddress
   )
 
@@ -674,7 +673,7 @@ export async function depositActivatingStakeAccount(
   options: DepositStakeAccountOptions = {}
 ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     stakeAccountAddress
   )
 
@@ -751,7 +750,7 @@ export async function liquidateStakeAccount(
   mSolToKeep?: BN
 ): Promise<MarinadeResult.LiquidateStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     stakeAccountAddress
   )
   const rent =
@@ -821,7 +820,7 @@ export async function partiallyLiquidateStakeAccount(
   solToKeep: BN
 ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     stakeAccountAddress
   )
 
@@ -900,11 +899,10 @@ export async function orderUnstake(
   ownerAddress: PublicKey,
   msolAmount: BN
 ): Promise<MarinadeResult.OrderUnstake> {
-  const associatedMSolTokenAccountAddress =
-    await getAssociatedTokenAccountAddress(
-      marinadeProgram.marinadeState.msolMint,
-      ownerAddress
-    )
+  const associatedMSolTokenAccountAddress = utils.token.associatedAddress({
+    mint: marinadeProgram.marinadeState.msolMint,
+    owner: ownerAddress,
+  })
   const ticketAccountKeypair = Keypair.generate()
   const rent =
     await marinadeProgram.provider.connection.getMinimumBalanceForRentExemption(
@@ -1029,7 +1027,7 @@ export async function depositStakePoolToken(
     associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.msolMint,
     ownerAddress
   )
@@ -1181,7 +1179,7 @@ export async function liquidateStakePoolToken(
     associatedTokenAccountAddress: associatedMSolTokenAccountAddress,
     createAssociateTokenInstruction,
   } = await getOrCreateAssociatedTokenAccount(
-    marinadeProgram.provider,
+    marinadeProgram.provider.connection,
     marinadeProgram.marinadeState.msolMint,
     ownerAddress
   )

@@ -7,9 +7,10 @@ import {
   PublicKey,
   PublicKeyInitData,
   SYSVAR_CLOCK_PUBKEY,
+  StakeProgram,
   TransactionInstruction,
 } from '@solana/web3.js'
-import { STAKE_PROGRAM_ID, getParsedStakeAccountInfo } from './anchor'
+import { getParsedStakeAccountInfo } from './anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import {
   getValidatorRecords,
@@ -73,7 +74,7 @@ export async function identifyValidatorFromTx(
 
   const excludedAccounts = [
     SYSVAR_CLOCK_PUBKEY.toString(),
-    STAKE_PROGRAM_ID.toString(),
+    StakeProgram.programId.toString(),
     TOKEN_PROGRAM_ID.toString(),
   ]
   const uniqueAccounts = withdrawTxAccounts.filter(
@@ -91,7 +92,7 @@ export async function identifyValidatorFromTx(
     uniqueAccounts.map(async (acc: PublicKeyInitData) => {
       try {
         const accountInfo = await getParsedStakeAccountInfo(
-          program.provider,
+          program.provider.connection,
           new PublicKey(acc)
         )
         if (accountInfo.voterAddress)
@@ -102,7 +103,7 @@ export async function identifyValidatorFromTx(
     })
   )
 
-  const duplicationFlag = await validatorDuplicationFlag(
+  const duplicationFlag = validatorDuplicationFlag(
     state,
     new PublicKey(validatorAddress)
   )
