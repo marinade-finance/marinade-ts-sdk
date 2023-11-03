@@ -1,13 +1,9 @@
-import { Program, Provider, Wallet } from '@coral-xyz/anchor'
+import { AnchorProvider, Program, Provider, Wallet } from '@coral-xyz/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { MarinadeReferralReferralState } from '../marinade-referral-state/marinade-referral-state.types'
 import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
 import * as marinadeReferral from './idl/types/marinade_referral'
 import { DEFAULT_MARINADE_REFERRAL_PROGRAM_ID } from '../config/marinade-config'
-import {
-  AnchorProvider,
-  Wallet as WalletInterface,
-} from '@coral-xyz/anchor/dist/cjs/provider'
 import { MarinadeState } from '../marinade-state/marinade-state.types'
 import {
   mSolLegAuthority,
@@ -38,7 +34,7 @@ export function marinadeReferralProgram({
 }: {
   programAddress?: PublicKey
   provider: Connection | Provider
-  wallet?: WalletInterface | Keypair
+  wallet?: Wallet | Keypair
   opts?: ConfirmOptions
 }): MarinadeReferralProgram {
   if (provider instanceof Connection) {

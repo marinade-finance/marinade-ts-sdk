@@ -1,6 +1,6 @@
 import { MarinadeState } from '../marinade-state/marinade-state.types'
 import { ConfirmOptions, Connection, Keypair, PublicKey } from '@solana/web3.js'
-import { Provider } from '@coral-xyz/anchor'
+import { Provider, Wallet } from '@coral-xyz/anchor'
 import {
   MarinadeFinanceProgram,
   marinadeFinanceProgram,
@@ -10,7 +10,6 @@ import {
   marinadeReferralProgram,
 } from './marinade-referral-program'
 import { MarinadeReferralReferralState } from '../marinade-referral-state/marinade-referral-state.types'
-import { Wallet as WalletInterface } from '@coral-xyz/anchor/dist/cjs/provider'
 import { fetchMarinadeState } from '../marinade-state/marinade-state'
 import { fetchReferralState } from '../marinade-referral-state/marinade-referral-partner-state'
 
@@ -75,7 +74,7 @@ export class MarinadeProgram {
     marinadeStateAddress?: PublicKey
     referralProgramAddress?: PublicKey
     referralCode?: PublicKey
-    wallet?: WalletInterface | Keypair
+    wallet?: Wallet | Keypair
     opts?: ConfirmOptions
   }): Promise<MarinadeProgram> {
     const program = marinadeFinanceProgram({

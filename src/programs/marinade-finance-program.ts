@@ -1,8 +1,10 @@
-import { Program, Provider, IdlTypes, Wallet } from '@coral-xyz/anchor'
 import {
   AnchorProvider,
-  Wallet as WalletInterface,
-} from '@coral-xyz/anchor/dist/cjs/provider'
+  Program,
+  Provider,
+  IdlTypes,
+  Wallet,
+} from '@coral-xyz/anchor'
 import {
   STAKE_PROGRAM_ID,
   SYSTEM_PROGRAM_ID,
@@ -52,7 +54,7 @@ export function marinadeFinanceProgram({
 }: {
   programAddress?: PublicKey
   provider: Connection | Provider
-  wallet?: WalletInterface | Keypair
+  wallet?: Wallet | Keypair
   opts?: ConfirmOptions
 }): MarinadeFinanceProgram {
   if (provider instanceof Connection) {
