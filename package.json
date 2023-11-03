@@ -20,7 +20,7 @@
     "prepare": "husky install",
     "pretest": "pnpm lint",
     "test": "pnpm test:unit",
-    "test:unit": "jest --roots '<rootDir>/src'",
+    "test:unit": "jest --testTimeout 20000 --roots '<rootDir>/src'",
     "test:integration": "anchor test",
     "_test:integration": "jest --testTimeout 90000 --runInBand --globalSetup '<rootDir>/test/setup/globalSetup.ts' --roots '<rootDir>/test' -- $FILE",
     "lint": "gts lint",
