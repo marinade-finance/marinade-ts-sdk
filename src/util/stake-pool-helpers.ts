@@ -10,7 +10,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js'
 import { STAKE_PROGRAM_ID, getParsedStakeAccountInfo } from './anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import {
   getValidatorRecords,
   validatorDuplicationFlag,

@@ -1,5 +1,5 @@
 import { Program, Provider, Wallet } from '@coral-xyz/anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { MarinadeReferralReferralState } from '../marinade-referral-state/marinade-referral-state.types'
 import { STAKE_PROGRAM_ID, SYSTEM_PROGRAM_ID } from '../util'
 import * as marinadeReferral from './idl/types/marinade_referral'

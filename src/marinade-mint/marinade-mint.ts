@@ -1,4 +1,4 @@
-import { getMint, Mint } from '@solana/spl-token-3.x'
+import { getMint, Mint } from '@solana/spl-token'
 import { tokenBalanceToNumber } from '../util/conversion'
 import { Connection, PublicKey } from '@solana/web3.js'
 import BN from 'bn.js'

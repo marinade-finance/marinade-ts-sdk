@@ -3,7 +3,7 @@ import {
   createAssociatedTokenAccountInstruction,
   getAccount,
   TokenError,
-} from '@solana/spl-token-3.x'
+} from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
 import {
   SystemProgram,
