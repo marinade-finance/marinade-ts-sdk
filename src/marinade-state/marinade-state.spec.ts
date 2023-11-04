@@ -1,10 +1,11 @@
-import { AccountInfo, Connection, Keypair, PublicKey } from '@solana/web3.js'
 import {
-  DEFAULT_PROVIDER_URL,
-  MarinadeUtils,
-  fetchMarinadeState,
-  getStakeStates,
-} from '..'
+  AccountInfo,
+  Connection,
+  Keypair,
+  PublicKey,
+  StakeProgram,
+} from '@solana/web3.js'
+import { DEFAULT_PROVIDER_URL, fetchMarinadeState, getStakeStates } from '..'
 import { marinadeFinanceProgram } from '../programs/marinade-finance-program'
 import { AnchorProvider } from '@coral-xyz/anchor'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
@@ -31,7 +32,7 @@ describe('MarinadeState', () => {
           ),
           executable: false,
           lamports: 2190793099,
-          owner: MarinadeUtils.STAKE_PROGRAM_ID,
+          owner: StakeProgram.programId,
           rentEpoch: 224,
         },
         pubkey: new PublicKey('6yWLeYR8RsBHGbAvUGQhsi72JEhn2sZAjY2jxjQPT5sC'),
