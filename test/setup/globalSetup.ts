@@ -10,48 +10,30 @@ export default async (): Promise<void> => {
   const votePubkey = await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
 
   // --- CREATING STAKE ACCOUNT and DELEGATE ---
-  // create a stake account that will be used later in all tests
-  const tx = new web3.Transaction()
-  const ixStakeAccount = web3.StakeProgram.createAccount({
-    authorized: {
-      staker: TestWorld.PROVIDER.wallet.publicKey,
-      withdrawer: TestWorld.PROVIDER.wallet.publicKey,
-    },
-    fromPubkey: TestWorld.PROVIDER.wallet.publicKey,
-    lamports: 2 * web3.LAMPORTS_PER_SOL,
-    stakePubkey: TestWorld.STAKE_ACCOUNT.publicKey,
-  })
-  tx.add(ixStakeAccount)
-  /// delegating stake account to the vote account
-  const ixDelegate = web3.StakeProgram.delegate({
-    authorizedPubkey: TestWorld.PROVIDER.wallet.publicKey,
-    stakePubkey: TestWorld.STAKE_ACCOUNT.publicKey,
-    votePubkey,
-  })
-  tx.add(ixDelegate)
-  await TestWorld.PROVIDER.sendAndConfirm(tx, [TestWorld.STAKE_ACCOUNT])
-
-  const stakeBalance = await TestWorld.CONNECTION.getBalance(
-    TestWorld.STAKE_ACCOUNT.publicKey
-  )
-  await TestWorld.CONNECTION.getAccountInfo(TestWorld.STAKE_ACCOUNT.publicKey)
-  if (!stakeBalance) {
-    throw new Error('Jest global setup error: no stake account balance')
-  }
+  await createAndDelegateStake(TestWorld.STAKE_ACCOUNT, votePubkey)
+  await createAndDelegateStake(TestWorld.STAKE_ACCOUNT_TO_WITHDRAW, votePubkey)
 
   // --- WAITING FOR STAKE ACCOUNT to be READY ---
+  const stakeAccounts = [
+    TestWorld.STAKE_ACCOUNT.publicKey,
+    TestWorld.STAKE_ACCOUNT_TO_WITHDRAW.publicKey,
+  ]
   const startTime = Date.now()
   console.log(
-    `Waiting for stake account ${TestWorld.STAKE_ACCOUNT.publicKey.toBase58()} to be activated`
+    `Waiting for stake accounts ${stakeAccounts
+      .map(sa => sa.toBase58())
+      .join(', ')} to be activated`
   )
-  await TestWorld.waitForStakeAccountActivation({
-    stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
-    connection: TestWorld.CONNECTION,
-  })
+  for (const stakeAccountToWait of stakeAccounts) {
+    await TestWorld.waitForStakeAccountActivation({
+      stakeAccount: stakeAccountToWait,
+      connection: TestWorld.CONNECTION,
+    })
+  }
   console.log(
-    `Stake account ${TestWorld.STAKE_ACCOUNT.publicKey.toBase58()} is activated after ${
-      (Date.now() - startTime) / 1000
-    } s`
+    `Stake account(s) ${stakeAccounts.map(sa =>
+      sa.toBase58()
+    )} are activated after ${(Date.now() - startTime) / 1000} s`
   )
 
   // --- ADDING solana-test-validator under MARINADE ---
@@ -90,5 +72,42 @@ export default async (): Promise<void> => {
     await TestWorld.PROVIDER.sendAndConfirm(addTx, [
       TestWorld.MARINADE_STATE_ADMIN,
     ])
+  }
+}
+
+async function createAndDelegateStake(
+  stakeAccountKeypair: web3.Keypair,
+  votePubkey: web3.PublicKey,
+  lamports: number = 42 * web3.LAMPORTS_PER_SOL
+) {
+  // create a stake account that will be used later in all tests
+  const tx = new web3.Transaction()
+  const ixStakeAccount = web3.StakeProgram.createAccount({
+    authorized: {
+      staker: TestWorld.PROVIDER.wallet.publicKey,
+      withdrawer: TestWorld.PROVIDER.wallet.publicKey,
+    },
+    fromPubkey: TestWorld.PROVIDER.wallet.publicKey,
+    lamports,
+    stakePubkey: stakeAccountKeypair.publicKey,
+  })
+  tx.add(ixStakeAccount)
+  /// delegating stake account to the vote account
+  const ixDelegate = web3.StakeProgram.delegate({
+    authorizedPubkey: TestWorld.PROVIDER.wallet.publicKey,
+    stakePubkey: stakeAccountKeypair.publicKey,
+    votePubkey,
+  })
+  tx.add(ixDelegate)
+  await TestWorld.PROVIDER.sendAndConfirm(tx, [stakeAccountKeypair])
+
+  const stakeBalance = await TestWorld.CONNECTION.getBalance(
+    stakeAccountKeypair.publicKey
+  )
+  await TestWorld.CONNECTION.getAccountInfo(stakeAccountKeypair.publicKey)
+  if (!stakeBalance) {
+    throw new Error(
+      `Jest setup error: no balance of stake account ${stakeAccountKeypair.publicKey.toBase58()}`
+    )
   }
 }
