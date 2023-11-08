@@ -8,11 +8,17 @@ export const enum ProgramDerivedAddressSeed {
   LIQ_POOL_SOL_ACCOUNT = 'liq_sol',
   RESERVE_ACCOUNT = 'reserve',
   UNIQUE_VALIDATOR = 'unique_validator',
+  STAKE_WITHDRAW = 'withdraw',
+  STAKE_DEPOSIT = 'deposit',
 }
 
 export namespace MarinadeStateResponse {
   export interface Fee {
     basisPoints: number
+  }
+
+  export interface FeeCents {
+    bpCents: number
   }
 
   export interface AccountList {
@@ -80,4 +86,12 @@ export interface MarinadeStateResponse {
   minWithdraw: BN
   stakingSolCap: BN
   emergencyCoolingDown: BN
+  pauseAuthority: web3.PublicKey
+  paused: boolean
+  delayedUnstakeFee: MarinadeStateResponse.FeeCents
+  withdrawStakeAccountFee: MarinadeStateResponse.FeeCents
+  withdrawStakeAccountEnabled: boolean
+  lastStakeMoveEpoch: BN
+  stakeMoved: BN
+  maxStakeMovedPerEpoch: MarinadeStateResponse.Fee
 }

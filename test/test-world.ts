@@ -1,6 +1,7 @@
 import { AnchorProvider, BN, Wallet, web3 } from '@coral-xyz/anchor'
 import { Marinade, MarinadeUtils } from '../src'
 import { getParsedStakeAccountInfo } from '../src/util'
+import { Signer } from '@solana/web3.js'
 
 export const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
@@ -14,6 +15,18 @@ export const STAKE_ACCOUNT: web3.Keypair = web3.Keypair.fromSecretKey(
     106, 176, 103, 94, 13, 170, 98, 66, 69, 124, 209, 44, 76, 190, 136,
   ])
 )
+
+// EHNgTdy16497UC6Eq4pri9WicTwzPEDSj3U4Ge6nMVfr
+export const STAKE_ACCOUNT_TO_WITHDRAW: web3.Keypair =
+  web3.Keypair.fromSecretKey(
+    new Uint8Array([
+      146, 213, 168, 194, 197, 182, 98, 74, 198, 138, 199, 171, 114, 229, 74,
+      71, 248, 98, 187, 168, 237, 65, 224, 211, 214, 171, 205, 10, 22, 95, 103,
+      128, 197, 89, 188, 173, 45, 161, 99, 206, 234, 23, 24, 32, 235, 19, 255,
+      72, 224, 137, 72, 42, 71, 129, 22, 126, 255, 66, 205, 84, 246, 238, 233,
+      141,
+    ])
+  )
 
 // 9wmxMQ2TFxYh918RzESjiA1dUXbdRAsXBd12JA1vwWQq
 export const SDK_USER = web3.Keypair.fromSecretKey(
@@ -110,12 +123,7 @@ export async function transferMinimumLamportsBalance(
 }
 
 export async function simulateTransaction(transaction: web3.Transaction) {
-  const {
-    context: { slot: executedSlot },
-    value: { blockhash },
-  } = await CONNECTION.getLatestBlockhashAndContext()
-  transaction.recentBlockhash = blockhash
-  transaction.feePayer = SDK_USER.publicKey
+  const { executedSlot, blockhash } = await setupTransaction(transaction)
 
   const {
     context: { slot: simulatedSlot },
@@ -123,12 +131,60 @@ export async function simulateTransaction(transaction: web3.Transaction) {
   } = await PROVIDER.connection.simulateTransaction(transaction)
   return {
     executedSlot,
+    blockhash,
     simulatedSlot,
     err,
     logs,
     unitsConsumed,
     accounts,
     returnData,
+  }
+}
+
+export async function executeTransaction(
+  transaction: web3.Transaction,
+  signers?: Signer[]
+) {
+  const { executedSlot, blockhash } = await setupTransaction(transaction)
+
+  const transactionSignature = await PROVIDER.sendAndConfirm(
+    transaction,
+    signers
+  )
+  const transactionData = await CONNECTION.getParsedTransaction(
+    transactionSignature
+  )
+  if (transactionData === null || transactionData.meta === null) {
+    throw new Error(`Cannot fetch transaction data ${transactionSignature}`)
+  }
+  const {
+    slot: executionSlot,
+    meta: { err, logMessages: logs, computeUnitsConsumed: unitsConsumed },
+    transaction: {
+      message: { accountKeys: accounts },
+    },
+  } = transactionData
+  return {
+    executedSlot,
+    blockhash,
+    executionSlot,
+    err,
+    logs,
+    unitsConsumed,
+    accounts,
+  }
+}
+
+async function setupTransaction(transaction: web3.Transaction) {
+  const {
+    context: { slot: executedSlot },
+    value: { blockhash },
+  } = await CONNECTION.getLatestBlockhashAndContext()
+  transaction.recentBlockhash = blockhash
+  transaction.feePayer = SDK_USER.publicKey
+  return {
+    executedSlot,
+    blockhash,
   }
 }
 
@@ -152,7 +208,7 @@ export async function getSolanaTestValidatorVoteAccountPubkey(): Promise<web3.Pu
 }
 
 // Used for local solana-test-validator testing.
-// The globalSetup.ts creates stake account and before it can be used one needs to wait for its activation.
+// The globalSetup.ts creates stake account, before the stake account can be used activation is required.
 // This function waits for the stake account to be activated.
 // Plus, parameter 'activatedAtLeastFor' defines how many epochs the stake account has to be activated for to be considered OK.
 //       The epoch activation for at least some epochs is required by Marinade to be able to delegate.

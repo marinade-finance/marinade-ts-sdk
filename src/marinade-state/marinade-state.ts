@@ -71,6 +71,11 @@ export class MarinadeState {
       ProgramDerivedAddressSeed.LIQ_POOL_SOL_ACCOUNT
     )
 
+  stakeDepositAuthority = async () =>
+    this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_DEPOSIT)
+  stakeWithdrawAuthority = async () =>
+    this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_WITHDRAW)
+
   private async findProgramDerivedAddress(
     seed: ProgramDerivedAddressSeed,
     extraSeeds: Buffer[] = []
@@ -283,4 +288,10 @@ export class MarinadeState {
    * Commission in %
    */
   rewardsCommissionPercent: number = this.state.rewardFee.basisPoints / 100
+
+  /**
+   * Max Stake moved per epoch in %
+   */
+  maxStakeMovedPerEpoch: number =
+    this.state.maxStakeMovedPerEpoch.basisPoints / 100
 }
