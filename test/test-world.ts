@@ -1,4 +1,4 @@
-import { AnchorProvider } from '@coral-xyz/anchor'
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
 import { MarinadeUtils, validatorDuplicationFlag } from '../src'
 import { getParsedStakeAccountInfo } from '../src/util'
 import { MarinadeFinanceProgram } from '../src/programs/marinade-finance-program'
@@ -14,6 +14,7 @@ import {
   Transaction,
   TransactionInstruction,
 } from '@solana/web3.js'
+import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 export const MINIMUM_LAMPORTS_BEFORE_TEST = MarinadeUtils.solToLamports(2.5)
 export const LAMPORTS_AIRDROP_CAP = MarinadeUtils.solToLamports(2)
@@ -61,21 +62,10 @@ export const CONNECTION = new Connection(PROVIDER_URL, {
   commitment: 'confirmed',
 })
 
-export const PROVIDER = new AnchorProvider(
-  CONNECTION,
-  {
-    signTransaction: () => {
-      throw new Error()
-    },
-    signAllTransactions: () => {
-      throw new Error()
-    },
-    publicKey: SDK_USER.publicKey,
-  },
-  {
-    commitment: 'confirmed' /*, skipPreflight: true*/,
-  }
-)
+export const TEST_WALLET = new NodeWallet(SDK_USER)
+export const PROVIDER = new AnchorProvider(CONNECTION, new Wallet(SDK_USER), {
+  commitment: 'confirmed' /*, skipPreflight: true*/,
+})
 
 export const REFERRAL_CODE = new PublicKey(
   '2Q7u7ndBhSJpTNpDzkjvRyRvuzRLZSovkNRQ5SEUb64g'
