@@ -227,6 +227,10 @@ export async function deposit(
 }
 
 /**
+ * ⚠️ WARNING ⚠️ The liquidity in the pool for this swap is typically low,
+ * which can result in high transaction fees. It is advisable to consider
+ * Jup swap API or proceed with caution.
+ *
  * Returns a transaction with the instructions to
  * Swap your mSOL to get back SOL immediately using the liquidity pool
  *
