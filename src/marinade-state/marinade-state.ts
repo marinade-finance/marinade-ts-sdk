@@ -31,7 +31,7 @@ export async function fetchMarinadeState(
 ): Promise<Readonly<MarinadeState>> {
   const stateResponse = (await program.account.state.fetch(
     marinadeStateAddress
-  )) as unknown as MarinadeStateResponse
+  )) as MarinadeStateResponse
   return {
     programId: program.programId,
     address: marinadeStateAddress,

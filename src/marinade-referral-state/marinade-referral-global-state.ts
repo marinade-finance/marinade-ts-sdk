@@ -12,7 +12,7 @@ export async function fetchReferralGlobalState(
 ): Promise<MarinadeReferralGlobalState> {
   const globalState = (await program.account.globalState.fetch(
     referralGlobalState
-  )) as unknown as MarinadeReferralStateResponse.GlobalState
+  )) as MarinadeReferralStateResponse.GlobalState
 
   return {
     programId: program.programId,

@@ -11,7 +11,7 @@ export async function fetchReferralState(
 ): Promise<MarinadeReferralReferralState> {
   const state = (await program.account.referralState.fetch(
     referralCode
-  )) as unknown as MarinadeReferralStateResponse.ReferralState
+  )) as MarinadeReferralStateResponse.ReferralState
 
   return {
     address: referralCode,

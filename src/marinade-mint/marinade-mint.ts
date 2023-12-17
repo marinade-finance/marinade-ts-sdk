@@ -27,11 +27,4 @@ export class MarinadeMint {
       mintInfo.decimals
     )
   }
-
-  /**
-   * @deprecated use totalSupply() instead
-   */
-  async tokenBalance(mintInfoCached?: Mint): Promise<number> {
-    return this.totalSupply(mintInfoCached)
-  }
 }
