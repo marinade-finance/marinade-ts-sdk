@@ -1,4 +1,4 @@
-import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
+import { AnchorProvider } from '@coral-xyz/anchor'
 import { MarinadeUtils, validatorDuplicationFlag } from '../src'
 import { getParsedStakeAccountInfo } from '../src/util'
 import { MarinadeFinanceProgram } from '../src/programs/marinade-finance-program'
@@ -60,9 +60,22 @@ export const PROVIDER_URL = 'http://localhost:8899'
 export const CONNECTION = new Connection(PROVIDER_URL, {
   commitment: 'confirmed',
 })
-export const PROVIDER = new AnchorProvider(CONNECTION, new Wallet(SDK_USER), {
-  commitment: 'confirmed' /*, skipPreflight: true*/,
-})
+
+export const PROVIDER = new AnchorProvider(
+  CONNECTION,
+  {
+    signTransaction: () => {
+      throw new Error()
+    },
+    signAllTransactions: () => {
+      throw new Error()
+    },
+    publicKey: SDK_USER.publicKey,
+  },
+  {
+    commitment: 'confirmed' /*, skipPreflight: true*/,
+  }
+)
 
 export const REFERRAL_CODE = new PublicKey(
   '2Q7u7ndBhSJpTNpDzkjvRyRvuzRLZSovkNRQ5SEUb64g'

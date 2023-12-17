@@ -1,4 +1,3 @@
-import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
 import * as TestWorld from '../../test/test-world'
 import {
   computeMsolAmount,
@@ -94,13 +93,9 @@ describe('state-helpers', () => {
   describe('computeMsolAmount', () => {
     it('apply napkin math', async () => {
       const connection = new Connection(DEFAULT_PROVIDER_URL, 'confirmed')
-      const provider = new AnchorProvider(
-        connection,
-        new Wallet(TestWorld.SDK_USER),
-        {}
-      )
       const marinadeProgram = marinadeFinanceProgram({
-        provider,
+        cnx: connection,
+        walletAddress: TestWorld.SDK_USER.publicKey,
       })
       const marinadeState = (await fetchMarinadeState(
         marinadeProgram

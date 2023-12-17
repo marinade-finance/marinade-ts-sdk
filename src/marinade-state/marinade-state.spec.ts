@@ -7,17 +7,15 @@ import {
 } from '@solana/web3.js'
 import { DEFAULT_PROVIDER_URL, fetchMarinadeState, getStakeStates } from '..'
 import { marinadeFinanceProgram } from '../programs/marinade-finance-program'
-import { AnchorProvider } from '@coral-xyz/anchor'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 
 describe('MarinadeState', () => {
   it('getStakeStates', async () => {
-    const provider = new AnchorProvider(
-      new Connection(DEFAULT_PROVIDER_URL),
-      new NodeWallet(Keypair.generate()),
-      { commitment: 'confirmed' }
-    )
-    const marinadeProgram = marinadeFinanceProgram({ provider })
+    const cnx = new Connection(DEFAULT_PROVIDER_URL)
+    const marinadeProgram = marinadeFinanceProgram({
+      cnx,
+      walletAddress: new NodeWallet(Keypair.generate()).publicKey,
+    })
     const marinade = await fetchMarinadeState(marinadeProgram)
 
     const accountInfos: {
@@ -39,11 +37,9 @@ describe('MarinadeState', () => {
       },
     ]
 
-    provider.connection.getProgramAccounts = jest
-      .fn()
-      .mockResolvedValueOnce(accountInfos)
+    cnx.getProgramAccounts = jest.fn().mockResolvedValueOnce(accountInfos)
 
-    const stakeStates = await getStakeStates(provider.connection, marinade)
+    const stakeStates = await getStakeStates(cnx, marinade)
 
     expect(stakeStates).toMatchSnapshot()
   })

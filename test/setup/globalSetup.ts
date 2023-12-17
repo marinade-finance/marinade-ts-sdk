@@ -57,7 +57,8 @@ export default async (): Promise<void> => {
 
   // --- ADDING solana-test-validator under MARINADE ---
   const marinadeProgram = marinadeFinanceProgram({
-    provider: TestWorld.PROVIDER,
+    cnx: TestWorld.CONNECTION,
+    walletAddress: TestWorld.SDK_USER.publicKey,
   })
   const marinadeState = await fetchMarinadeState(marinadeProgram)
   if (

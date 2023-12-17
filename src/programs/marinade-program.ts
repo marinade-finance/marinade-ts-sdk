@@ -1,6 +1,6 @@
 import { MarinadeState } from '../marinade-state/marinade-state.types'
-import { ConfirmOptions, Connection, Keypair, PublicKey } from '@solana/web3.js'
-import { Provider, Wallet } from '@coral-xyz/anchor'
+import { ConfirmOptions, Connection, PublicKey } from '@solana/web3.js'
+import { Provider } from '@coral-xyz/anchor'
 import {
   MarinadeFinanceProgram,
   marinadeFinanceProgram,
@@ -61,26 +61,26 @@ export class MarinadeProgram {
    * The `referralCode` is a public key of the referral state account.
    */
   static async init({
-    provider,
+    cnx,
     marinadeProgramAddress,
     marinadeStateAddress,
     referralProgramAddress,
     referralCode,
-    wallet,
+    walletAddress,
     opts = {},
   }: {
-    provider: Connection | Provider
+    cnx: Connection
     marinadeProgramAddress?: PublicKey
     marinadeStateAddress?: PublicKey
     referralProgramAddress?: PublicKey
     referralCode?: PublicKey
-    wallet?: Wallet | Keypair
+    walletAddress: PublicKey
     opts?: ConfirmOptions
   }): Promise<MarinadeProgram> {
     const program = marinadeFinanceProgram({
       programAddress: marinadeProgramAddress,
-      provider,
-      wallet,
+      cnx,
+      walletAddress,
       opts,
     })
     const marinadeState = await fetchMarinadeState(
@@ -93,8 +93,8 @@ export class MarinadeProgram {
     if (referralCode) {
       referralProgram = marinadeReferralProgram({
         programAddress: referralProgramAddress,
-        provider,
-        wallet,
+        cnx,
+        walletAddress,
         opts,
       })
       referralState = await fetchReferralState(referralProgram, referralCode)

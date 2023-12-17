@@ -1,4 +1,4 @@
-import { AnchorProvider, Program, Provider, Wallet } from '@coral-xyz/anchor'
+import { AnchorProvider, Program } from '@coral-xyz/anchor'
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { MarinadeReferralReferralState } from '../marinade-referral-state/marinade-referral-state.types'
 import * as marinadeReferral from './idl/types/marinade_referral'
@@ -13,7 +13,6 @@ import {
 import {
   ConfirmOptions,
   Connection,
-  Keypair,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -29,26 +28,29 @@ export type MarinadeReferralProgram = Program<MarinadeReferral>
 
 export function marinadeReferralProgram({
   programAddress = DEFAULT_MARINADE_REFERRAL_PROGRAM_ID,
-  provider,
-  wallet,
+  cnx,
+  walletAddress,
   opts = {},
 }: {
   programAddress?: PublicKey
-  provider: Connection | Provider
-  wallet?: Wallet | Keypair
+  cnx: Connection
+  walletAddress: PublicKey
   opts?: ConfirmOptions
 }): MarinadeReferralProgram {
-  if (provider instanceof Connection) {
-    if (!wallet) {
-      throw new Error(
-        'Wallet must be provided to initialize the Anchor Program with Connection'
-      )
-    }
-    if (wallet instanceof Keypair) {
-      wallet = new Wallet(wallet)
-    }
-    provider = new AnchorProvider(provider, wallet, opts)
-  }
+  const provider = new AnchorProvider(
+    cnx,
+    {
+      signTransaction: () => {
+        throw new Error()
+      },
+      signAllTransactions: () => {
+        throw new Error()
+      },
+      publicKey: walletAddress,
+    },
+    opts ?? AnchorProvider.defaultOptions()
+  )
+
   return new Program<MarinadeReferral>(
     MarinadeReferralIDL,
     programAddress,

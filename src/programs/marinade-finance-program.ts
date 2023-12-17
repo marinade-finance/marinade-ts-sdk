@@ -1,10 +1,4 @@
-import {
-  AnchorProvider,
-  Program,
-  Provider,
-  IdlTypes,
-  Wallet,
-} from '@coral-xyz/anchor'
+import { AnchorProvider, Program, IdlTypes } from '@coral-xyz/anchor'
 import {
   getEpochInfo,
   getTicketDateInfo,
@@ -27,7 +21,6 @@ import {
   ConfirmOptions,
   Connection,
   GetProgramAccountsFilter,
-  Keypair,
   PublicKey,
   SYSVAR_CLOCK_PUBKEY,
   SYSVAR_RENT_PUBKEY,
@@ -48,26 +41,28 @@ export type StateRecordAnchorType =
 
 export function marinadeFinanceProgram({
   programAddress = DEFAULT_MARINADE_PROGRAM_ID,
-  provider,
-  wallet,
+  cnx,
+  walletAddress,
   opts = {},
 }: {
   programAddress?: PublicKey
-  provider: Connection | Provider
-  wallet?: Wallet | Keypair
+  cnx: Connection
+  walletAddress: PublicKey
   opts?: ConfirmOptions
 }): MarinadeFinanceProgram {
-  if (provider instanceof Connection) {
-    if (!wallet) {
-      throw new Error(
-        'Wallet must be provided to initialize the Anchor Program with Connection'
-      )
-    }
-    if (wallet instanceof Keypair) {
-      wallet = new Wallet(wallet)
-    }
-    provider = new AnchorProvider(provider, wallet, opts)
-  }
+  const provider = new AnchorProvider(
+    cnx,
+    {
+      signTransaction: () => {
+        throw new Error()
+      },
+      signAllTransactions: () => {
+        throw new Error()
+      },
+      publicKey: walletAddress,
+    },
+    opts ?? AnchorProvider.defaultOptions()
+  )
   const program = new Program<MarinadeFinance>(
     MarinadeFinanceIDL,
     programAddress,
