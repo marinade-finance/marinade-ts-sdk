@@ -12,7 +12,8 @@ describe('Marinade Referral', () => {
   // adding MSOL liquidity as setup of all tests
   beforeAll(async () => {
     const marinadeProgram = await MarinadeProgram.init({
-      provider: TestWorld.PROVIDER,
+      cnx: TestWorld.PROVIDER.connection,
+      walletAddress: TestWorld.PROVIDER.wallet.publicKey,
     })
 
     const { transaction: liqTx } = await addLiquidity(
@@ -26,7 +27,8 @@ describe('Marinade Referral', () => {
   describe('deposit', () => {
     it('deposits SOL', async () => {
       const referralProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
 
@@ -47,7 +49,8 @@ describe('Marinade Referral', () => {
   describe('liquidUnstake', () => {
     it('unstakes SOL', async () => {
       const referralProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
 
@@ -66,7 +69,8 @@ describe('Marinade Referral', () => {
   describe('liquidateStakeAccount', () => {
     it('liquidates stake account (simulation)', async () => {
       const referralProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
 

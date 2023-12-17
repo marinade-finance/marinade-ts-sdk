@@ -22,7 +22,8 @@ import { getDelayedUnstakeTickets } from '../src/programs/marinade-finance-progr
 describe('Marinade Finance', () => {
   beforeAll(async () => {
     const marinadeProgram = await MarinadeProgram.init({
-      provider: TestWorld.PROVIDER,
+      cnx: TestWorld.PROVIDER.connection,
+      walletAddress: TestWorld.PROVIDER.wallet.publicKey,
     })
 
     try {
@@ -42,7 +43,8 @@ describe('Marinade Finance', () => {
   describe('deposit', () => {
     it('deposits SOL', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const { transaction } = await deposit(
@@ -72,7 +74,8 @@ describe('Marinade Finance', () => {
 
       const anotherAccount = Keypair.generate()
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const { transaction: tx1 } = await deposit(
@@ -98,7 +101,8 @@ describe('Marinade Finance', () => {
 
     it('deposits SOL and get mSOL to another account', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const anotherAccount = Keypair.generate()
@@ -118,7 +122,8 @@ describe('Marinade Finance', () => {
       const validatorVoteAddress =
         await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const directedStakeSdk = new DirectedStakeSdk({
@@ -168,7 +173,8 @@ describe('Marinade Finance', () => {
       const validatorVoteAddress2 =
         await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const directedStakeSdk = new DirectedStakeSdk({
@@ -210,7 +216,8 @@ describe('Marinade Finance', () => {
 
     it('deposit SOL and un-direct the stake', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const directedStakeSdk = new DirectedStakeSdk({
@@ -254,7 +261,8 @@ describe('Marinade Finance', () => {
   describe('liquidUnstake', () => {
     it('unstakes SOL', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const { transaction } = await liquidUnstake(
@@ -272,7 +280,8 @@ describe('Marinade Finance', () => {
   describe('depositStakeAccount', () => {
     it('deposits stake account (simulate)', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       // for a validator could be deposited, it must be activated for at least 2 epochs
@@ -303,7 +312,8 @@ describe('Marinade Finance', () => {
   describe('liquidateStakeAccount', () => {
     it('liquidates stake account (simulate)', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       // for a validator could be liquidated, it must be activated for at least 2 epochs
@@ -334,7 +344,8 @@ describe('Marinade Finance', () => {
 
     it('order unstake', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const { transaction, ticketAccountKeypair } = await orderUnstake(
@@ -364,7 +375,8 @@ describe('Marinade Finance', () => {
 
     it('try to claim tickets after expiration', async () => {
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
       const tickets = await getDelayedUnstakeTickets(
         marinadeProgram.program,
@@ -386,7 +398,8 @@ describe('Marinade Finance', () => {
       assert(ticketAccount !== undefined)
 
       const marinadeProgram = await MarinadeProgram.init({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const { transaction } = await claim(

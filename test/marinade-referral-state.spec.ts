@@ -16,7 +16,8 @@ describe('Marinade Referral Program', () => {
   describe('getReferralGlobalState', () => {
     it("fetches the referral program's global state which matches the expected type", async () => {
       const referralProgram = marinadeReferralProgram({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
       const globalState = await fetchReferralGlobalState(referralProgram)
 
@@ -36,7 +37,8 @@ describe('Marinade Referral Program', () => {
   describe('getReferralPartnerState', () => {
     it("fetches the referral partner' state which matches the expected type", async () => {
       const referralProgram = marinadeReferralProgram({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
       const partnerState = await fetchReferralState(
         referralProgram,
@@ -80,7 +82,8 @@ describe('Marinade Referral Program', () => {
   describe('getReferralPartners', () => {
     it('fetches all the referral partners ', async () => {
       const referralProgram = marinadeReferralProgram({
-        provider: TestWorld.PROVIDER,
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
 
       const partners = await getReferralPartners(referralProgram)
