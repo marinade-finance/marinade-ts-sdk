@@ -65,6 +65,8 @@ import { utils } from '@coral-xyz/anchor'
  * Add liquidity to the liquidity pool and receive LP tokens
  *
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be added to liquidity pool
  * @param {BN} amountLamports - The amount of lamports added to the liquidity pool
  */
 export async function addLiquidity(
@@ -107,7 +109,8 @@ export async function addLiquidity(
  * Returns a transaction with the instructions to
  * Burn LP tokens and get SOL and mSOL back from the liquidity pool
  *
- *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be removed from liquidity pool
  * @param {BN} amountLamports - The amount of LP tokens burned
  */
 export async function removeLiquidity(
@@ -157,8 +160,8 @@ export async function removeLiquidity(
  * Returns a transaction with the instructions to
  * Stake SOL in exchange for mSOL
  *
- * // TODO: params are wrongly documented here
- * @param {MarinadeReferralProgram} referralProgram - Marinade Referral Program
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - Who deposits the SOLs, who will receive the mSOLs
  * @param {BN} amountLamports - The amount lamports staked
  * @param {DepositOptions} options - Additional deposit options
  */
@@ -235,7 +238,10 @@ export async function deposit(
  * Swap your mSOL to get back SOL immediately using the liquidity pool
  *
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be un-staked
  * @param {BN} amountLamports - The amount of mSOL exchanged for SOL
+ * @param {PublicKey} associatedMSolTokenAccountAddress - MSOL account where mSOLs are stored, when not provided mSOL ATA of the ownerAddress is calculated
  */
 export async function liquidUnstake(
   marinadeProgram: MarinadeProgram,
@@ -295,6 +301,8 @@ export async function liquidUnstake(
  * Note that the stake must be fully activated and the validator must be known to Marinade
  *
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner (staker authority) of the stake account to be deposited
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
  * @param {DepositStakeAccountOptions} options - Additional deposit options
  */
@@ -330,6 +338,8 @@ export async function depositStakeAccount(
  * Note that the stake must be deactivating and the validator must be known to Marinade
  *
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the stake account to be deposited
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
  * @param {DepositStakeAccountOptions} options - Additional deposit options
  */
@@ -436,7 +446,8 @@ export async function depositDeactivatingStakeAccount(
  * Deposit a delegated stake account.
  * Note that the stake must be fully activated and the validator must be known to Marinade
  *
- * @param {MarinadeState} state - Marinade State needed for retrieving validator info
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner (staker authority) of the stake account to be deposited
  * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
  * @param {number} rent - Rent needed for a stake account
  * @param {DepositStakeAccountOptions} options - Additional deposit options
@@ -596,6 +607,8 @@ export async function depositStakeAccountByAccount(
  * - The transaction should be executed immediately after being generated.
  * - A minimum amount of 1 SOL is required for conversion to mSOL.
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner (staker authority) of the stake account to be deposited
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
  * @param {BN} solToKeep - Amount of SOL lamports to keep
  * @param {DepositStakeAccountOptions} options - Additional deposit options
@@ -665,6 +678,8 @@ export async function partiallyDepositStakeAccount(
  * - The stake's validator should be recognized by Marinade.
  * - The transaction should be executed immediately after being generated.
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner (staker authority) of the stake account to be deposited
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
  * @param {BN} solToKeep - Amount of SOL lamports to keep as a stake account
  * @param {DepositStakeAccountOptions} options - Additional deposit options
@@ -744,6 +759,8 @@ export async function depositActivatingStakeAccount(
  * Note that the stake must be fully activated and the validator must be known to Marinade
  * and that the transaction should be executed immediately after creation.
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the stake account to be liquidated
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
  * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
  */
@@ -814,6 +831,8 @@ export async function liquidateStakeAccount(
  * Note that the stake must be fully activated and the validator must be known to Marinade
  * and that the transaction should be executed immediately after creation.
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the stake account to be partially liquidated
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
  * @param {BN} solToKeep - Amount of SOL lamports to keep
  */
@@ -896,6 +915,8 @@ export async function partiallyLiquidateStakeAccount(
  * Returns a transaction with the instructions to
  * Order Unstake to create a ticket which can be claimed later (with {@link claim}).
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be un-staked
  * @param {BN} msolAmount - The amount of mSOL in lamports to order for unstaking
  */
 export async function orderUnstake(
@@ -975,6 +996,8 @@ export async function claim(
  *
  * This method is in beta stage. It may be changed or removed in future versions.
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be deposited
  * @param {PublicKey} stakePoolTokenAddress - The stake pool token account to be deposited
  * @param {number} amountToDeposit - Amount to deposit
  * @param {ValidatorStats[]} validators - List of validators to prioritize where to take the stake from
@@ -1111,6 +1134,8 @@ export async function depositStakePoolToken(
  *
  * This method is in beta stage. It may be changed or removed in future versions.
  *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be liquidated
  * @param {PublicKey} stakePoolTokenAddress - The stake pool token account to be liquidated
  * @param {number} amountToLiquidate - Amount to liquidate
  * @param {ValidatorStats[]} validators - List of validators to prioritize where to take the stake from
