@@ -1,7 +1,7 @@
 FROM ubuntu:latest AS builder
 
 RUN apt-get update && \
-    apt-get install -y curl cargo pkg-config build-essential libudev-dev
+    apt-get install -y curl cargo pkg-config build-essential libudev-dev python3
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- --default-toolchain none -y
 

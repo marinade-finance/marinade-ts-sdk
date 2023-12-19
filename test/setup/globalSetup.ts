@@ -17,34 +17,6 @@ export default async (): Promise<void> => {
   const votePubkey = await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
 
   // --- CREATING STAKE ACCOUNT and DELEGATE ---
-  // create a stake account that will be used later in all tests
-  const tx = new Transaction()
-  const ixStakeAccount = StakeProgram.createAccount({
-    authorized: {
-      staker: TestWorld.PROVIDER.wallet.publicKey,
-      withdrawer: TestWorld.PROVIDER.wallet.publicKey,
-    },
-    fromPubkey: TestWorld.PROVIDER.wallet.publicKey,
-    lamports: 2 * LAMPORTS_PER_SOL,
-    stakePubkey: TestWorld.STAKE_ACCOUNT.publicKey,
-  })
-  tx.add(ixStakeAccount)
-  /// delegating stake account to the vote account
-  const ixDelegate = StakeProgram.delegate({
-    authorizedPubkey: TestWorld.PROVIDER.wallet.publicKey,
-    stakePubkey: TestWorld.STAKE_ACCOUNT.publicKey,
-    votePubkey,
-  })
-  tx.add(ixDelegate)
-  await TestWorld.PROVIDER.sendAndConfirm(tx, [TestWorld.STAKE_ACCOUNT])
-
-  const stakeBalance = await TestWorld.CONNECTION.getBalance(
-    TestWorld.STAKE_ACCOUNT.publicKey
-  )
-  await TestWorld.CONNECTION.getAccountInfo(TestWorld.STAKE_ACCOUNT.publicKey)
-  if (!stakeBalance) {
-    throw new Error('Jest global setup error: no stake account balance')
-  }
   await createAndDelegateStake(TestWorld.STAKE_ACCOUNT, votePubkey)
   await createAndDelegateStake(TestWorld.STAKE_ACCOUNT_TO_WITHDRAW, votePubkey)
 
