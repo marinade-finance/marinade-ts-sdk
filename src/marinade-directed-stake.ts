@@ -28,14 +28,14 @@ import {
  */
 export function getDirectedStakeSdk(
   connection: Connection,
-  walletPublicKey: PublicKey | null
+  walletPublicKey: PublicKey
 ): DirectedStakeSdk {
   return new DirectedStakeSdk({
     connection,
     wallet: {
       signTransaction: async () => new Promise(() => new Transaction()),
       signAllTransactions: async () => new Promise(() => [new Transaction()]),
-      publicKey: walletPublicKey ?? PublicKey.default,
+      publicKey: walletPublicKey,
     },
   })
 }
