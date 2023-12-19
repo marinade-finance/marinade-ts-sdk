@@ -412,7 +412,7 @@ describe('Marinade Finance', () => {
         await TestWorld.PROVIDER.sendAndConfirm(transaction)
         fail('should not be able to claim')
       } catch (e) {
-        if (!(e as Error).message.includes('custom program error: 0x1103')) {
+        if (!(e as Error).message.includes('custom program error: 0x1784')) {
           console.log('Claim ticket failed with unexpected error', e)
           throw e
         }

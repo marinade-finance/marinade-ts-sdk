@@ -1,3 +1,9 @@
+## v5.0.6
+
+### Feat:
+
+    - IDL update coming with upgrade of liquid-staking-program contract
+
 ## v5.0.5
 
 ### Feat:

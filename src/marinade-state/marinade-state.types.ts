@@ -18,6 +18,10 @@ export namespace MarinadeStateResponse {
     basisPoints: number
   }
 
+  export interface FeeCents {
+    bpCents: number
+  }
+
   export interface AccountList {
     account: PublicKey
     itemSize: number
@@ -83,6 +87,14 @@ export interface MarinadeStateResponse {
   minWithdraw: BN
   stakingSolCap: BN
   emergencyCoolingDown: BN
+  pauseAuthority: web3.PublicKey
+  paused: boolean
+  delayedUnstakeFee: MarinadeStateResponse.FeeCents
+  withdrawStakeAccountFee: MarinadeStateResponse.FeeCents
+  withdrawStakeAccountEnabled: boolean
+  lastStakeMoveEpoch: BN
+  stakeMoved: BN
+  maxStakeMovedPerEpoch: MarinadeStateResponse.Fee
 }
 
 export interface MarinadeState extends MarinadeStateResponse {

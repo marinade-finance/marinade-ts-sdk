@@ -371,3 +371,10 @@ export async function getStakeInfos(
 export function rewardsCommissionPercent(state: MarinadeState): number {
   return state.rewardFee.basisPoints / 100
 }
+
+/**
+ * Max Stake moved per epoch in %
+ */
+export function maxStakeMovedPerEpoch(state: MarinadeState): number {
+  return state.maxStakeMovedPerEpoch.basisPoints / 100
+}
