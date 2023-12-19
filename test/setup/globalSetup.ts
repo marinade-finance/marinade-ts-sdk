@@ -1,7 +1,13 @@
 import * as TestWorld from '../test-world'
 import { fetchMarinadeState, getValidatorRecords } from '../../src'
 import { marinadeFinanceProgram } from '../../src/programs/marinade-finance-program'
-import { LAMPORTS_PER_SOL, StakeProgram, Transaction } from '@solana/web3.js'
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  StakeProgram,
+  Transaction,
+} from '@solana/web3.js'
 
 require('ts-node/register')
 
@@ -105,13 +111,13 @@ export default async (): Promise<void> => {
 }
 
 async function createAndDelegateStake(
-  stakeAccountKeypair: web3.Keypair,
-  votePubkey: web3.PublicKey,
-  lamports: number = 42 * web3.LAMPORTS_PER_SOL
+  stakeAccountKeypair: Keypair,
+  votePubkey: PublicKey,
+  lamports: number = 42 * LAMPORTS_PER_SOL
 ) {
   // create a stake account that will be used later in all tests
-  const tx = new web3.Transaction()
-  const ixStakeAccount = web3.StakeProgram.createAccount({
+  const tx = new Transaction()
+  const ixStakeAccount = StakeProgram.createAccount({
     authorized: {
       staker: TestWorld.PROVIDER.wallet.publicKey,
       withdrawer: TestWorld.PROVIDER.wallet.publicKey,
@@ -122,7 +128,7 @@ async function createAndDelegateStake(
   })
   tx.add(ixStakeAccount)
   /// delegating stake account to the vote account
-  const ixDelegate = web3.StakeProgram.delegate({
+  const ixDelegate = StakeProgram.delegate({
     authorizedPubkey: TestWorld.PROVIDER.wallet.publicKey,
     stakePubkey: stakeAccountKeypair.publicKey,
     votePubkey,

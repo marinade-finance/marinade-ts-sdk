@@ -31,16 +31,14 @@ export const STAKE_ACCOUNT: Keypair = Keypair.fromSecretKey(
 )
 
 // EHNgTdy16497UC6Eq4pri9WicTwzPEDSj3U4Ge6nMVfr
-export const STAKE_ACCOUNT_TO_WITHDRAW: web3.Keypair =
-  web3.Keypair.fromSecretKey(
-    new Uint8Array([
-      146, 213, 168, 194, 197, 182, 98, 74, 198, 138, 199, 171, 114, 229, 74,
-      71, 248, 98, 187, 168, 237, 65, 224, 211, 214, 171, 205, 10, 22, 95, 103,
-      128, 197, 89, 188, 173, 45, 161, 99, 206, 234, 23, 24, 32, 235, 19, 255,
-      72, 224, 137, 72, 42, 71, 129, 22, 126, 255, 66, 205, 84, 246, 238, 233,
-      141,
-    ])
-  )
+export const STAKE_ACCOUNT_TO_WITHDRAW: Keypair = Keypair.fromSecretKey(
+  new Uint8Array([
+    146, 213, 168, 194, 197, 182, 98, 74, 198, 138, 199, 171, 114, 229, 74, 71,
+    248, 98, 187, 168, 237, 65, 224, 211, 214, 171, 205, 10, 22, 95, 103, 128,
+    197, 89, 188, 173, 45, 161, 99, 206, 234, 23, 24, 32, 235, 19, 255, 72, 224,
+    137, 72, 42, 71, 129, 22, 126, 255, 66, 205, 84, 246, 238, 233, 141,
+  ])
+)
 
 // 9wmxMQ2TFxYh918RzESjiA1dUXbdRAsXBd12JA1vwWQq
 export const SDK_USER = Keypair.fromSecretKey(
@@ -157,7 +155,7 @@ export async function simulateTransaction(transaction: Transaction) {
 }
 
 export async function executeTransaction(
-  transaction: web3.Transaction,
+  transaction: Transaction,
   signers?: Signer[]
 ) {
   const { executedSlot, blockhash } = await setupTransaction(transaction)
@@ -190,7 +188,7 @@ export async function executeTransaction(
   }
 }
 
-async function setupTransaction(transaction: web3.Transaction) {
+async function setupTransaction(transaction: Transaction) {
   const {
     context: { slot: executedSlot },
     value: { blockhash },

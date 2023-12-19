@@ -26,8 +26,8 @@ export namespace MarinadeStateResponse {
     account: PublicKey
     itemSize: number
     count: number
-    newAccount: PublicKey
-    copiedCount: number
+    reserved1: PublicKey
+    reserved2: number
   }
 
   export interface StakeSystem {
@@ -87,7 +87,7 @@ export interface MarinadeStateResponse {
   minWithdraw: BN
   stakingSolCap: BN
   emergencyCoolingDown: BN
-  pauseAuthority: web3.PublicKey
+  pauseAuthority: PublicKey
   paused: boolean
   delayedUnstakeFee: MarinadeStateResponse.FeeCents
   withdrawStakeAccountFee: MarinadeStateResponse.FeeCents
