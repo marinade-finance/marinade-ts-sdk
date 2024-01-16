@@ -57,6 +57,11 @@ export namespace MarinadeResult {
     transaction: web3.Transaction
   }
 
+  export interface OrderUnstakeWithPublicKey {
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    transaction: web3.Transaction
+  }
+
   export interface Claim {
     transaction: web3.Transaction
   }

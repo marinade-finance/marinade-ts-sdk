@@ -54,6 +54,7 @@ import {
 import {
   Keypair,
   LAMPORTS_PER_SOL,
+  PublicKey,
   StakeProgram,
   Transaction,
 } from '@solana/web3.js'
@@ -1059,6 +1060,58 @@ export class Marinade {
 
     return {
       ticketAccountKeypair,
+      transaction,
+      associatedMSolTokenAccountAddress,
+    }
+  }
+
+  /**
+   * Returns a transaction with the instructions to
+   * Order Unstake to create a ticket which can be claimed later (with {@link claim}).
+   *
+   * @param {BN} msolAmount - The amount of mSOL in lamports to order for unstaking
+   * @param {PublicKey} ticketAccountPublicKey - The public key of the ticket account that will sign the transaction
+   */
+  async orderUnstakeWithPublicKey(msolAmount: BN, ticketAccountPublicKey: PublicKey): Promise<MarinadeResult.OrderUnstakeWithPublicKey> {
+    const ownerAddress = assertNotNullAndReturn(
+      this.config.publicKey,
+      ErrorMessage.NO_PUBLIC_KEY
+    )
+    const marinadeState = await this.getMarinadeState()
+
+    const associatedMSolTokenAccountAddress =
+      await getAssociatedTokenAccountAddress(
+        marinadeState.mSolMintAddress,
+        ownerAddress
+      )
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        TICKET_ACCOUNT_SIZE
+      )
+    const createAccountInstruction = web3.SystemProgram.createAccount({
+      fromPubkey: ownerAddress,
+      newAccountPubkey: ticketAccountPublicKey,
+      lamports: rent,
+      space: TICKET_ACCOUNT_SIZE,
+      programId: this.marinadeFinanceProgram.programAddress,
+    })
+
+    const program = this.marinadeFinanceProgram
+    const orderUnstakeInstruction =
+      await program.orderUnstakeInstructionBuilder({
+        msolAmount,
+        marinadeState,
+        ownerAddress,
+        associatedMSolTokenAccountAddress,
+        newTicketAccount: ticketAccountPublicKey,
+      })
+
+    const transaction = new web3.Transaction().add(
+      createAccountInstruction,
+      orderUnstakeInstruction
+    )
+
+    return {
       transaction,
       associatedMSolTokenAccountAddress,
     }
