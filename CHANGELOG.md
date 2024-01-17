@@ -1,3 +1,9 @@
+## v5.0.7
+
+### Feat:
+
+    - Add method to support delayed unstake with PublicKey instead of Keypair
+
 ## v5.0.6
 
 ### Feat:
