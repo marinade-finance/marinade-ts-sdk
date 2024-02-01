@@ -147,7 +147,7 @@ describe('Marinade Finance', () => {
         })
       )[0]
 
-      expect(voteRecord.account.validatorVote).toEqual(validatorVoteAddress)
+      expect(voteRecord.account.target).toEqual(validatorVoteAddress)
     })
 
     it('deposit SOL and redirect the stake', async () => {
@@ -192,7 +192,7 @@ describe('Marinade Finance', () => {
         })
       )[0]
 
-      expect(voteRecord?.account.validatorVote).toEqual(validatorVoteAddress2)
+      expect(voteRecord?.account.target).toEqual(validatorVoteAddress2)
     })
 
     it('deposit SOL and undirect the stake', async () => {
