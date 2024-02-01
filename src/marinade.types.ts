@@ -78,9 +78,9 @@ export interface DepositOptions {
    */
   mintToOwnerAddress?: web3.PublicKey
   /**
-   * The vote address of the validator to direct your stake to.
+   * The vote address of the validator or Marinade Algorithmic Delegation strategy to direct your stake to.
    */
-  directToValidatorVoteAddress?: web3.PublicKey
+  directedTarget?: web3.PublicKey
 }
 
 export interface DepositStakeAccountOptions {

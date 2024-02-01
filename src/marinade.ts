@@ -295,7 +295,7 @@ export class Marinade {
         return (
           await withCreateVote({
             sdk: this.directedStakeSdk,
-            validatorVote: validatorVoteAddress,
+            target: validatorVoteAddress,
           })
         ).instruction
       }
@@ -306,7 +306,7 @@ export class Marinade {
       return (
         await withUpdateVote({
           sdk: this.directedStakeSdk,
-          validatorVote: validatorVoteAddress,
+          target: validatorVoteAddress,
           voteRecord: voteRecord.publicKey,
         })
       ).instruction
@@ -367,7 +367,7 @@ export class Marinade {
     transaction.add(depositInstruction)
 
     const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directToValidatorVoteAddress
+      options.directedTarget
     )
     if (directedStakeInstruction) {
       transaction.add(directedStakeInstruction)
@@ -380,6 +380,10 @@ export class Marinade {
   }
 
   /**
+   *  * ⚠️ WARNING ⚠️ The liquidity in the pool for this swap is typically low,
+   * which can result in high transaction fees. It is advisable to consider
+   * Jup swap API or proceed with caution.
+   *
    * Returns a transaction with the instructions to
    * Swap your mSOL to get back SOL immediately using the liquidity pool
    *
@@ -827,7 +831,7 @@ export class Marinade {
 
     const { transaction: depositTx, associatedMSolTokenAccountAddress } =
       await this.deposit(lamportsToWithdraw, {
-        directToValidatorVoteAddress: options.directToValidatorVoteAddress,
+        directedTarget: options.directToValidatorVoteAddress,
       })
 
     transaction.instructions.push(...depositTx.instructions)
@@ -1072,7 +1076,10 @@ export class Marinade {
    * @param {BN} msolAmount - The amount of mSOL in lamports to order for unstaking
    * @param {PublicKey} ticketAccountPublicKey - The public key of the ticket account that will sign the transaction
    */
-  async orderUnstakeWithPublicKey(msolAmount: BN, ticketAccountPublicKey: PublicKey): Promise<MarinadeResult.OrderUnstakeWithPublicKey> {
+  async orderUnstakeWithPublicKey(
+    msolAmount: BN,
+    ticketAccountPublicKey: PublicKey
+  ): Promise<MarinadeResult.OrderUnstakeWithPublicKey> {
     const ownerAddress = assertNotNullAndReturn(
       this.config.publicKey,
       ErrorMessage.NO_PUBLIC_KEY
@@ -1243,7 +1250,7 @@ export class Marinade {
     instructions.push(depositInstruction)
 
     const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directToValidatorVoteAddress
+      options.directedTarget
     )
     if (directedStakeInstruction) {
       instructions.push(directedStakeInstruction)

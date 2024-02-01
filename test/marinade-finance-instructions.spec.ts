@@ -121,7 +121,7 @@ describe('Marinade Finance', () => {
 
       const { transaction } = await marinade.deposit(
         MarinadeUtils.solToLamports(0.01),
-        { directToValidatorVoteAddress: validatorVoteAddress }
+        { directedTarget: validatorVoteAddress }
       )
       let transactionSignature: string
       try {
@@ -147,7 +147,7 @@ describe('Marinade Finance', () => {
         })
       )[0]
 
-      expect(voteRecord.account.validatorVote).toEqual(validatorVoteAddress)
+      expect(voteRecord.account.target).toEqual(validatorVoteAddress)
     })
 
     it('deposit SOL and redirect the stake', async () => {
@@ -172,7 +172,7 @@ describe('Marinade Finance', () => {
 
       const { transaction } = await marinade.deposit(
         MarinadeUtils.solToLamports(0.01),
-        { directToValidatorVoteAddress: validatorVoteAddress2 }
+        { directedTarget: validatorVoteAddress2 }
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
@@ -192,7 +192,7 @@ describe('Marinade Finance', () => {
         })
       )[0]
 
-      expect(voteRecord?.account.validatorVote).toEqual(validatorVoteAddress2)
+      expect(voteRecord?.account.target).toEqual(validatorVoteAddress2)
     })
 
     it('deposit SOL and undirect the stake', async () => {
