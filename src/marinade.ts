@@ -380,6 +380,10 @@ export class Marinade {
   }
 
   /**
+   *  * ⚠️ WARNING ⚠️ The liquidity in the pool for this swap is typically low,
+   * which can result in high transaction fees. It is advisable to consider
+   * Jup swap API or proceed with caution.
+   *
    * Returns a transaction with the instructions to
    * Swap your mSOL to get back SOL immediately using the liquidity pool
    *
@@ -1072,7 +1076,10 @@ export class Marinade {
    * @param {BN} msolAmount - The amount of mSOL in lamports to order for unstaking
    * @param {PublicKey} ticketAccountPublicKey - The public key of the ticket account that will sign the transaction
    */
-  async orderUnstakeWithPublicKey(msolAmount: BN, ticketAccountPublicKey: PublicKey): Promise<MarinadeResult.OrderUnstakeWithPublicKey> {
+  async orderUnstakeWithPublicKey(
+    msolAmount: BN,
+    ticketAccountPublicKey: PublicKey
+  ): Promise<MarinadeResult.OrderUnstakeWithPublicKey> {
     const ownerAddress = assertNotNullAndReturn(
       this.config.publicKey,
       ErrorMessage.NO_PUBLIC_KEY
