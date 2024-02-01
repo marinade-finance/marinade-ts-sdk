@@ -1,3 +1,10 @@
+## v5.0.8
+
+### Fix:
+
+    - Update directed stake sdk and method call
+    - Add warning about low liquidity on unstake via our pool
+
 ## v5.0.7
 
 ### Feat:
