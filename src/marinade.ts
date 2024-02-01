@@ -542,7 +542,7 @@ export class Marinade {
     delegateTransaction.instructions.push(depositInstruction)
 
     const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directToValidatorVoteAddress
+      options.directedTarget
     )
     if (directedStakeInstruction) {
       delegateTransaction.add(directedStakeInstruction)
@@ -672,7 +672,7 @@ export class Marinade {
     transaction.add(depositStakeAccountInstruction)
 
     const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directToValidatorVoteAddress
+      options.directedTarget
     )
     if (directedStakeInstruction) {
       transaction.add(directedStakeInstruction)
@@ -831,7 +831,7 @@ export class Marinade {
 
     const { transaction: depositTx, associatedMSolTokenAccountAddress } =
       await this.deposit(lamportsToWithdraw, {
-        directedTarget: options.directToValidatorVoteAddress,
+        directedTarget: options.directedTarget,
       })
 
     transaction.instructions.push(...depositTx.instructions)
