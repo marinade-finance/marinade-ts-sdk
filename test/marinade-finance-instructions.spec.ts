@@ -121,7 +121,7 @@ describe('Marinade Finance', () => {
 
       const { transaction } = await marinade.deposit(
         MarinadeUtils.solToLamports(0.01),
-        { directToValidatorVoteAddress: validatorVoteAddress }
+        { directedTarget: validatorVoteAddress }
       )
       let transactionSignature: string
       try {
@@ -172,7 +172,7 @@ describe('Marinade Finance', () => {
 
       const { transaction } = await marinade.deposit(
         MarinadeUtils.solToLamports(0.01),
-        { directToValidatorVoteAddress: validatorVoteAddress2 }
+        { directedTarget: validatorVoteAddress2 }
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
