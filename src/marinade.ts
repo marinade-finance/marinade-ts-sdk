@@ -295,7 +295,7 @@ export class Marinade {
         return (
           await withCreateVote({
             sdk: this.directedStakeSdk,
-            validatorVote: validatorVoteAddress,
+            target: validatorVoteAddress,
           })
         ).instruction
       }
@@ -306,7 +306,7 @@ export class Marinade {
       return (
         await withUpdateVote({
           sdk: this.directedStakeSdk,
-          validatorVote: validatorVoteAddress,
+          target: validatorVoteAddress,
           voteRecord: voteRecord.publicKey,
         })
       ).instruction
