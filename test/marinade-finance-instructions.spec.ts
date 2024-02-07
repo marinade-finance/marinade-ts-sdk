@@ -226,6 +226,10 @@ describe('Marinade Finance', () => {
       const { transaction } = await marinade.deposit(
         MarinadeUtils.solToLamports(0.01)
       )
+
+      const voteIx = await marinade.createDirectedStakeVoteIx()
+      if (voteIx) transaction.instructions.push(voteIx)
+
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
         [],
