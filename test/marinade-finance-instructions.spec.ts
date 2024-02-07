@@ -120,9 +120,14 @@ describe('Marinade Finance', () => {
       })
 
       const { transaction } = await marinade.deposit(
-        MarinadeUtils.solToLamports(0.01),
-        { directedTarget: validatorVoteAddress }
+        MarinadeUtils.solToLamports(0.01)
       )
+
+      const voteIx = await marinade.createDirectedStakeVoteIx(
+        validatorVoteAddress
+      )
+      if (voteIx) transaction.instructions.push(voteIx)
+
       let transactionSignature: string
       try {
         transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
@@ -171,9 +176,14 @@ describe('Marinade Finance', () => {
       })
 
       const { transaction } = await marinade.deposit(
-        MarinadeUtils.solToLamports(0.01),
-        { directedTarget: validatorVoteAddress2 }
+        MarinadeUtils.solToLamports(0.01)
       )
+
+      const voteIx = await marinade.createDirectedStakeVoteIx(
+        validatorVoteAddress2
+      )
+      if (voteIx) transaction.instructions.push(voteIx)
+
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
         [],
@@ -216,6 +226,10 @@ describe('Marinade Finance', () => {
       const { transaction } = await marinade.deposit(
         MarinadeUtils.solToLamports(0.01)
       )
+
+      const voteIx = await marinade.createDirectedStakeVoteIx()
+      if (voteIx) transaction.instructions.push(voteIx)
+
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
         transaction,
         [],

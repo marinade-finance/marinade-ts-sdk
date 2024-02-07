@@ -15,7 +15,6 @@ import {
 } from './util/anchor'
 import {
   DepositOptions,
-  DepositStakeAccountOptions,
   ErrorMessage,
   MarinadeResult,
   ValidatorStats,
@@ -366,13 +365,6 @@ export class Marinade {
 
     transaction.add(depositInstruction)
 
-    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directedTarget
-    )
-    if (directedStakeInstruction) {
-      transaction.add(directedStakeInstruction)
-    }
-
     return {
       associatedMSolTokenAccountAddress,
       transaction,
@@ -440,11 +432,9 @@ export class Marinade {
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
-   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
   async depositStakeAccount(
-    stakeAccountAddress: web3.PublicKey,
-    options: DepositStakeAccountOptions = {}
+    stakeAccountAddress: web3.PublicKey
   ): Promise<MarinadeResult.DepositStakeAccount> {
     const stakeAccountInfo = await getParsedStakeAccountInfo(
       this.provider,
@@ -459,8 +449,7 @@ export class Marinade {
     return this.depositStakeAccountByAccount(
       stakeAccountInfo,
       rent,
-      marinadeState,
-      options
+      marinadeState
     )
   }
 
@@ -472,11 +461,9 @@ export class Marinade {
    * Note that the stake must be deactivating and the validator must be known to Marinade
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
-   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
   async depositDeactivatingStakeAccount(
-    stakeAccountAddress: web3.PublicKey,
-    options: DepositStakeAccountOptions = {}
+    stakeAccountAddress: web3.PublicKey
   ): Promise<MarinadeResult.DepositDeactivatingStakeAccount> {
     const ownerAddress = assertNotNullAndReturn(
       this.config.publicKey,
@@ -541,13 +528,6 @@ export class Marinade {
 
     delegateTransaction.instructions.push(depositInstruction)
 
-    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directedTarget
-    )
-    if (directedStakeInstruction) {
-      delegateTransaction.add(directedStakeInstruction)
-    }
-
     return {
       transaction: delegateTransaction,
       associatedMSolTokenAccountAddress,
@@ -562,13 +542,11 @@ export class Marinade {
    * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
    * @param {number} rent - Rent needed for a stake account
    * @param {MarinadeState} marinadeState - Marinade State needed for retrieving validator info
-   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
   async depositStakeAccountByAccount(
     stakeAccountInfo: ParsedStakeAccountInfo,
     rent: number,
-    marinadeState: MarinadeState,
-    options: DepositStakeAccountOptions = {}
+    marinadeState: MarinadeState
   ): Promise<MarinadeResult.DepositStakeAccount> {
     const ownerAddress = assertNotNullAndReturn(
       this.config.publicKey,
@@ -671,13 +649,6 @@ export class Marinade {
 
     transaction.add(depositStakeAccountInstruction)
 
-    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directedTarget
-    )
-    if (directedStakeInstruction) {
-      transaction.add(directedStakeInstruction)
-    }
-
     return {
       associatedMSolTokenAccountAddress,
       voterAddress,
@@ -699,12 +670,10 @@ export class Marinade {
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} solToKeep - Amount of SOL lamports to keep
-   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
   async partiallyDepositStakeAccount(
     stakeAccountAddress: web3.PublicKey,
-    solToKeep: BN,
-    options: DepositStakeAccountOptions = {}
+    solToKeep: BN
   ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
     const ownerAddress = assertNotNullAndReturn(
       this.config.publicKey,
@@ -745,8 +714,7 @@ export class Marinade {
     } = await this.depositStakeAccountByAccount(
       stakeAccountInfo,
       rent,
-      marinadeState,
-      options
+      marinadeState
     )
 
     splitStakeTx.instructions.push(...depositTx.instructions)
@@ -771,12 +739,10 @@ export class Marinade {
    *
    * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
    * @param {BN} solToKeep - Amount of SOL lamports to keep as a stake account
-   * @param {DepositStakeAccountOptions} options - Additional deposit options
    */
   async depositActivatingStakeAccount(
     stakeAccountAddress: web3.PublicKey,
-    solToKeep: BN,
-    options: DepositStakeAccountOptions = {}
+    solToKeep: BN
   ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
     const ownerAddress = assertNotNullAndReturn(
       this.config.publicKey,
@@ -830,9 +796,7 @@ export class Marinade {
     transaction.add(...withdrawTx.instructions)
 
     const { transaction: depositTx, associatedMSolTokenAccountAddress } =
-      await this.deposit(lamportsToWithdraw, {
-        directedTarget: options.directedTarget,
-      })
+      await this.deposit(lamportsToWithdraw)
 
     transaction.instructions.push(...depositTx.instructions)
 
@@ -1167,8 +1131,7 @@ export class Marinade {
   async depositStakePoolToken(
     stakePoolTokenAddress: web3.PublicKey,
     amountToDeposit: number,
-    validators: ValidatorStats[],
-    options: DepositOptions = {}
+    validators: ValidatorStats[]
   ): Promise<MarinadeResult.LiquidateStakePoolToken> {
     const marinadeState = await this.getMarinadeState()
     const ownerAddress = assertNotNullAndReturn(
@@ -1248,13 +1211,6 @@ export class Marinade {
       )
 
     instructions.push(depositInstruction)
-
-    const directedStakeInstruction = await this.createDirectedStakeVoteIx(
-      options.directedTarget
-    )
-    if (directedStakeInstruction) {
-      instructions.push(directedStakeInstruction)
-    }
 
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')
