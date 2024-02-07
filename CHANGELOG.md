@@ -1,3 +1,9 @@
+## v5.0.10
+
+### Fix:
+
+    - Remove directed vote instruction from stake transaction to prevent accidental vote reset
+
 ## v5.0.9
 
 ### Fix:

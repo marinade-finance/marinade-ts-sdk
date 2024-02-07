@@ -77,17 +77,6 @@ export interface DepositOptions {
    * The address of the owner account for the associated mSOL account.
    */
   mintToOwnerAddress?: web3.PublicKey
-  /**
-   * The vote address of the validator or Marinade Algorithmic Delegation strategy to direct your stake to.
-   */
-  directedTarget?: web3.PublicKey
-}
-
-export interface DepositStakeAccountOptions {
-  /**
-   * The vote address of the validator or Marinade Algorithmic Delegation strategy to direct your stake to.
-   */
-  directedTarget?: web3.PublicKey
 }
 
 export interface ValidatorStats {
