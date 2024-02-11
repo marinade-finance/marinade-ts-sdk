@@ -45,11 +45,11 @@ export function getDirectedStakeSdk(
  * If the vote address is left undefined the standard delegation strategy is used.
  *
  * @param {DirectedStakeSdk} directedStakeSdk - The DirectedStakeSdk instance
- * @param {PublicKey} validatorVoteAddress - The vote address to identify the validator
+ * @param {PublicKey} target - The vote address to identify the validator
  */
 export async function createDirectedStakeVoteIx(
   directedStakeSdk: DirectedStakeSdk,
-  validatorVoteAddress?: PublicKey
+  target?: PublicKey
 ): Promise<TransactionInstruction | undefined> {
   const owner = assertNotUndefinedAndReturn(
     directedStakeSdk.program.provider.publicKey,
@@ -60,22 +60,22 @@ export async function createDirectedStakeVoteIx(
   const { voteRecord } = await getUserVoteRecord(directedStakeSdk, owner)
 
   if (!voteRecord) {
-    if (validatorVoteAddress) {
+    if (target) {
       return (
         await withCreateVote({
           sdk: directedStakeSdk,
-          validatorVote: validatorVoteAddress,
+          target,
         })
       ).instruction
     }
     return
   }
 
-  if (validatorVoteAddress) {
+  if (target) {
     return (
       await withUpdateVote({
         sdk: directedStakeSdk,
-        validatorVote: validatorVoteAddress,
+        target,
         voteRecord: voteRecord.publicKey,
       })
     ).instruction
