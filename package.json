@@ -1,6 +1,6 @@
 {
   "name": "@marinade.finance/marinade-ts-sdk",
-  "version": "5.0.6",
+  "version": "5.0.10",
   "description": "Marinade SDK for Typescript",
   "main": "dist/src/index.js",
   "repository": {
@@ -36,7 +36,7 @@
   "license": "ISC",
   "dependencies": {
     "@coral-xyz/anchor": "^0.28.0",
-    "@marinade.finance/directed-stake-sdk": "^0.0.4",
+    "@marinade.finance/directed-stake-sdk": "^0.1.0",
     "@marinade.finance/native-staking-sdk": "^1.0.0",
     "@solana/spl-stake-pool": "^0.7.0",
     "@solana/spl-token": "^0.3.8",

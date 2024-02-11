@@ -5,7 +5,6 @@ import {
 } from './util/anchor'
 import {
   DepositOptions,
-  DepositStakeAccountOptions,
   MarinadeResult,
   ValidatorStats,
 } from './marinade.types'
@@ -43,10 +42,6 @@ import {
   validatorDuplicationFlag,
 } from './marinade-state/marinade-state'
 import BN from 'bn.js'
-import {
-  createDirectedStakeVoteIx,
-  getDirectedStakeSdk,
-} from './marinade-directed-stake'
 import { MarinadeProgram } from './programs/marinade-program'
 import {
   depositInstructionBuilder as marinadeDepositInstructionBuilder,
@@ -211,18 +206,6 @@ export async function deposit(
 
   transaction.add(depositInstruction)
 
-  const directedStakeSdk = getDirectedStakeSdk(
-    marinadeProgram.provider.connection,
-    ownerAddress
-  )
-  const directedStakeInstruction = await createDirectedStakeVoteIx(
-    directedStakeSdk,
-    options.directToValidatorVoteAddress
-  )
-  if (directedStakeInstruction) {
-    transaction.add(directedStakeInstruction)
-  }
-
   return {
     associatedMSolTokenAccountAddress,
     transaction,
@@ -304,13 +287,11 @@ export async function liquidUnstake(
  * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
  * @param {PublicKey} ownerAddress - The owner (staker authority) of the stake account to be deposited
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
- * @param {DepositStakeAccountOptions} options - Additional deposit options
  */
 export async function depositStakeAccount(
   marinadeProgram: MarinadeProgram,
   ownerAddress: PublicKey,
-  stakeAccountAddress: PublicKey,
-  options: DepositStakeAccountOptions = {}
+  stakeAccountAddress: PublicKey
 ): Promise<MarinadeResult.DepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
     marinadeProgram.provider.connection,
@@ -325,8 +306,7 @@ export async function depositStakeAccount(
     marinadeProgram,
     ownerAddress,
     stakeAccountInfo,
-    rent,
-    options
+    rent
   )
 }
 
@@ -341,13 +321,11 @@ export async function depositStakeAccount(
  * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
  * @param {PublicKey} ownerAddress - The owner of the stake account to be deposited
  * @param {PublicKey} stakeAccountAddress - The account to be deposited
- * @param {DepositStakeAccountOptions} options - Additional deposit options
  */
 export async function depositDeactivatingStakeAccount(
   marinadeProgram: MarinadeProgram,
   ownerAddress: PublicKey,
-  stakeAccountAddress: PublicKey,
-  options: DepositStakeAccountOptions = {}
+  stakeAccountAddress: PublicKey
 ): Promise<MarinadeResult.DepositDeactivatingStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
     marinadeProgram.provider.connection,
@@ -423,18 +401,6 @@ export async function depositDeactivatingStakeAccount(
 
   delegateTransaction.instructions.push(depositInstruction)
 
-  const directedStakeSdk = getDirectedStakeSdk(
-    marinadeProgram.provider.connection,
-    ownerAddress
-  )
-  const directedStakeInstruction = await createDirectedStakeVoteIx(
-    directedStakeSdk,
-    options.directToValidatorVoteAddress
-  )
-  if (directedStakeInstruction) {
-    delegateTransaction.add(directedStakeInstruction)
-  }
-
   return {
     transaction: delegateTransaction,
     associatedMSolTokenAccountAddress,
@@ -450,14 +416,12 @@ export async function depositDeactivatingStakeAccount(
  * @param {PublicKey} ownerAddress - The owner (staker authority) of the stake account to be deposited
  * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
  * @param {number} rent - Rent needed for a stake account
- * @param {DepositStakeAccountOptions} options - Additional deposit options
  */
 export async function depositStakeAccountByAccount(
   marinadeProgram: MarinadeProgram,
   ownerAddress: PublicKey,
   stakeAccountInfo: ParsedStakeAccountInfo,
-  rent: number,
-  options: DepositStakeAccountOptions = {}
+  rent: number
 ): Promise<MarinadeResult.DepositStakeAccount> {
   const transaction = new Transaction()
   const currentEpoch = await marinadeProgram.provider.connection.getEpochInfo()
@@ -576,18 +540,6 @@ export async function depositStakeAccountByAccount(
 
   transaction.add(depositStakeAccountInstruction)
 
-  const directedStakeSdk = getDirectedStakeSdk(
-    marinadeProgram.provider.connection,
-    ownerAddress
-  )
-  const directedStakeInstruction = await createDirectedStakeVoteIx(
-    directedStakeSdk,
-    options.directToValidatorVoteAddress
-  )
-  if (directedStakeInstruction) {
-    transaction.add(directedStakeInstruction)
-  }
-
   return {
     associatedMSolTokenAccountAddress,
     voterAddress,
@@ -617,8 +569,7 @@ export async function partiallyDepositStakeAccount(
   marinadeProgram: MarinadeProgram,
   ownerAddress: PublicKey,
   stakeAccountAddress: PublicKey,
-  solToKeep: BN,
-  options: DepositStakeAccountOptions = {}
+  solToKeep: BN
 ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
     marinadeProgram.provider.connection,
@@ -654,8 +605,7 @@ export async function partiallyDepositStakeAccount(
     marinadeProgram,
     ownerAddress,
     stakeAccountInfo,
-    rent,
-    options
+    rent
   )
 
   splitStakeTx.instructions.push(...depositTx.instructions)
@@ -688,8 +638,7 @@ export async function depositActivatingStakeAccount(
   marinadeProgram: MarinadeProgram,
   ownerAddress: PublicKey,
   stakeAccountAddress: PublicKey,
-  solToKeep: BN,
-  options: DepositStakeAccountOptions = {}
+  solToKeep: BN
 ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
   const stakeAccountInfo = await getParsedStakeAccountInfo(
     marinadeProgram.provider.connection,
@@ -738,9 +687,7 @@ export async function depositActivatingStakeAccount(
   transaction.add(...withdrawTx.instructions)
 
   const { transaction: depositTx, associatedMSolTokenAccountAddress } =
-    await deposit(marinadeProgram, ownerAddress, lamportsToWithdraw, {
-      directToValidatorVoteAddress: options.directToValidatorVoteAddress,
-    })
+    await deposit(marinadeProgram, ownerAddress, lamportsToWithdraw)
 
   transaction.instructions.push(...depositTx.instructions)
 
@@ -964,6 +911,57 @@ export async function orderUnstake(
 
 /**
  * Returns a transaction with the instructions to
+ * Order Unstake to create a ticket which can be claimed later (with {@link claim}).
+ *
+ * @param {MarinadeProgram} marinadeProgram - Instance providing marinade methods, backed by Anchor program
+ * @param {PublicKey} ownerAddress - The owner of the tokens to be un-staked
+ * @param {PublicKey} ticketAccountPublicKey - ticketAccountPublicKey - The public key of the ticket account that will sign the transaction
+ * @param {BN} msolAmount - The amount of mSOL in lamports to order for unstaking
+ */
+export async function orderUnstakeWithPublicKey(
+  marinadeProgram: MarinadeProgram,
+  ownerAddress: PublicKey,
+  ticketAccountPublicKey: PublicKey,
+  msolAmount: BN
+): Promise<MarinadeResult.OrderUnstakeWithPublicKey> {
+  const associatedMSolTokenAccountAddress = utils.token.associatedAddress({
+    mint: marinadeProgram.marinadeState.msolMint,
+    owner: ownerAddress,
+  })
+  const rent =
+    await marinadeProgram.provider.connection.getMinimumBalanceForRentExemption(
+      TICKET_ACCOUNT_SIZE
+    )
+  const createAccountInstruction = SystemProgram.createAccount({
+    fromPubkey: ownerAddress,
+    newAccountPubkey: ticketAccountPublicKey,
+    lamports: rent,
+    space: TICKET_ACCOUNT_SIZE,
+    programId: marinadeProgram.program.programId,
+  })
+
+  const orderUnstakeInstruction = await orderUnstakeInstructionBuilder({
+    program: marinadeProgram.program,
+    marinadeState: marinadeProgram.marinadeState,
+    msolAmount,
+    ownerAddress,
+    associatedMSolTokenAccountAddress,
+    newTicketAccount: ticketAccountPublicKey,
+  })
+
+  const transaction = new Transaction().add(
+    createAccountInstruction,
+    orderUnstakeInstruction
+  )
+
+  return {
+    transaction,
+    associatedMSolTokenAccountAddress,
+  }
+}
+
+/**
+ * Returns a transaction with the instructions to
  * claim a ticket (created by {@link orderUnstake} beforehand).
  * Claimed SOLs will be sent to owner address.
  *
@@ -1008,8 +1006,7 @@ export async function depositStakePoolToken(
   lookupTableAddress: PublicKey,
   stakePoolTokenAddress: PublicKey,
   amountToDeposit: number,
-  validators: ValidatorStats[],
-  options: DepositOptions = {}
+  validators: ValidatorStats[]
 ): Promise<MarinadeResult.LiquidateStakePoolToken> {
   const lookupTable = (
     await marinadeProgram.provider.connection.getAddressLookupTable(
@@ -1096,18 +1093,6 @@ export async function depositStakePoolToken(
   }
 
   instructions.push(depositInstruction)
-
-  const directedStakeSdk = getDirectedStakeSdk(
-    marinadeProgram.provider.connection,
-    ownerAddress
-  )
-  const directedStakeInstruction = await createDirectedStakeVoteIx(
-    directedStakeSdk,
-    options.directToValidatorVoteAddress
-  )
-  if (directedStakeInstruction) {
-    instructions.push(directedStakeInstruction)
-  }
 
   const { blockhash: recentBlockhash } =
     await marinadeProgram.provider.connection.getLatestBlockhash('finalized')

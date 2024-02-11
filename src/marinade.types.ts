@@ -58,6 +58,11 @@ export namespace MarinadeResult {
     transaction: Transaction
   }
 
+  export interface OrderUnstakeWithPublicKey {
+    associatedMSolTokenAccountAddress: PublicKey
+    transaction: Transaction
+  }
+
   export interface Claim {
     transaction: Transaction
   }
@@ -73,17 +78,6 @@ export interface DepositOptions {
    * The address of the owner account for the associated mSOL account.
    */
   mintToOwnerAddress?: PublicKey
-  /**
-   * The vote address of the validator to direct your stake to.
-   */
-  directToValidatorVoteAddress?: PublicKey
-}
-
-export interface DepositStakeAccountOptions {
-  /**
-   * The vote address of the validator to direct your stake to.
-   */
-  directToValidatorVoteAddress?: PublicKey
 }
 
 export interface ValidatorStats {

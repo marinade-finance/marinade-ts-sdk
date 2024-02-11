@@ -1,3 +1,28 @@
+## v5.0.10
+
+### Fix:
+
+    - Remove directed vote instruction from stake transaction to prevent accidental vote reset
+
+## v5.0.9
+
+### Fix:
+
+    - Naming consistency
+
+## v5.0.8
+
+### Fix:
+
+    - Update directed stake sdk and method call
+    - Add warning about low liquidity on unstake via our pool
+
+## v5.0.7
+
+### Feat:
+
+    - Add method to support delayed unstake with PublicKey instead of Keypair
+
 ## v5.0.6
 
 ### Feat:
