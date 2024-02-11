@@ -1,31 +1,45 @@
-import { web3 } from '@coral-xyz/anchor'
-import { Marinade } from '../marinade'
-import { MarinadeReferralStateResponse } from './marinade-referral-state.types'
+import {
+  MarinadeReferralReferralState,
+  MarinadeReferralStateResponse,
+} from './marinade-referral-state.types'
+import { MarinadeReferralProgram } from '../programs/marinade-referral-program'
+import { PublicKey } from '@solana/web3.js'
 
-export class MarinadeReferralPartnerState {
-  private constructor(
-    public readonly state: MarinadeReferralStateResponse.ReferralState,
-    public readonly referralStateAddress: web3.PublicKey,
-    public readonly marinadeReferralProgramId: web3.PublicKey
-  ) {}
+export async function fetchReferralState(
+  program: MarinadeReferralProgram,
+  referralCode: PublicKey
+): Promise<MarinadeReferralReferralState> {
+  const state = (await program.account.referralState.fetch(
+    referralCode
+  )) as MarinadeReferralStateResponse.ReferralState
 
-  static async fetch(marinade: Marinade, referralCode?: web3.PublicKey) {
-    const { marinadeReferralProgram, config } = marinade
-    const code = referralCode ?? config.referralCode
-    if (!code) {
-      throw new Error(
-        'The Referral Code must be provided in the MarinadeConfigor supplied as an arg!'
-      )
-    }
-    const state =
-      (await marinadeReferralProgram.program.account.referralState.fetch(
-        code
-      )) as unknown as MarinadeReferralStateResponse.ReferralState
-
-    return new MarinadeReferralPartnerState(
-      state,
-      code,
-      config.marinadeReferralProgramId
-    )
+  return {
+    address: referralCode,
+    programId: program.programId,
+    ...state,
   }
+}
+
+/**
+ * Fetch all the referral partners
+ */
+export async function getReferralPartners(
+  program: MarinadeReferralProgram
+): Promise<MarinadeReferralReferralState[]> {
+  const accounts = await program.provider.connection.getProgramAccounts(
+    new PublicKey(program.programId),
+    {
+      filters: [
+        {
+          dataSize: program.account.referralState.size + 20 + 96, // number of bytes,
+        },
+      ],
+    }
+  )
+  return accounts.map(acc =>
+    program.coder.accounts.decode<MarinadeReferralReferralState>(
+      'referralState',
+      acc.account.data
+    )
+  ) as MarinadeReferralReferralState[]
 }

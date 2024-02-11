@@ -1,15 +1,24 @@
-import { Marinade, MarinadeConfig, MarinadeUtils } from '../src'
+import {
+  MarinadeUtils,
+  addLiquidity,
+  deposit,
+  liquidUnstake,
+  liquidateStakeAccount,
+} from '../src'
+import { MarinadeProgram } from '../src/programs/marinade-program'
 import * as TestWorld from './test-world'
 
 describe('Marinade Referral', () => {
   // adding MSOL liquidity as setup of all tests
   beforeAll(async () => {
-    const config = new MarinadeConfig({
-      connection: TestWorld.CONNECTION,
-      publicKey: TestWorld.SDK_USER.publicKey,
+    const marinadeProgram = await MarinadeProgram.init({
+      cnx: TestWorld.PROVIDER.connection,
+      walletAddress: TestWorld.PROVIDER.wallet.publicKey,
     })
-    const marinade = new Marinade(config)
-    const { transaction: liqTx } = await marinade.addLiquidity(
+
+    const { transaction: liqTx } = await addLiquidity(
+      marinadeProgram,
+      TestWorld.SDK_USER.publicKey,
       MarinadeUtils.solToLamports(100)
     )
     await TestWorld.PROVIDER.sendAndConfirm(liqTx)
@@ -17,14 +26,15 @@ describe('Marinade Referral', () => {
 
   describe('deposit', () => {
     it('deposits SOL', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const referralProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.deposit(
+      const { transaction } = await deposit(
+        referralProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(1)
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
@@ -38,14 +48,15 @@ describe('Marinade Referral', () => {
 
   describe('liquidUnstake', () => {
     it('unstakes SOL', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const referralProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
         referralCode: TestWorld.REFERRAL_CODE,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.liquidUnstake(
+      const { transaction } = await liquidUnstake(
+        referralProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(0.8)
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
@@ -57,18 +68,20 @@ describe('Marinade Referral', () => {
 
   describe('liquidateStakeAccount', () => {
     it('liquidates stake account (simulation)', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const referralProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
+        referralCode: TestWorld.REFERRAL_CODE,
       })
-      const marinade = new Marinade(config)
 
       await TestWorld.waitForStakeAccountActivation({
         connection: TestWorld.CONNECTION,
         stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
         activatedAtLeastFor: 2,
       })
-      const { transaction } = await marinade.liquidateStakeAccount(
+      const { transaction } = await liquidateStakeAccount(
+        referralProgram,
+        TestWorld.SDK_USER.publicKey,
         TestWorld.STAKE_ACCOUNT.publicKey
       )
 

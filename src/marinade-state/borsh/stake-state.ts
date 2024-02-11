@@ -1,9 +1,10 @@
-import { BN, web3 } from '@coral-xyz/anchor'
 import {
   deserializePublicKey,
   deserializeF64,
   commonBorshSchema,
 } from './common'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export class StakeState {
   Uninitialized?: StakeState.UninitializedState
@@ -58,8 +59,8 @@ export class Meta {
 }
 
 export class Authorized {
-  staker!: web3.PublicKey
-  withdrawer!: web3.PublicKey
+  staker!: PublicKey
+  withdrawer!: PublicKey
 
   constructor(args: Authorized) {
     Object.assign(this, args)
@@ -75,7 +76,7 @@ export class Lockup {
   epoch!: BN
   // custodian signature on a transaction exempts the operation from
   //  lockup constraints
-  custodian!: web3.PublicKey
+  custodian!: PublicKey
 
   constructor(args: Lockup) {
     Object.assign(this, args)
@@ -94,7 +95,7 @@ export class Stake {
 
 export class Delegation {
   // to whom the stake is delegated
-  voterPubkey!: web3.PublicKey
+  voterPubkey!: PublicKey
   // activated stake amount, set at delegate() time
   stake!: BN
   // epoch at which this stake was activated, std::Epoch::MAX if is a bootstrap stake

@@ -1,4 +1,5 @@
-import { web3, BN } from '@coral-xyz/anchor'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export const enum ProgramDerivedAddressSeed {
   LIQ_POOL_MINT_AUTHORITY = 'liq_mint',
@@ -8,8 +9,8 @@ export const enum ProgramDerivedAddressSeed {
   LIQ_POOL_SOL_ACCOUNT = 'liq_sol',
   RESERVE_ACCOUNT = 'reserve',
   UNIQUE_VALIDATOR = 'unique_validator',
-  STAKE_WITHDRAW = 'withdraw',
-  STAKE_DEPOSIT = 'deposit',
+  STAKE_WITHDRAW_SEED = 'withdraw',
+  STAKE_DEPOSIT_SEED = 'deposit',
 }
 
 export namespace MarinadeStateResponse {
@@ -22,11 +23,11 @@ export namespace MarinadeStateResponse {
   }
 
   export interface AccountList {
-    account: web3.PublicKey
+    account: PublicKey
     itemSize: number
     count: number
-    newAccount: web3.PublicKey
-    copiedCount: number
+    reserved1: PublicKey
+    reserved2: number
   }
 
   export interface StakeSystem {
@@ -42,18 +43,18 @@ export namespace MarinadeStateResponse {
 
   export interface ValidatorSystem {
     validatorList: AccountList
-    managerAuthority: web3.PublicKey
+    managerAuthority: PublicKey
     totalValidatorScore: number
     totalActiveBalance: BN
     autoAddValidatorEnabled: number
   }
 
   export interface LiqPool {
-    lpMint: web3.PublicKey
+    lpMint: PublicKey
     lpMintAuthorityBumpSeed: number
     solLegBumpSeed: number
     msolLegAuthorityBumpSeed: number
-    msolLeg: web3.PublicKey
+    msolLeg: PublicKey
     lpLiquidityTarget: BN
     lpMaxFee: Fee
     lpMinFee: Fee
@@ -65,10 +66,10 @@ export namespace MarinadeStateResponse {
 }
 
 export interface MarinadeStateResponse {
-  msolMint: web3.PublicKey
-  adminAuthority: web3.PublicKey
-  operationalSolAccount: web3.PublicKey
-  treasuryMsolAccount: web3.PublicKey
+  msolMint: PublicKey
+  adminAuthority: PublicKey
+  operationalSolAccount: PublicKey
+  treasuryMsolAccount: PublicKey
   reserveBumpSeed: number
   msolMintAuthorityBumpSeed: number
   rentExemptForTokenAcc: BN
@@ -86,7 +87,7 @@ export interface MarinadeStateResponse {
   minWithdraw: BN
   stakingSolCap: BN
   emergencyCoolingDown: BN
-  pauseAuthority: web3.PublicKey
+  pauseAuthority: PublicKey
   paused: boolean
   delayedUnstakeFee: MarinadeStateResponse.FeeCents
   withdrawStakeAccountFee: MarinadeStateResponse.FeeCents
@@ -94,4 +95,9 @@ export interface MarinadeStateResponse {
   lastStakeMoveEpoch: BN
   stakeMoved: BN
   maxStakeMovedPerEpoch: MarinadeStateResponse.Fee
+}
+
+export interface MarinadeState extends MarinadeStateResponse {
+  address: PublicKey
+  programId: PublicKey
 }

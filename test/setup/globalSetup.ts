@@ -1,6 +1,13 @@
-import { web3 } from '@coral-xyz/anchor'
 import * as TestWorld from '../test-world'
-import { Marinade, MarinadeConfig } from '../../src'
+import { fetchMarinadeState, getValidatorRecords } from '../../src'
+import { marinadeFinanceProgram } from '../../src/programs/marinade-finance-program'
+import {
+  Keypair,
+  LAMPORTS_PER_SOL,
+  PublicKey,
+  StakeProgram,
+  Transaction,
+} from '@solana/web3.js'
 
 require('ts-node/register')
 
@@ -37,14 +44,13 @@ export default async (): Promise<void> => {
   )
 
   // --- ADDING solana-test-validator under MARINADE ---
-  const config = new MarinadeConfig({
-    connection: TestWorld.CONNECTION,
-    publicKey: TestWorld.SDK_USER.publicKey,
+  const marinadeProgram = marinadeFinanceProgram({
+    cnx: TestWorld.CONNECTION,
+    walletAddress: TestWorld.SDK_USER.publicKey,
   })
-  const marinade = new Marinade(config)
-  const marinadeState = await marinade.getMarinadeState()
+  const marinadeState = await fetchMarinadeState(marinadeProgram)
   if (
-    !marinadeState.state.validatorSystem.managerAuthority.equals(
+    !marinadeState.validatorSystem.managerAuthority.equals(
       TestWorld.MARINADE_STATE_ADMIN.publicKey
     )
   ) {
@@ -53,7 +59,7 @@ export default async (): Promise<void> => {
     )
   }
   // check if the validator is part of Marinade already
-  const validators = await marinadeState.getValidatorRecords()
+  const validators = await getValidatorRecords(marinadeProgram, marinadeState)
   if (
     validators.validatorRecords.findIndex(
       v => v.validatorAccount.toBase58() === votePubkey.toBase58()
@@ -63,12 +69,13 @@ export default async (): Promise<void> => {
       `Validator vote account ${votePubkey.toBase58()} is not part of Marinade yet, adding it.`
     )
     const addIx = await TestWorld.addValidatorInstructionBuilder({
-      marinade,
+      program: marinadeProgram,
+      marinadeState,
       validatorScore: 1000,
       rentPayer: TestWorld.PROVIDER.wallet.publicKey,
       validatorVote: votePubkey,
     })
-    const addTx = new web3.Transaction().add(addIx)
+    const addTx = new Transaction().add(addIx)
     await TestWorld.PROVIDER.sendAndConfirm(addTx, [
       TestWorld.MARINADE_STATE_ADMIN,
     ])
@@ -76,13 +83,13 @@ export default async (): Promise<void> => {
 }
 
 async function createAndDelegateStake(
-  stakeAccountKeypair: web3.Keypair,
-  votePubkey: web3.PublicKey,
-  lamports: number = 42 * web3.LAMPORTS_PER_SOL
+  stakeAccountKeypair: Keypair,
+  votePubkey: PublicKey,
+  lamports: number = 42 * LAMPORTS_PER_SOL
 ) {
   // create a stake account that will be used later in all tests
-  const tx = new web3.Transaction()
-  const ixStakeAccount = web3.StakeProgram.createAccount({
+  const tx = new Transaction()
+  const ixStakeAccount = StakeProgram.createAccount({
     authorized: {
       staker: TestWorld.PROVIDER.wallet.publicKey,
       withdrawer: TestWorld.PROVIDER.wallet.publicKey,
@@ -93,7 +100,7 @@ async function createAndDelegateStake(
   })
   tx.add(ixStakeAccount)
   /// delegating stake account to the vote account
-  const ixDelegate = web3.StakeProgram.delegate({
+  const ixDelegate = StakeProgram.delegate({
     authorizedPubkey: TestWorld.PROVIDER.wallet.publicKey,
     stakePubkey: stakeAccountKeypair.publicKey,
     votePubkey,

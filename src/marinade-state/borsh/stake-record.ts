@@ -1,7 +1,8 @@
-import { BN, web3 } from '@coral-xyz/anchor'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export class StakeRecord {
-  stakeAccount!: web3.PublicKey
+  stakeAccount!: PublicKey
   lastUpdateDelegatedLamports!: BN
   lastUpdateEpoch!: BN
   isEmergencyUnstaking!: number

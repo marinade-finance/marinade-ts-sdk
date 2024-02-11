@@ -1,4 +1,4 @@
-import { BN } from '@coral-xyz/anchor'
+import BN from 'bn.js'
 import { StakeRecord } from './stake-record'
 import { StakeState } from './stake-state'
 

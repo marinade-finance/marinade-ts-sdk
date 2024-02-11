@@ -1,7 +1,8 @@
-import { BN, web3 } from '@coral-xyz/anchor'
+import { PublicKey } from '@solana/web3.js'
+import BN from 'bn.js'
 
 export class ValidatorRecord {
-  validatorAccount!: web3.PublicKey
+  validatorAccount!: PublicKey
   activeBalance!: BN
   score!: number
   lastStakeDeltaEpoch!: BN

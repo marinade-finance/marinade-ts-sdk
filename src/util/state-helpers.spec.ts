@@ -1,12 +1,14 @@
-import { BN } from '@coral-xyz/anchor'
-import { MarinadeConfig } from '../config/marinade-config'
-import { Marinade } from '../marinade'
 import * as TestWorld from '../../test/test-world'
 import {
   computeMsolAmount,
   proportionalBN,
   unstakeNowFeeBp,
 } from './state-helpers'
+import { marinadeFinanceProgram } from '../programs/marinade-finance-program'
+import { DEFAULT_PROVIDER_URL, fetchMarinadeState } from '..'
+import { MarinadeState } from '../marinade-state/marinade-state.types'
+import { Connection } from '@solana/web3.js'
+import { BN } from 'bn.js'
 
 describe('state-helpers', () => {
   describe('unstakeNowFeeBp', () => {
@@ -90,20 +92,24 @@ describe('state-helpers', () => {
 
   describe('computeMsolAmount', () => {
     it('apply napkin math', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION_DEVNET,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const connection = new Connection(DEFAULT_PROVIDER_URL, 'confirmed')
+      const marinadeProgram = marinadeFinanceProgram({
+        cnx: connection,
+        walletAddress: TestWorld.SDK_USER.publicKey,
       })
-      const marinade = new Marinade(config)
-      const marinadeState = await marinade.getMarinadeState()
-      marinadeState.state.stakeSystem.delayedUnstakeCoolingDown = new BN(0)
-      marinadeState.state.emergencyCoolingDown = new BN(0)
-      marinadeState.state.validatorSystem.totalActiveBalance = new BN(
+      const marinadeState = (await fetchMarinadeState(
+        marinadeProgram
+      )) as MarinadeState
+      marinadeState.stakeSystem.delayedUnstakeCoolingDown = new BN(0)
+
+      marinadeState.emergencyCoolingDown = new BN(0)
+      marinadeState.emergencyCoolingDown = new BN(0)
+      marinadeState.validatorSystem.totalActiveBalance = new BN(
         7127287605604809
       )
-      marinadeState.state.availableReserveBalance = new BN(314928893290695)
-      marinadeState.state.circulatingTicketBalance = new BN(14301681747495)
-      marinadeState.state.msolSupply = new BN(6978141264398309)
+      marinadeState.availableReserveBalance = new BN(314928893290695)
+      marinadeState.circulatingTicketBalance = new BN(14301681747495)
+      marinadeState.msolSupply = new BN(6978141264398309)
 
       const actualResult = computeMsolAmount(
         new BN('10230883291'),

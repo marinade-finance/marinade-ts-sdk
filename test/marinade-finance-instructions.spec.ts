@@ -1,21 +1,36 @@
-import { Marinade, MarinadeConfig, MarinadeUtils, Wallet, web3 } from '../src'
+import {
+  MarinadeUtils,
+  addLiquidity,
+  claim,
+  createDirectedStakeVoteIx,
+  deposit,
+  depositStakeAccount,
+  liquidUnstake,
+  liquidateStakeAccount,
+  orderUnstake,
+} from '../src'
 import * as TestWorld from './test-world'
 import assert from 'assert'
-import { AnchorProvider } from '@coral-xyz/anchor'
+import { AnchorProvider, Wallet } from '@coral-xyz/anchor'
 import {
   DirectedStakeSdk,
   findVoteRecords,
 } from '@marinade.finance/directed-stake-sdk'
+import { Keypair, PublicKey, Transaction } from '@solana/web3.js'
+import { MarinadeProgram } from '../src/programs/marinade-program'
+import { getDelayedUnstakeTickets } from '../src/programs/marinade-finance-program'
 
 describe('Marinade Finance', () => {
   beforeAll(async () => {
-    const config = new MarinadeConfig({
-      connection: TestWorld.CONNECTION,
-      publicKey: TestWorld.SDK_USER.publicKey,
+    const marinadeProgram = await MarinadeProgram.init({
+      cnx: TestWorld.PROVIDER.connection,
+      walletAddress: TestWorld.PROVIDER.wallet.publicKey,
     })
-    const marinade = new Marinade(config)
+
     try {
-      const { transaction: liqTx } = await marinade.addLiquidity(
+      const { transaction: liqTx } = await addLiquidity(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(100)
       )
       await TestWorld.PROVIDER.sendAndConfirm(liqTx)
@@ -28,13 +43,14 @@ describe('Marinade Finance', () => {
 
   describe('deposit', () => {
     it('deposits SOL', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.deposit(
+      const { transaction } = await deposit(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(1)
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
@@ -48,7 +64,7 @@ describe('Marinade Finance', () => {
     })
 
     it('deposits SOL, only creates ATA when necessary', async () => {
-      const newAccount = new web3.Keypair()
+      const newAccount = new Keypair()
       await TestWorld.transferMinimumLamportsBalance(newAccount.publicKey)
 
       const provider = new AnchorProvider(
@@ -57,14 +73,15 @@ describe('Marinade Finance', () => {
         { commitment: 'confirmed' }
       )
 
-      const anotherAccount = web3.Keypair.generate()
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: newAccount.publicKey,
+      const anotherAccount = Keypair.generate()
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction: tx1 } = await marinade.deposit(
+      const { transaction: tx1 } = await deposit(
+        marinadeProgram,
+        newAccount.publicKey,
         MarinadeUtils.solToLamports(1),
         { mintToOwnerAddress: anotherAccount.publicKey }
       )
@@ -72,7 +89,9 @@ describe('Marinade Finance', () => {
       const transactionSignature1 = await provider.sendAndConfirm(tx1)
       console.log('Deposit tx1:', transactionSignature1)
 
-      const { transaction: tx2 } = await marinade.deposit(
+      const { transaction: tx2 } = await deposit(
+        marinadeProgram,
+        newAccount.publicKey,
         MarinadeUtils.solToLamports(1),
         { mintToOwnerAddress: anotherAccount.publicKey }
       )
@@ -82,14 +101,15 @@ describe('Marinade Finance', () => {
     })
 
     it('deposits SOL and get mSOL to another account', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const anotherAccount = web3.Keypair.generate()
-      const { transaction } = await marinade.deposit(
+      const anotherAccount = Keypair.generate()
+      const { transaction } = await deposit(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(1),
         { mintToOwnerAddress: anotherAccount.publicKey }
       )
@@ -102,28 +122,29 @@ describe('Marinade Finance', () => {
     it('deposit SOL and direct the stake', async () => {
       const validatorVoteAddress =
         await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
       const directedStakeSdk = new DirectedStakeSdk({
         connection: TestWorld.CONNECTION,
         wallet: {
-          signTransaction: async () =>
-            new Promise(() => new web3.Transaction()),
+          signTransaction: async () => new Promise(() => new Transaction()),
           signAllTransactions: async () =>
-            new Promise(() => [new web3.Transaction()]),
+            new Promise(() => [new Transaction()]),
           publicKey: TestWorld.SDK_USER.publicKey,
         },
       })
 
-      const { transaction } = await marinade.deposit(
+      const { transaction } = await deposit(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(0.01)
       )
 
-      const voteIx = await marinade.createDirectedStakeVoteIx(
+      const voteIx = await createDirectedStakeVoteIx(
+        directedStakeSdk,
         validatorVoteAddress
       )
       if (voteIx) transaction.instructions.push(voteIx)
@@ -158,28 +179,29 @@ describe('Marinade Finance', () => {
     it('deposit SOL and redirect the stake', async () => {
       const validatorVoteAddress2 =
         await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
       const directedStakeSdk = new DirectedStakeSdk({
         connection: TestWorld.CONNECTION,
         wallet: {
-          signTransaction: async () =>
-            new Promise(() => new web3.Transaction()),
+          signTransaction: async () => new Promise(() => new Transaction()),
           signAllTransactions: async () =>
-            new Promise(() => [new web3.Transaction()]),
+            new Promise(() => [new Transaction()]),
           publicKey: TestWorld.SDK_USER.publicKey,
         },
       })
 
-      const { transaction } = await marinade.deposit(
+      const { transaction } = await deposit(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(0.01)
       )
 
-      const voteIx = await marinade.createDirectedStakeVoteIx(
+      const voteIx = await createDirectedStakeVoteIx(
+        directedStakeSdk,
         validatorVoteAddress2
       )
       if (voteIx) transaction.instructions.push(voteIx)
@@ -205,29 +227,29 @@ describe('Marinade Finance', () => {
       expect(voteRecord?.account.target).toEqual(validatorVoteAddress2)
     })
 
-    it('deposit SOL and undirect the stake', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+    it('deposit SOL and un-direct the stake', async () => {
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
       const directedStakeSdk = new DirectedStakeSdk({
         connection: TestWorld.CONNECTION,
         wallet: {
-          signTransaction: async () =>
-            new Promise(() => new web3.Transaction()),
+          signTransaction: async () => new Promise(() => new Transaction()),
           signAllTransactions: async () =>
-            new Promise(() => [new web3.Transaction()]),
+            new Promise(() => [new Transaction()]),
           publicKey: TestWorld.SDK_USER.publicKey,
         },
       })
 
-      const { transaction } = await marinade.deposit(
+      const { transaction } = await deposit(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(0.01)
       )
 
-      const voteIx = await marinade.createDirectedStakeVoteIx()
+      const voteIx = await createDirectedStakeVoteIx(directedStakeSdk)
       if (voteIx) transaction.instructions.push(voteIx)
 
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
@@ -255,13 +277,14 @@ describe('Marinade Finance', () => {
   // expected the `deposit SOL` test to be called before
   describe('liquidUnstake', () => {
     it('unstakes SOL', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.liquidUnstake(
+      const { transaction } = await liquidUnstake(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(0.8)
       )
       const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
@@ -273,11 +296,10 @@ describe('Marinade Finance', () => {
 
   describe('depositStakeAccount', () => {
     it('deposits stake account (simulate)', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
       // for a validator could be deposited, it must be activated for at least 2 epochs
       // i.e., "error: Deposited stake <pubkey> is not activated yet. Wait for #2 epoch"
@@ -287,7 +309,9 @@ describe('Marinade Finance', () => {
         activatedAtLeastFor: 2,
       })
 
-      const { transaction } = await marinade.depositStakeAccount(
+      const { transaction } = await depositStakeAccount(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         TestWorld.STAKE_ACCOUNT.publicKey
       )
 
@@ -304,11 +328,10 @@ describe('Marinade Finance', () => {
   // this tests is dependent on being called after `deposits stake account (simulate)`
   describe('liquidateStakeAccount', () => {
     it('liquidates stake account (simulate)', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
       // for a validator could be liquidated, it must be activated for at least 2 epochs
       await TestWorld.waitForStakeAccountActivation({
@@ -317,7 +340,9 @@ describe('Marinade Finance', () => {
         activatedAtLeastFor: 2,
       })
 
-      const { transaction } = await marinade.liquidateStakeAccount(
+      const { transaction } = await liquidateStakeAccount(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         TestWorld.STAKE_ACCOUNT.publicKey
       )
       const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =
@@ -332,16 +357,17 @@ describe('Marinade Finance', () => {
 
   // expecting this test to be called after the `deposit SOL` is executed
   describe('order unstake and claim', () => {
-    let ticketAccount: web3.PublicKey | undefined
+    let ticketAccount: PublicKey | undefined
 
     it('order unstake', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction, ticketAccountKeypair } = await marinade.orderUnstake(
+      const { transaction, ticketAccountKeypair } = await orderUnstake(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
         MarinadeUtils.solToLamports(0.1)
       )
       ticketAccount = ticketAccountKeypair.publicKey
@@ -351,10 +377,11 @@ describe('Marinade Finance', () => {
       )
       console.log('Order unstake tx:', transactionSignature)
 
-      const tickets = await marinade.getDelayedUnstakeTickets(
+      const tickets = await getDelayedUnstakeTickets(
+        marinadeProgram.program,
         TestWorld.SDK_USER.publicKey
       )
-      const ticketKeys: web3.PublicKey[] = []
+      const ticketKeys: PublicKey[] = []
       for (const [key] of tickets) {
         ticketKeys.push(key)
       }
@@ -364,17 +391,21 @@ describe('Marinade Finance', () => {
     })
 
     it('try to claim tickets after expiration', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
-      const tickets = await marinade.getDelayedUnstakeTickets(
+      const tickets = await getDelayedUnstakeTickets(
+        marinadeProgram.program,
         TestWorld.SDK_USER.publicKey
       )
       for (const [key, value] of tickets) {
         if (value.ticketDue) {
-          const { transaction } = await marinade.claim(key)
+          const { transaction } = await claim(
+            marinadeProgram,
+            TestWorld.SDK_USER.publicKey,
+            key
+          )
           await TestWorld.PROVIDER.sendAndConfirm(transaction)
         }
       }
@@ -383,13 +414,16 @@ describe('Marinade Finance', () => {
     it('claim', async () => {
       assert(ticketAccount !== undefined)
 
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
+      const marinadeProgram = await MarinadeProgram.init({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const { transaction } = await marinade.claim(ticketAccount)
+      const { transaction } = await claim(
+        marinadeProgram,
+        TestWorld.SDK_USER.publicKey,
+        ticketAccount
+      )
       try {
         // expecting error as the ticket is not expired yet
         await TestWorld.PROVIDER.sendAndConfirm(transaction)

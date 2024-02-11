@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BN, Provider } from '@coral-xyz/anchor'
+import BN from 'bn.js'
 import { getStakePoolAccount } from '@solana/spl-stake-pool'
 import { ValidatorAccount } from '@solana/spl-stake-pool/dist/utils'
 import {
@@ -7,12 +7,18 @@ import {
   PublicKey,
   PublicKeyInitData,
   SYSVAR_CLOCK_PUBKEY,
+  StakeProgram,
   TransactionInstruction,
 } from '@solana/web3.js'
-import { STAKE_PROGRAM_ID, getParsedStakeAccountInfo } from './anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
-import { MarinadeState } from '../marinade-state/marinade-state'
+import { getParsedStakeAccountInfo } from './anchor'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import {
+  getValidatorRecords,
+  validatorDuplicationFlag,
+} from '../marinade-state/marinade-state'
 import { calcLamportsWithdrawAmount, solToLamports } from './conversion'
+import { MarinadeFinanceProgram } from '../programs/marinade-finance-program'
+import { MarinadeState } from '../marinade-state/marinade-state.types'
 
 export async function computeExpectedSOL(
   amountToWithdraw: number,
@@ -52,8 +58,8 @@ export async function computeLSTValueInSOL(
 
 export async function identifyValidatorFromTx(
   instructions: TransactionInstruction[],
-  provider: Provider,
-  marinadeState: MarinadeState
+  program: MarinadeFinanceProgram,
+  state: MarinadeState
 ): Promise<{
   validatorAddress: PublicKey
   duplicationFlag: PublicKey
@@ -68,7 +74,7 @@ export async function identifyValidatorFromTx(
 
   const excludedAccounts = [
     SYSVAR_CLOCK_PUBKEY.toString(),
-    STAKE_PROGRAM_ID.toString(),
+    StakeProgram.programId.toString(),
     TOKEN_PROGRAM_ID.toString(),
   ]
   const uniqueAccounts = withdrawTxAccounts.filter(
@@ -86,7 +92,7 @@ export async function identifyValidatorFromTx(
     uniqueAccounts.map(async (acc: PublicKeyInitData) => {
       try {
         const accountInfo = await getParsedStakeAccountInfo(
-          provider,
+          program.provider.connection,
           new PublicKey(acc)
         )
         if (accountInfo.voterAddress)
@@ -97,17 +103,18 @@ export async function identifyValidatorFromTx(
     })
   )
 
-  const duplicationFlag = await marinadeState.validatorDuplicationFlag(
+  const duplicationFlag = validatorDuplicationFlag(
+    state,
     new PublicKey(validatorAddress)
   )
-  const { validatorRecords } = await marinadeState.getValidatorRecords()
+  const { validatorRecords } = await getValidatorRecords(program, state)
   const validatorLookupIndex = validatorRecords.findIndex(
     ({ validatorAccount }) =>
       validatorAccount.equals(new PublicKey(validatorAddress))
   )
   const validatorIndex =
     validatorLookupIndex === -1
-      ? marinadeState.state.validatorSystem.validatorList.count
+      ? state.validatorSystem.validatorList.count
       : validatorLookupIndex
 
   return {

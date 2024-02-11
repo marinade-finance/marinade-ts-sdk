@@ -1,23 +1,33 @@
-import { Marinade, MarinadeConfig, web3, BN } from '../src'
-import { MarinadeReferralStateResponse } from '../src/marinade-referral-state/marinade-referral-state.types'
+import { PublicKey } from '@solana/web3.js'
+import {
+  fetchReferralGlobalState,
+  fetchReferralState,
+  getReferralPartners,
+} from '../src'
+import {
+  MarinadeReferralGlobalState,
+  MarinadeReferralReferralState,
+} from '../src/marinade-referral-state/marinade-referral-state.types'
 import * as TestWorld from './test-world'
+import BN from 'bn.js'
+import { marinadeReferralProgram } from '../src/programs/marinade-referral-program'
 
 describe('Marinade Referral Program', () => {
   describe('getReferralGlobalState', () => {
     it("fetches the referral program's global state which matches the expected type", async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        referralCode: TestWorld.REFERRAL_CODE,
+      const referralProgram = marinadeReferralProgram({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
+      const globalState = await fetchReferralGlobalState(referralProgram)
 
-      const { state } = await marinade.getReferralGlobalState()
-
-      expect(state).toStrictEqual<MarinadeReferralStateResponse.GlobalState>({
-        adminAccount: expect.any(web3.PublicKey),
-        msolMintAccount: expect.any(web3.PublicKey),
-        foreman1: expect.any(web3.PublicKey),
-        foreman2: expect.any(web3.PublicKey),
+      expect(globalState).toStrictEqual<MarinadeReferralGlobalState>({
+        address: expect.any(PublicKey),
+        programId: expect.any(PublicKey),
+        adminAccount: expect.any(PublicKey),
+        msolMintAccount: expect.any(PublicKey),
+        foreman1: expect.any(PublicKey),
+        foreman2: expect.any(PublicKey),
         minKeepPct: expect.any(Number),
         maxKeepPct: expect.any(Number),
       })
@@ -26,58 +36,18 @@ describe('Marinade Referral Program', () => {
 
   describe('getReferralPartnerState', () => {
     it("fetches the referral partner' state which matches the expected type", async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        referralCode: TestWorld.REFERRAL_CODE,
+      const referralProgram = marinadeReferralProgram({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
-
-      const { state } = await marinade.getReferralPartnerState()
-
-      expect(state).toStrictEqual<MarinadeReferralStateResponse.ReferralState>({
-        baseFee: expect.any(Number),
-        validatorVoteKey: null,
-        keepSelfStakePct: expect.any(Number),
-        delayedUnstakeAmount: expect.any(BN),
-        delayedUnstakeOperations: expect.any(BN),
-        depositSolAmount: expect.any(BN),
-        depositSolOperations: expect.any(BN),
-        depositStakeAccountAmount: expect.any(BN),
-        depositStakeAccountOperations: expect.any(BN),
-        liqUnstakeSolAmount: expect.any(BN),
-        liqUnstakeMsolAmount: expect.any(BN),
-        liqUnstakeMsolFees: expect.any(BN),
-        liqUnstakeOperations: expect.any(BN),
-        maxFee: expect.any(Number),
-        maxNetStake: expect.any(BN),
-        partnerAccount: expect.any(web3.PublicKey),
-        partnerName: TestWorld.PARTNER_NAME,
-        pause: expect.any(Boolean),
-        msolTokenPartnerAccount: expect.any(web3.PublicKey),
-        operationDepositSolFee: expect.any(Number),
-        operationDepositStakeAccountFee: expect.any(Number),
-        operationLiquidUnstakeFee: expect.any(Number),
-        operationDelayedUnstakeFee: expect.any(Number),
-        accumDepositSolFee: expect.any(BN),
-        accumDepositStakeAccountFee: expect.any(BN),
-        accumLiquidUnstakeFee: expect.any(BN),
-        accumDelayedUnstakeFee: expect.any(BN),
-      })
-    })
-  })
-
-  describe('getReferralPartnerState', () => {
-    it("fetches the referral partner' state using argument and no config and which matches the expected type", async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-      })
-      const marinade = new Marinade(config)
-
-      const { state } = await marinade.getReferralPartnerState(
+      const partnerState = await fetchReferralState(
+        referralProgram,
         TestWorld.REFERRAL_CODE
       )
 
-      expect(state).toStrictEqual<MarinadeReferralStateResponse.ReferralState>({
+      expect(partnerState).toStrictEqual<MarinadeReferralReferralState>({
+        address: expect.any(PublicKey),
+        programId: expect.any(PublicKey),
         baseFee: expect.any(Number),
         validatorVoteKey: null,
         keepSelfStakePct: expect.any(Number),
@@ -93,10 +63,10 @@ describe('Marinade Referral Program', () => {
         liqUnstakeOperations: expect.any(BN),
         maxFee: expect.any(Number),
         maxNetStake: expect.any(BN),
-        partnerAccount: expect.any(web3.PublicKey),
+        partnerAccount: expect.any(PublicKey),
         partnerName: TestWorld.PARTNER_NAME,
         pause: expect.any(Boolean),
-        msolTokenPartnerAccount: expect.any(web3.PublicKey),
+        msolTokenPartnerAccount: expect.any(PublicKey),
         operationDepositSolFee: expect.any(Number),
         operationDepositStakeAccountFee: expect.any(Number),
         operationLiquidUnstakeFee: expect.any(Number),
@@ -111,12 +81,12 @@ describe('Marinade Referral Program', () => {
 
   describe('getReferralPartners', () => {
     it('fetches all the referral partners ', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
+      const referralProgram = marinadeReferralProgram({
+        cnx: TestWorld.PROVIDER.connection,
+        walletAddress: TestWorld.PROVIDER.wallet.publicKey,
       })
-      const marinade = new Marinade(config)
 
-      const partners = await marinade.getReferralPartners()
+      const partners = await getReferralPartners(referralProgram)
 
       expect(partners.length).toBeGreaterThan(0)
     })

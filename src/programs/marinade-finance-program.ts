@@ -1,285 +1,347 @@
-import { BN, Program, web3, Provider, IdlTypes } from '@coral-xyz/anchor'
-import { MarinadeState } from '../marinade-state/marinade-state'
+import { AnchorProvider, Program, IdlTypes } from '@coral-xyz/anchor'
 import {
-  STAKE_PROGRAM_ID,
-  SYSTEM_PROGRAM_ID,
   getEpochInfo,
   getTicketDateInfo,
   estimateTicketDateInfo,
 } from '../util'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { TicketAccount } from '../marinade-state/borsh/ticket-account'
-import * as mariandeFinance from './idl/types/marinade_finance'
+import * as marinadeFinance from './idl/types/marinade_finance'
+import { MarinadeState } from '../marinade-state/marinade-state.types'
+import { TicketDateInfo } from '../util/ticket-date-info.types'
+import {
+  lpMintAuthority,
+  mSolLegAuthority,
+  mSolMintAuthority,
+  reserveAddress,
+  solLeg,
+} from '../marinade-state/marinade-state'
+import { DEFAULT_MARINADE_PROGRAM_ID } from '../config/marinade-config'
+import {
+  ConfirmOptions,
+  Connection,
+  GetProgramAccountsFilter,
+  PublicKey,
+  SYSVAR_CLOCK_PUBKEY,
+  SYSVAR_RENT_PUBKEY,
+  StakeProgram,
+  SystemProgram,
+  TransactionInstruction,
+} from '@solana/web3.js'
+import BN from 'bn.js'
 
-const MarinadeFinanceIDL = mariandeFinance.IDL
-type MarinadeFinance = mariandeFinance.MarinadeFinance
-export type MarinadeFinanceProgramType = Program<MarinadeFinance>
+const MarinadeFinanceIDL = marinadeFinance.IDL
+type MarinadeFinance = marinadeFinance.MarinadeFinance
+export type MarinadeFinanceProgram = Program<MarinadeFinance>
 
 export type ValidatorRecordAnchorType =
-  IdlTypes<mariandeFinance.MarinadeFinance>['ValidatorRecord']
+  IdlTypes<marinadeFinance.MarinadeFinance>['ValidatorRecord']
 export type StateRecordAnchorType =
-  IdlTypes<mariandeFinance.MarinadeFinance>['StakeRecord']
+  IdlTypes<marinadeFinance.MarinadeFinance>['StakeRecord']
 
-export class MarinadeFinanceProgram {
-  constructor(
-    public readonly programAddress: web3.PublicKey,
-    public readonly anchorProvider: Provider
-  ) {}
-
-  get program(): MarinadeFinanceProgramType {
-    return new Program<MarinadeFinance>(
-      MarinadeFinanceIDL,
-      this.programAddress,
-      this.anchorProvider
-    )
-  }
-
-  async getDelayedUnstakeTickets(
-    beneficiary?: web3.PublicKey
-  ): Promise<Map<web3.PublicKey, TicketAccount>> {
-    const filters: web3.GetProgramAccountsFilter[] = [
-      {
-        dataSize: 88,
+export function marinadeFinanceProgram({
+  programAddress = DEFAULT_MARINADE_PROGRAM_ID,
+  cnx,
+  walletAddress,
+  opts = {},
+}: {
+  programAddress?: PublicKey
+  cnx: Connection
+  walletAddress: PublicKey
+  opts?: ConfirmOptions
+}): MarinadeFinanceProgram {
+  const provider = new AnchorProvider(
+    cnx,
+    {
+      signTransaction: () => {
+        throw new Error()
       },
-    ]
+      signAllTransactions: () => {
+        throw new Error()
+      },
+      publicKey: walletAddress,
+    },
+    opts ?? AnchorProvider.defaultOptions()
+  )
+  const program = new Program<MarinadeFinance>(
+    MarinadeFinanceIDL,
+    programAddress,
+    provider
+  )
+  return program
+}
 
-    if (beneficiary) {
-      filters.push({
-        memcmp: {
-          offset: 8 + 32,
-          bytes: beneficiary.toBase58(),
-        },
-      })
-    }
+/**
+ * Retrieve user's ticket accounts
+ *
+ * @param {PublicKey} beneficiary - The owner of the ticket accounts
+ */
+export async function getDelayedUnstakeTickets(
+  program: MarinadeFinanceProgram,
+  beneficiary?: PublicKey
+): Promise<Map<PublicKey, TicketAccount>> {
+  const filters: GetProgramAccountsFilter[] = [
+    {
+      dataSize: 88,
+    },
+  ]
 
-    const ticketAccounts = await this.program.account.ticketAccountData.all(
-      filters
-    )
-    const epochInfo = await getEpochInfo(this.anchorProvider.connection)
-
-    return new Map(
-      ticketAccounts.map(ticketAccount => {
-        const ticketAccountdata = ticketAccount.account
-        const ticketAcconuntPubkey = ticketAccount.publicKey
-        const ticketDateInfo = getTicketDateInfo(
-          epochInfo,
-          ticketAccountdata.createdEpoch.toNumber(),
-          Date.now()
-        )
-
-        return [
-          ticketAcconuntPubkey,
-          { ...ticketAccountdata, ...ticketDateInfo },
-        ]
-      })
-    )
+  if (beneficiary) {
+    filters.push({
+      memcmp: {
+        offset: 8 + 32,
+        bytes: beneficiary.toBase58(),
+      },
+    })
   }
 
-  // Estimate due date if a ticket would be created right now
-  getEstimatedUnstakeTicketDueDate = async (marinadeState: MarinadeState) => {
-    const epochInfo = await getEpochInfo(this.anchorProvider.connection)
-    return estimateTicketDateInfo(
-      epochInfo,
-      Date.now(),
-      marinadeState.state.stakeSystem.slotsForStakeDelta.toNumber()
-    )
-  }
+  const ticketAccounts = await program.account.ticketAccountData.all(filters)
+  const epochInfo = await getEpochInfo(program.provider.connection)
 
-  addLiquidityInstructionBuilder = async ({
-    marinadeState,
-    ownerAddress,
-    associatedLPTokenAccountAddress,
-    amountLamports,
-  }: {
-    marinadeState: MarinadeState
-    ownerAddress: web3.PublicKey
-    associatedLPTokenAccountAddress: web3.PublicKey
-    amountLamports: BN
-  }): Promise<web3.TransactionInstruction> =>
-    await this.program.methods
-      .addLiquidity(amountLamports)
-      .accountsStrict({
-        state: marinadeState.marinadeStateAddress,
-        lpMint: marinadeState.lpMintAddress,
-        lpMintAuthority: await marinadeState.lpMintAuthority(),
-        liqPoolMsolLeg: marinadeState.mSolLeg,
-        liqPoolSolLegPda: await marinadeState.solLeg(),
-        transferFrom: ownerAddress,
-        mintTo: associatedLPTokenAccountAddress,
-        systemProgram: SYSTEM_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .instruction()
+  return new Map(
+    ticketAccounts.map(ticketAccount => {
+      const ticketAccountData = ticketAccount.account
+      const ticketAccountPubkey = ticketAccount.publicKey
+      const ticketDateInfo = getTicketDateInfo(
+        epochInfo,
+        ticketAccountData.createdEpoch.toNumber(),
+        Date.now()
+      )
 
-  removeLiquidityInstructionBuilder = async ({
-    marinadeState,
-    ownerAddress,
-    associatedLPTokenAccountAddress,
-    associatedMSolTokenAccountAddress,
-    amountLamports,
-  }: {
-    marinadeState: MarinadeState
-    ownerAddress: web3.PublicKey
-    associatedLPTokenAccountAddress: web3.PublicKey
-    associatedMSolTokenAccountAddress: web3.PublicKey
-    amountLamports: BN
-  }): Promise<web3.TransactionInstruction> =>
-    await this.program.methods
-      .removeLiquidity(amountLamports)
-      .accountsStrict({
-        state: marinadeState.marinadeStateAddress,
-        lpMint: marinadeState.lpMintAddress,
-        burnFrom: associatedLPTokenAccountAddress,
-        burnFromAuthority: ownerAddress,
-        liqPoolSolLegPda: await marinadeState.solLeg(),
-        transferSolTo: ownerAddress,
-        transferMsolTo: associatedMSolTokenAccountAddress,
-        liqPoolMsolLeg: marinadeState.mSolLeg,
-        liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
-        systemProgram: SYSTEM_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .instruction()
+      return [ticketAccountPubkey, { ...ticketAccountData, ...ticketDateInfo }]
+    })
+  )
+}
 
-  liquidUnstakeInstructionBuilder = async ({
-    marinadeState,
-    ownerAddress,
-    associatedMSolTokenAccountAddress,
-    amountLamports,
-  }: {
-    marinadeState: MarinadeState
-    ownerAddress: web3.PublicKey
-    associatedMSolTokenAccountAddress: web3.PublicKey
-    amountLamports: BN
-  }): Promise<web3.TransactionInstruction> =>
-    await this.program.methods
-      .liquidUnstake(amountLamports)
-      .accountsStrict({
-        state: marinadeState.marinadeStateAddress,
-        msolMint: marinadeState.mSolMintAddress,
-        liqPoolMsolLeg: marinadeState.mSolLeg,
-        liqPoolSolLegPda: await marinadeState.solLeg(),
-        getMsolFrom: associatedMSolTokenAccountAddress,
-        getMsolFromAuthority: ownerAddress,
-        transferSolTo: ownerAddress,
-        treasuryMsolAccount: marinadeState.treasuryMsolAccount,
-        systemProgram: SYSTEM_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .instruction()
+/**
+ * Estimate due date if a ticket would be created right now
+ */
+export async function getEstimatedUnstakeTicketDueDate(
+  connection: Connection,
+  marinadeState: Readonly<MarinadeState>
+): Promise<TicketDateInfo> {
+  const epochInfo = await getEpochInfo(connection)
+  return estimateTicketDateInfo(
+    epochInfo,
+    Date.now(),
+    marinadeState.stakeSystem.slotsForStakeDelta.toNumber()
+  )
+}
 
-  depositInstructionBuilder = async ({
-    marinadeState,
-    transferFrom,
-    associatedMSolTokenAccountAddress,
-    amountLamports,
-  }: {
-    marinadeState: MarinadeState
-    transferFrom: web3.PublicKey
-    associatedMSolTokenAccountAddress: web3.PublicKey
-    amountLamports: BN
-  }): Promise<web3.TransactionInstruction> =>
-    await this.program.methods
-      .deposit(amountLamports)
-      .accountsStrict({
-        reservePda: await marinadeState.reserveAddress(),
-        state: marinadeState.marinadeStateAddress,
-        msolMint: marinadeState.mSolMintAddress,
-        msolMintAuthority: await marinadeState.mSolMintAuthority(),
-        liqPoolMsolLegAuthority: await marinadeState.mSolLegAuthority(),
-        liqPoolMsolLeg: marinadeState.mSolLeg,
-        liqPoolSolLegPda: await marinadeState.solLeg(),
-        mintTo: associatedMSolTokenAccountAddress,
-        transferFrom,
-        systemProgram: SYSTEM_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .instruction()
+export async function addLiquidityInstructionBuilder({
+  program,
+  marinadeState,
+  ownerAddress,
+  associatedLPTokenAccountAddress,
+  amountLamports,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  ownerAddress: PublicKey
+  associatedLPTokenAccountAddress: PublicKey
+  amountLamports: BN
+}): Promise<TransactionInstruction> {
+  return await program.methods
+    .addLiquidity(amountLamports)
+    .accountsStrict({
+      state: marinadeState.address,
+      lpMint: marinadeState.liqPool.lpMint,
+      lpMintAuthority: lpMintAuthority(marinadeState),
+      liqPoolMsolLeg: marinadeState.liqPool.msolLeg,
+      liqPoolSolLegPda: solLeg(marinadeState),
+      transferFrom: ownerAddress,
+      mintTo: associatedLPTokenAccountAddress,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .instruction()
+}
 
-  depositStakeAccountInstructionBuilder = async ({
-    marinadeState,
-    duplicationFlag,
-    ownerAddress,
-    stakeAccountAddress,
-    authorizedWithdrawerAddress,
-    associatedMSolTokenAccountAddress,
-    validatorIndex,
-  }: {
-    marinadeState: MarinadeState
-    duplicationFlag: web3.PublicKey
-    ownerAddress: web3.PublicKey
-    stakeAccountAddress: web3.PublicKey
-    authorizedWithdrawerAddress: web3.PublicKey
-    associatedMSolTokenAccountAddress: web3.PublicKey
-    validatorIndex: number
-  }): Promise<web3.TransactionInstruction> =>
-    this.program.methods
-      .depositStakeAccount(validatorIndex)
-      .accountsStrict({
-        duplicationFlag,
-        stakeAuthority: authorizedWithdrawerAddress,
-        state: marinadeState.marinadeStateAddress,
-        stakeList: marinadeState.state.stakeSystem.stakeList.account,
-        stakeAccount: stakeAccountAddress,
-        validatorList:
-          marinadeState.state.validatorSystem.validatorList.account,
-        msolMint: marinadeState.mSolMintAddress,
-        msolMintAuthority: await marinadeState.mSolMintAuthority(),
-        mintTo: associatedMSolTokenAccountAddress,
-        rentPayer: ownerAddress,
-        clock: web3.SYSVAR_CLOCK_PUBKEY,
-        rent: web3.SYSVAR_RENT_PUBKEY,
-        systemProgram: SYSTEM_PROGRAM_ID,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        stakeProgram: STAKE_PROGRAM_ID,
-      })
-      .instruction()
+export async function removeLiquidityInstructionBuilder({
+  program,
+  marinadeState,
+  ownerAddress,
+  associatedLPTokenAccountAddress,
+  associatedMSolTokenAccountAddress,
+  amountLamports,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  ownerAddress: PublicKey
+  associatedLPTokenAccountAddress: PublicKey
+  associatedMSolTokenAccountAddress: PublicKey
+  amountLamports: BN
+}): Promise<TransactionInstruction> {
+  return await program.methods
+    .removeLiquidity(amountLamports)
+    .accountsStrict({
+      state: marinadeState.address,
+      lpMint: marinadeState.liqPool.lpMint,
+      burnFrom: associatedLPTokenAccountAddress,
+      burnFromAuthority: ownerAddress,
+      liqPoolSolLegPda: solLeg(marinadeState),
+      transferSolTo: ownerAddress,
+      transferMsolTo: associatedMSolTokenAccountAddress,
+      liqPoolMsolLeg: marinadeState.liqPool.msolLeg,
+      liqPoolMsolLegAuthority: mSolLegAuthority(marinadeState),
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .instruction()
+}
 
-  claimInstructionBuilder = async ({
-    marinadeState,
-    ticketAccount,
-    transferSolTo,
-  }: {
-    marinadeState: MarinadeState
-    ticketAccount: web3.PublicKey
-    transferSolTo: web3.PublicKey
-  }): Promise<web3.TransactionInstruction> =>
-    await this.program.methods
-      .claim()
-      .accountsStrict({
-        state: marinadeState.marinadeStateAddress,
-        reservePda: await marinadeState.reserveAddress(),
-        ticketAccount,
-        transferSolTo,
-        clock: web3.SYSVAR_CLOCK_PUBKEY,
-        systemProgram: SYSTEM_PROGRAM_ID,
-      })
-      .instruction()
+export async function liquidUnstakeInstructionBuilder({
+  program,
+  marinadeState,
+  ownerAddress,
+  associatedMSolTokenAccountAddress,
+  amountLamports,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  ownerAddress: PublicKey
+  associatedMSolTokenAccountAddress: PublicKey
+  amountLamports: BN
+}): Promise<TransactionInstruction> {
+  return await program.methods
+    .liquidUnstake(amountLamports)
+    .accountsStrict({
+      state: marinadeState.address,
+      msolMint: marinadeState.msolMint,
+      liqPoolMsolLeg: marinadeState.liqPool.msolLeg,
+      liqPoolSolLegPda: solLeg(marinadeState),
+      getMsolFrom: associatedMSolTokenAccountAddress,
+      getMsolFromAuthority: ownerAddress,
+      transferSolTo: ownerAddress,
+      treasuryMsolAccount: marinadeState.treasuryMsolAccount,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .instruction()
+}
 
-  orderUnstakeInstructionBuilder = async ({
-    marinadeState,
-    ownerAddress,
-    associatedMSolTokenAccountAddress,
-    newTicketAccount,
-    msolAmount,
-  }: {
-    marinadeState: MarinadeState
-    ownerAddress: web3.PublicKey
-    associatedMSolTokenAccountAddress: web3.PublicKey
-    newTicketAccount: web3.PublicKey
-    msolAmount: BN
-  }): Promise<web3.TransactionInstruction> =>
-    await this.program.methods
-      .orderUnstake(msolAmount)
-      .accountsStrict({
-        state: marinadeState.marinadeStateAddress,
-        msolMint: marinadeState.mSolMintAddress,
-        burnMsolFrom: associatedMSolTokenAccountAddress,
-        burnMsolAuthority: ownerAddress,
-        newTicketAccount,
-        rent: web3.SYSVAR_RENT_PUBKEY,
-        clock: web3.SYSVAR_CLOCK_PUBKEY,
-        tokenProgram: TOKEN_PROGRAM_ID,
-      })
-      .instruction()
+export async function depositInstructionBuilder({
+  program,
+  marinadeState,
+  transferFrom,
+  associatedMSolTokenAccountAddress,
+  amountLamports,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  transferFrom: PublicKey
+  associatedMSolTokenAccountAddress: PublicKey
+  amountLamports: BN
+}): Promise<TransactionInstruction> {
+  return await program.methods
+    .deposit(amountLamports)
+    .accountsStrict({
+      state: marinadeState.address,
+      reservePda: reserveAddress(marinadeState),
+      msolMint: marinadeState.msolMint,
+      msolMintAuthority: mSolMintAuthority(marinadeState),
+      liqPoolMsolLegAuthority: mSolLegAuthority(marinadeState),
+      liqPoolMsolLeg: marinadeState.liqPool.msolLeg,
+      liqPoolSolLegPda: solLeg(marinadeState),
+      mintTo: associatedMSolTokenAccountAddress,
+      transferFrom,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .instruction()
+}
+
+export async function depositStakeAccountInstructionBuilder({
+  program,
+  marinadeState,
+  duplicationFlag,
+  ownerAddress,
+  stakeAccountAddress,
+  authorizedWithdrawerAddress,
+  associatedMSolTokenAccountAddress,
+  validatorIndex,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  duplicationFlag: PublicKey
+  ownerAddress: PublicKey
+  stakeAccountAddress: PublicKey
+  authorizedWithdrawerAddress: PublicKey
+  associatedMSolTokenAccountAddress: PublicKey
+  validatorIndex: number
+}): Promise<TransactionInstruction> {
+  return program.methods
+    .depositStakeAccount(validatorIndex)
+    .accountsStrict({
+      state: marinadeState.address,
+      duplicationFlag,
+      stakeAuthority: authorizedWithdrawerAddress,
+      stakeList: marinadeState.stakeSystem.stakeList.account,
+      stakeAccount: stakeAccountAddress,
+      validatorList: marinadeState.validatorSystem.validatorList.account,
+      msolMint: marinadeState.msolMint,
+      msolMintAuthority: mSolMintAuthority(marinadeState),
+      mintTo: associatedMSolTokenAccountAddress,
+      rentPayer: ownerAddress,
+      clock: SYSVAR_CLOCK_PUBKEY,
+      rent: SYSVAR_RENT_PUBKEY,
+      systemProgram: SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      stakeProgram: StakeProgram.programId,
+    })
+    .instruction()
+}
+
+export async function claimInstructionBuilder({
+  program,
+  marinadeState,
+  ticketAccount,
+  transferSolTo,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  ticketAccount: PublicKey
+  transferSolTo: PublicKey
+}): Promise<TransactionInstruction> {
+  return await program.methods
+    .claim()
+    .accountsStrict({
+      state: marinadeState.address,
+      reservePda: reserveAddress(marinadeState),
+      ticketAccount,
+      transferSolTo,
+      clock: SYSVAR_CLOCK_PUBKEY,
+      systemProgram: SystemProgram.programId,
+    })
+    .instruction()
+}
+
+export async function orderUnstakeInstructionBuilder({
+  program,
+  marinadeState,
+  ownerAddress,
+  associatedMSolTokenAccountAddress,
+  newTicketAccount,
+  msolAmount,
+}: {
+  program: MarinadeFinanceProgram
+  marinadeState: Readonly<MarinadeState>
+  ownerAddress: PublicKey
+  associatedMSolTokenAccountAddress: PublicKey
+  newTicketAccount: PublicKey
+  msolAmount: BN
+}): Promise<TransactionInstruction> {
+  return await program.methods
+    .orderUnstake(msolAmount)
+    .accountsStrict({
+      state: marinadeState.address,
+      msolMint: marinadeState.msolMint,
+      burnMsolFrom: associatedMSolTokenAccountAddress,
+      burnMsolAuthority: ownerAddress,
+      newTicketAccount,
+      rent: SYSVAR_RENT_PUBKEY,
+      clock: SYSVAR_CLOCK_PUBKEY,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .instruction()
 }

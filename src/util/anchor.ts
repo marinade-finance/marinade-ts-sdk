@@ -1,20 +1,24 @@
-import { BN, Provider, utils, web3 } from '@coral-xyz/anchor'
+import { utils } from '@coral-xyz/anchor'
 import {
   createAssociatedTokenAccountInstruction,
   getAccount,
   TokenError,
-} from '@solana/spl-token-3.x'
+} from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
-import { Connection } from '@solana/web3.js'
+import {
+  Connection,
+  PublicKey,
+  TransactionInstruction,
+  StakeProgram,
+} from '@solana/web3.js'
+import BN from 'bn.js'
 
-export const SYSTEM_PROGRAM_ID = web3.SystemProgram.programId
-export const STAKE_PROGRAM_ID = web3.StakeProgram.programId
 export const U64_MAX = new BN('ffffffffffffffff', 16)
 
 export function web3PubKeyOrNull(
-  value: ConstructorParameters<typeof web3.PublicKey>[0] | null
-): web3.PublicKey | null {
-  return value === null ? null : new web3.PublicKey(value)
+  value: ConstructorParameters<typeof PublicKey>[0] | null
+): PublicKey | null {
+  return value === null ? null : new PublicKey(value)
 }
 
 export function BNOrNull(
@@ -23,35 +27,30 @@ export function BNOrNull(
   return value === null ? null : new BN(value)
 }
 
-export async function getAssociatedTokenAccountAddress(
-  mint: web3.PublicKey,
-  owner: web3.PublicKey
-): Promise<web3.PublicKey> {
-  return utils.token.associatedAddress({ mint, owner })
-}
-
 export async function getOrCreateAssociatedTokenAccount(
-  anchorProvider: Provider,
-  mintAddress: web3.PublicKey,
-  ownerAddress: web3.PublicKey,
-  payerAddress?: web3.PublicKey
+  connection: Connection,
+  mintAddress: PublicKey,
+  ownerAddress: PublicKey,
+  payerAddress?: PublicKey
 ): Promise<{
-  associatedTokenAccountAddress: web3.PublicKey
-  createAssociateTokenInstruction: web3.TransactionInstruction | null
+  associatedTokenAccountAddress: PublicKey
+  createAssociateTokenInstruction: TransactionInstruction | null
 }> {
-  const existingTokenAccounts =
-    await anchorProvider.connection.getTokenAccountsByOwner(ownerAddress, {
+  const existingTokenAccounts = await connection.getTokenAccountsByOwner(
+    ownerAddress,
+    {
       mint: mintAddress,
-    })
+    }
+  )
   const [existingTokenAccount] = existingTokenAccounts.value
 
   const associatedTokenAccountAddress =
     existingTokenAccount?.pubkey ??
-    (await getAssociatedTokenAccountAddress(mintAddress, ownerAddress))
-  let createAssociateTokenInstruction: web3.TransactionInstruction | null = null
+    utils.token.associatedAddress({ mint: mintAddress, owner: ownerAddress })
+  let createAssociateTokenInstruction: TransactionInstruction | null = null
 
   try {
-    await getAccount(anchorProvider.connection, associatedTokenAccountAddress)
+    await getAccount(connection, associatedTokenAccountAddress)
   } catch (err) {
     if (
       !(err instanceof TokenError) ||
@@ -75,13 +74,9 @@ export async function getOrCreateAssociatedTokenAccount(
 }
 
 export async function getParsedStakeAccountInfo(
-  providerOrConnection: Provider | web3.Connection,
-  stakeAccountAddress: web3.PublicKey
+  connection: Connection,
+  stakeAccountAddress: PublicKey
 ): Promise<ParsedStakeAccountInfo> {
-  const connection =
-    providerOrConnection instanceof Connection
-      ? providerOrConnection
-      : providerOrConnection.connection
   const { value: stakeAccountInfo } = await connection.getParsedAccountInfo(
     stakeAccountAddress
   )
@@ -92,7 +87,7 @@ export async function getParsedStakeAccountInfo(
     )
   }
 
-  if (!stakeAccountInfo.owner.equals(STAKE_PROGRAM_ID)) {
+  if (!stakeAccountInfo.owner.equals(StakeProgram.programId)) {
     throw new Error(
       `${stakeAccountAddress.toBase58()} is not a stake account because owner is ${
         stakeAccountInfo.owner
@@ -146,7 +141,7 @@ export async function getParsedStakeAccountInfo(
 }
 
 export async function getEpochInfo(
-  connection: web3.Connection
+  connection: Connection
 ): Promise<ProcessedEpochInfo> {
   const epochInfo = await connection.getEpochInfo()
   const samples = await connection.getRecentPerformanceSamples(64)
