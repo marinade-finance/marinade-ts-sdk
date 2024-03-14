@@ -8,8 +8,8 @@ dependencies:
     specifier: ^0.1.0
     version: 0.1.0(@solana/web3.js@1.75.0)(bn.js@5.2.1)(jsbi@4.3.0)
   '@marinade.finance/native-staking-sdk':
-    specifier: ^1.0.0
-    version: 1.0.0
+    specifier: ^1.1.0
+    version: 1.1.0
   '@solana/spl-stake-pool':
     specifier: ^0.6.5
     version: 0.6.5
@@ -920,8 +920,8 @@ packages:
       - utf-8-validate
     dev: false
 
-  /@marinade.finance/native-staking-sdk@1.0.0:
-    resolution: {integrity: sha512-Cj2dy3SH9LAgcFBpGEgRHyF/nK+L7SfNIHkGqAZYRDVgn/h7u8bqKNkYqKXgCWbA5WwPmJzugWWm1DxEt7LyPQ==}
+  /@marinade.finance/native-staking-sdk@1.1.0:
+    resolution: {integrity: sha512-+iuJLEBIcBgYETkshEGIhwQqUvbjCJ0rHV6BHNOiJur2ppMbswaaCsj3DPu0yJiB2PWvzItZGZMo+BSWUxvJvg==}
     dependencies:
       '@solana/spl-memo': 0.2.3(@solana/web3.js@1.75.0)
       '@solana/web3.js': 1.75.0

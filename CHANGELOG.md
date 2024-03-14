@@ -1,3 +1,9 @@
+## v5.0.11
+
+### Chore:
+
+    - Bump Marinade Native Stake SDK to latest update
+
 ## v5.0.10
 
 ### Fix:
