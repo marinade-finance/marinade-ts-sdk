@@ -700,12 +700,15 @@ export class Marinade {
 
     const newStakeAccountKeypair = Keypair.generate()
 
-    const splitStakeTx = StakeProgram.split({
-      stakePubkey: stakeAccountAddress,
-      authorizedPubkey: ownerAddress,
-      splitStakePubkey: newStakeAccountKeypair.publicKey,
-      lamports: solToKeep.toNumber(),
-    })
+    const splitStakeTx = StakeProgram.split(
+      {
+        stakePubkey: stakeAccountAddress,
+        authorizedPubkey: ownerAddress,
+        splitStakePubkey: newStakeAccountKeypair.publicKey,
+        lamports: solToKeep.toNumber(),
+      },
+      rent
+    )
 
     const {
       transaction: depositTx,
@@ -772,12 +775,15 @@ export class Marinade {
     const transaction = new Transaction()
 
     if (solToKeep.gt(new BN(0))) {
-      const splitStakeTx = StakeProgram.split({
-        stakePubkey: stakeAccountAddress,
-        authorizedPubkey: ownerAddress,
-        splitStakePubkey: newStakeAccountKeypair.publicKey,
-        lamports: solToKeep.toNumber(),
-      })
+      const splitStakeTx = StakeProgram.split(
+        {
+          stakePubkey: stakeAccountAddress,
+          authorizedPubkey: ownerAddress,
+          splitStakePubkey: newStakeAccountKeypair.publicKey,
+          lamports: solToKeep.toNumber(),
+        },
+        rent
+      )
       transaction.add(...splitStakeTx.instructions)
     }
 
@@ -911,12 +917,15 @@ export class Marinade {
     const marinadeState = await this.getMarinadeState()
     const newStakeAccountKeypair = Keypair.generate()
 
-    const splitStakeInstruction = StakeProgram.split({
-      stakePubkey: stakeAccountAddress,
-      authorizedPubkey: ownerAddress,
-      splitStakePubkey: newStakeAccountKeypair.publicKey,
-      lamports: solToKeep.toNumber(),
-    })
+    const splitStakeInstruction = StakeProgram.split(
+      {
+        stakePubkey: stakeAccountAddress,
+        authorizedPubkey: ownerAddress,
+        splitStakePubkey: newStakeAccountKeypair.publicKey,
+        lamports: solToKeep.toNumber(),
+      },
+      rent
+    )
 
     const {
       transaction: depositTx,

@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
-    "@solana/web3.js": "^1.74.0",
+    "@solana/web3.js": "^1.91.7",
     "@types/bn.js": "^5.1.1",
     "@types/bs58": "^4.0.1",
     "@types/jest": "^29.5.1",
