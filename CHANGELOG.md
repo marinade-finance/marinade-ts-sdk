@@ -1,3 +1,9 @@
+## v5.0.12
+
+### Chore:
+
+    - Bump @solana/web3.js version
+
 ## v5.0.11
 
 ### Chore:

@@ -1,6 +1,6 @@
 {
   "name": "@marinade.finance/marinade-ts-sdk",
-  "version": "5.0.11",
+  "version": "5.0.12",
   "description": "Marinade SDK for Typescript",
   "main": "dist/src/index.js",
   "repository": {
@@ -45,7 +45,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
-    "@solana/web3.js": "^1.74.0",
+    "@solana/web3.js": "^1.91.7",
     "@types/bn.js": "^5.1.1",
     "@types/bs58": "^4.0.1",
     "@types/jest": "^29.5.1",
