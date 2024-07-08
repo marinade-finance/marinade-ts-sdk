@@ -25,10 +25,15 @@ export function divideBnToNumber(numerator: BN, denominator: BN): number {
   if (denominator.isZero()) {
     return 0
   }
-  const quotient = numerator.div(denominator).toNumber()
+  const quotient = numerator.div(denominator)
   const rem = numerator.umod(denominator)
   const gcd = rem.gcd(denominator)
-  return quotient + rem.div(gcd).toNumber() / denominator.div(gcd).toNumber()
+
+  const quotientNumber = parseFloat(quotient.toString())
+  const remNumber = parseFloat(rem.div(gcd).toString())
+  const denominatorNumber = parseFloat(denominator.div(gcd).toString())
+
+  return quotientNumber + remNumber / denominatorNumber
 }
 
 export function calcLamportsWithdrawAmount(
