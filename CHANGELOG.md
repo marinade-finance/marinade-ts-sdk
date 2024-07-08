@@ -1,3 +1,9 @@
+## v5.0.13
+
+### Fix:
+
+    - Bring BN division fix from @glitchful-dev/sol-apy-sdk
+
 ## v5.0.12
 
 ### Chore:
