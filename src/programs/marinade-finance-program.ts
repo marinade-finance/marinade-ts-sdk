@@ -283,7 +283,7 @@ export class MarinadeFinanceProgram {
       })
       .instruction()
 
-  withdrawStakeAccount = async ({
+  withdrawStakeAccountInstructionBuilder = async ({
     marinadeState,
     ownerAddress,
     associatedMSolTokenAccountAddress, // burnMsolFrom
