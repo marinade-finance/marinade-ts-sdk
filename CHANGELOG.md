@@ -1,3 +1,9 @@
+## v5.0.14
+
+### Feat:
+
+    - Expose withdraw stake account method from program
+
 ## v5.0.13
 
 ### Fix:
