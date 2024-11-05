@@ -6,6 +6,8 @@ import {
   DirectedStakeSdk,
   findVoteRecords,
 } from '@marinade.finance/directed-stake-sdk'
+import { getAccount } from '@solana/spl-token-3.x'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 
 describe('Marinade Finance', () => {
   beforeAll(async () => {
@@ -400,6 +402,54 @@ describe('Marinade Finance', () => {
           throw e
         }
       }
+    })
+  })
+
+  describe('withdraw stake account', () => {
+    it('withdraw stake account', async () => {
+      const config = new MarinadeConfig({
+        connection: TestWorld.CONNECTION,
+        publicKey: TestWorld.SDK_USER.publicKey,
+      })
+      const marinade = new Marinade(config)
+      // for a validator could be deposited, it must be activated for at least 2 epochs
+      // i.e., "error: Deposited stake <pubkey> could not be activated yet. Wait for #2 epoch"
+      await TestWorld.waitForStakeAccountActivation({
+        stakeAccount: TestWorld.STAKE_ACCOUNT_TO_WITHDRAW.publicKey,
+        connection: TestWorld.CONNECTION,
+        activatedAtLeastFor: 2,
+      })
+      const {
+        transaction: transactionDeposit,
+        associatedMSolTokenAccountAddress,
+      } = await marinade.depositStakeAccount(
+        TestWorld.STAKE_ACCOUNT_TO_WITHDRAW.publicKey
+      )
+      await TestWorld.executeTransaction(transactionDeposit)
+      const msolTokenBefore = await getAccount(
+        TestWorld.CONNECTION,
+        associatedMSolTokenAccountAddress
+      )
+      const { transaction, splitStakeAccountKeypair } =
+        await marinade.withdrawStakeAccount(
+          LAMPORTS_PER_SOL,
+          TestWorld.STAKE_ACCOUNT_TO_WITHDRAW.publicKey
+        )
+      const { executedSlot, executionSlot, err, logs, unitsConsumed } =
+        await TestWorld.executeTransaction(transaction, [
+          splitStakeAccountKeypair,
+        ])
+      expect(err).toBeNull() // no error at simulation
+      expect(executionSlot).toBeGreaterThanOrEqual(executedSlot)
+      expect(unitsConsumed).toBeGreaterThan(0) // something has been processed
+      console.log('Withdraw stake account tx logs:', logs)
+      const msolTokenAfter = await getAccount(
+        TestWorld.CONNECTION,
+        associatedMSolTokenAccountAddress
+      )
+      expect(
+        (msolTokenBefore?.amount - msolTokenAfter?.amount).toString()
+      ).toEqual(LAMPORTS_PER_SOL.toString())
     })
   })
 })

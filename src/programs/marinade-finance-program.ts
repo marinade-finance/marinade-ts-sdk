@@ -282,4 +282,50 @@ export class MarinadeFinanceProgram {
         tokenProgram: TOKEN_PROGRAM_ID,
       })
       .instruction()
+
+  withdrawStakeAccount = async ({
+    marinadeState,
+    ownerAddress,
+    associatedMSolTokenAccountAddress, // burnMsolFrom
+    stakeAccountAddress,
+    splitStakeAccountAddress,
+    splitStakeRentPayer,
+    stakeIndex,
+    validatorIndex,
+    msolAmount,
+    beneficiary,
+  }: {
+    marinadeState: MarinadeState
+    ownerAddress: web3.PublicKey
+    associatedMSolTokenAccountAddress: web3.PublicKey
+    stakeAccountAddress: web3.PublicKey
+    splitStakeAccountAddress: web3.PublicKey
+    splitStakeRentPayer: web3.PublicKey
+    stakeIndex: number
+    validatorIndex: number
+    msolAmount: BN
+    beneficiary: web3.PublicKey
+  }): Promise<web3.TransactionInstruction> =>
+    await this.program.methods
+      .withdrawStakeAccount(stakeIndex, validatorIndex, msolAmount, beneficiary)
+      .accountsStrict({
+        state: marinadeState.marinadeStateAddress,
+        msolMint: marinadeState.mSolMintAddress,
+        burnMsolFrom: associatedMSolTokenAccountAddress,
+        burnMsolAuthority: ownerAddress,
+        treasuryMsolAccount: marinadeState.treasuryMsolAccount,
+        validatorList:
+          marinadeState.state.validatorSystem.validatorList.account,
+        stakeList: marinadeState.state.stakeSystem.stakeList.account,
+        stakeWithdrawAuthority: await marinadeState.stakeWithdrawAuthority(),
+        stakeDepositAuthority: await marinadeState.stakeDepositAuthority(),
+        stakeAccount: stakeAccountAddress,
+        splitStakeAccount: splitStakeAccountAddress,
+        splitStakeRentPayer,
+        clock: web3.SYSVAR_CLOCK_PUBKEY,
+        systemProgram: SYSTEM_PROGRAM_ID,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        stakeProgram: STAKE_PROGRAM_ID,
+      })
+      .instruction()
 }
