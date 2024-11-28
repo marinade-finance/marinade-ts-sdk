@@ -294,4 +294,10 @@ export class MarinadeState {
    */
   maxStakeMovedPerEpoch: number =
     this.state.maxStakeMovedPerEpoch.basisPoints / 100
+
+  /**
+   * % Fee when withdrawing stake account
+   */
+  withdrawStakeAccountFee: number =
+    this.state.withdrawStakeAccountFee.bpCents / 10000 / 100
 }
