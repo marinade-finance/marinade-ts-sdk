@@ -100,7 +100,11 @@ export async function getParsedStakeAccountInfo(
     )
   }
 
-  if (!stakeAccountInfo.data || stakeAccountInfo.data instanceof Buffer) {
+  if (
+    !stakeAccountInfo.data ||
+    stakeAccountInfo.data instanceof Buffer ||
+    !('parsed' in stakeAccountInfo.data)
+  ) {
     throw new Error('Failed to parse the stake account data')
   }
 
