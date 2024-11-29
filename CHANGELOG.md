@@ -1,3 +1,9 @@
+## v5.0.15
+
+### Feat:
+
+    - Expose withdraw stake account fee value from program
+
 ## v5.0.14
 
 ### Feat:
