@@ -1,4 +1,5 @@
 import { AnchorProvider, BN, Wallet, web3 } from '@coral-xyz/anchor'
+import { getStakeActivation } from '@anza-xyz/solana-rpc-get-stake-activation'
 import { Marinade, MarinadeUtils } from '../src'
 import { getParsedStakeAccountInfo } from '../src/util'
 import { Signer } from '@solana/web3.js'
@@ -232,10 +233,10 @@ export async function waitForStakeAccountActivation({
   // 1. waiting for the stake account to be activated
   {
     const startTime = Date.now()
-    let stakeStatus = await connection.getStakeActivation(stakeAccount)
-    while (stakeStatus.state !== 'active') {
+    let stakeStatus = await getStakeActivation(connection, stakeAccount)
+    while (stakeStatus.status !== 'active') {
       await sleep(1000)
-      stakeStatus = await connection.getStakeActivation(stakeAccount)
+      stakeStatus = await getStakeActivation(connection, stakeAccount)
       if (Date.now() - startTime > timeoutSeconds * 1000) {
         throw new Error(
           `Stake account ${stakeAccount.toBase58()} was not activated in timeout of ${timeoutSeconds} seconds`
