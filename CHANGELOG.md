@@ -1,3 +1,9 @@
+## v5.0.16
+
+### Feat:
+
+    - Add util method to fetch epoch status from stake rewards distribution perspective based on current slot 
+
 ## v5.0.15
 
 ### Feat:
