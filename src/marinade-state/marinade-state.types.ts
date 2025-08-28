@@ -10,6 +10,7 @@ export const enum ProgramDerivedAddressSeed {
   UNIQUE_VALIDATOR = 'unique_validator',
   STAKE_WITHDRAW = 'withdraw',
   STAKE_DEPOSIT = 'deposit',
+  CANONICAL_STAKE = 'canonical_stake',
 }
 
 export namespace MarinadeStateResponse {

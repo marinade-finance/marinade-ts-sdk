@@ -42,18 +42,18 @@ export class MarinadeState {
     )
   }
 
-  reserveAddress = async () =>
+  reserveAddress = () =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)
 
   mSolPrice: number = this.state.msolPrice.toNumber() / 0x1_0000_0000
 
   mSolMintAddress: web3.PublicKey = this.state.msolMint
   mSolMint = MarinadeMint.build(this.anchorProvider, this.mSolMintAddress)
-  mSolMintAuthority = async () =>
+  mSolMintAuthority = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_MSOL_MINT_AUTHORITY
     )
-  mSolLegAuthority = async () =>
+  mSolLegAuthority = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_MSOL_AUTHORITY
     )
@@ -61,38 +61,43 @@ export class MarinadeState {
 
   lpMintAddress: web3.PublicKey = this.state.liqPool.lpMint
   lpMint = MarinadeMint.build(this.anchorProvider, this.lpMintAddress)
-  lpMintAuthority = async () =>
+  lpMintAuthority = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_MINT_AUTHORITY
     )
 
-  solLeg = async () =>
+  solLeg = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_SOL_ACCOUNT
     )
 
-  stakeDepositAuthority = async () =>
+  stakeDepositAuthority = () =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_DEPOSIT)
-  stakeWithdrawAuthority = async () =>
+  stakeWithdrawAuthority = () =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_WITHDRAW)
 
-  private async findProgramDerivedAddress(
-    seed: ProgramDerivedAddressSeed,
+  canonicalStake = (validator: web3.PublicKey) =>
+    this.findProgramDerivedAddress(undefined, [
+      validator.toBuffer(),
+      Buffer.from(ProgramDerivedAddressSeed.CANONICAL_STAKE),
+    ])
+
+  private findProgramDerivedAddress(
+    seed?: ProgramDerivedAddressSeed,
     extraSeeds: Buffer[] = []
-  ): Promise<web3.PublicKey> {
+  ): web3.PublicKey {
     const seeds = [
       this.marinade.config.marinadeStateAddress.toBuffer(),
-      Buffer.from(seed),
-      ...extraSeeds,
+      ...[seed ? Buffer.from(seed) : Buffer.alloc(0), ...extraSeeds],
     ]
-    const [result] = await web3.PublicKey.findProgramAddress(
+    const [result] = web3.PublicKey.findProgramAddressSync(
       seeds,
       this.marinade.config.marinadeFinanceProgramId
     )
     return result
   }
 
-  validatorDuplicationFlag = async (validatorAddress: web3.PublicKey) =>
+  validatorDuplicationFlag = (validatorAddress: web3.PublicKey) =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [
       validatorAddress.toBuffer(),
     ])
