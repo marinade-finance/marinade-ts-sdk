@@ -968,6 +968,16 @@ export class Marinade {
   }
 
   /**
+   * Retrieve all ticket accounts
+   *
+   */
+  async getAllDelayedUnstakeTickets(): Promise<
+    Map<web3.PublicKey, TicketAccount>
+  > {
+    return this.marinadeFinanceProgram.getDelayedUnstakeTickets()
+  }
+
+  /**
    * Retrieve user's ticket accounts
    *
    * @param {web3.PublicKey} beneficiary - The owner of the ticket accounts
