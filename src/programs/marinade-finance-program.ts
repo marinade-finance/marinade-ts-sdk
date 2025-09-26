@@ -10,6 +10,7 @@ import {
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
 import { TicketAccount } from '../marinade-state/borsh/ticket-account'
 import * as mariandeFinance from './idl/types/marinade_finance'
+import bs58 from 'bs58'
 
 const MarinadeFinanceIDL = mariandeFinance.IDL
 type MarinadeFinance = mariandeFinance.MarinadeFinance
@@ -19,6 +20,8 @@ export type ValidatorRecordAnchorType =
   IdlTypes<mariandeFinance.MarinadeFinance>['ValidatorRecord']
 export type StateRecordAnchorType =
   IdlTypes<mariandeFinance.MarinadeFinance>['StakeRecord']
+
+const TICKET_ACCOUNT_DISCRIMINATOR = [133, 77, 18, 98, 211, 1, 231, 3]
 
 export class MarinadeFinanceProgram {
   constructor(
@@ -39,7 +42,10 @@ export class MarinadeFinanceProgram {
   ): Promise<Map<web3.PublicKey, TicketAccount>> {
     const filters: web3.GetProgramAccountsFilter[] = [
       {
-        dataSize: 88,
+        memcmp: {
+          offset: 0,
+          bytes: bs58.encode(TICKET_ACCOUNT_DISCRIMINATOR),
+        },
       },
     ]
 
