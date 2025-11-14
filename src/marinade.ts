@@ -1,12 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { MarinadeConfig } from './config/marinade-config'
-import {
-  AnchorProvider,
-  BN,
-  ProgramAccount,
-  Provider,
-  web3,
-} from '@coral-xyz/anchor'
+import { AnchorProvider, BN, Provider, web3 } from '@coral-xyz/anchor'
 import { MarinadeState } from './marinade-state/marinade-state'
 import {
   getAssociatedTokenAccountAddress,
@@ -33,16 +27,6 @@ import {
   ParsedStakeAccountInfo,
   proportionalBN,
 } from './util'
-import {
-  DEFAULT_DIRECTED_STAKE_ROOT,
-  DirectedStakeSdk,
-  DirectedStakeVoteRecord,
-  findVoteRecords,
-  voteRecordAddress,
-  withCreateVote,
-  withRemoveVote,
-  withUpdateVote,
-} from '@marinade.finance/directed-stake-sdk'
 import NodeWallet from '@coral-xyz/anchor/dist/cjs/nodewallet'
 import { withdrawStake } from '@solana/spl-stake-pool'
 import {
@@ -66,16 +50,6 @@ export class Marinade {
     new NodeWallet(web3.Keypair.generate()),
     { commitment: 'confirmed' }
   )
-
-  private directedStakeSdk = new DirectedStakeSdk({
-    connection: this.config.connection,
-    wallet: {
-      signTransaction: async () => new Promise(() => new web3.Transaction()),
-      signAllTransactions: async () =>
-        new Promise(() => [new web3.Transaction()]),
-      publicKey: this.config.publicKey ?? web3.PublicKey.default,
-    },
-  })
 
   /**
    * The main Marinade Program
@@ -151,31 +125,6 @@ export class Marinade {
     return await Promise.all(
       codes.map(referralCode => this.getReferralPartnerState(referralCode))
     )
-  }
-
-  /**
-   * Fetches the voteRecord of a given user
-   *
-   * @param {web3.PublicKey} userPublicKey - The PublicKey of the user
-   */
-  async getUsersVoteRecord(userPublicKey: web3.PublicKey): Promise<{
-    voteRecord: ProgramAccount<DirectedStakeVoteRecord> | undefined
-    address: web3.PublicKey
-  }> {
-    const address = voteRecordAddress({
-      root: new web3.PublicKey(DEFAULT_DIRECTED_STAKE_ROOT),
-      owner: userPublicKey,
-    }).address
-
-    const voteRecords = await findVoteRecords({
-      sdk: this.directedStakeSdk,
-      owner: userPublicKey,
-    })
-
-    return {
-      voteRecord: voteRecords.length === 1 ? voteRecords[0] : undefined,
-      address,
-    }
   }
 
   /**
@@ -272,51 +221,6 @@ export class Marinade {
       associatedMSolTokenAccountAddress,
       transaction,
     }
-  }
-
-  /**
-   * Creates necessary directed stake voting instructions for the specified validator.
-   * If the vote address is left undefined the standard delegation strategy is used.
-   *
-   * @param {web3.PublicKey} validatorVoteAddress - The vote address to identify the validator
-   */
-  async createDirectedStakeVoteIx(
-    validatorVoteAddress?: web3.PublicKey
-  ): Promise<web3.TransactionInstruction | undefined> {
-    const owner = assertNotNullAndReturn(
-      this.config.publicKey,
-      ErrorMessage.NO_PUBLIC_KEY
-    )
-    const { voteRecord } = await this.getUsersVoteRecord(owner)
-
-    if (!voteRecord) {
-      if (validatorVoteAddress) {
-        return (
-          await withCreateVote({
-            sdk: this.directedStakeSdk,
-            target: validatorVoteAddress,
-          })
-        ).instruction
-      }
-      return
-    }
-
-    if (validatorVoteAddress) {
-      return (
-        await withUpdateVote({
-          sdk: this.directedStakeSdk,
-          target: validatorVoteAddress,
-          voteRecord: voteRecord.publicKey,
-        })
-      ).instruction
-    }
-
-    return (
-      await withRemoveVote({
-        sdk: this.directedStakeSdk,
-        voteRecord: voteRecord.publicKey,
-      })
-    ).instruction
   }
 
   /**
@@ -812,158 +716,6 @@ export class Marinade {
       stakeAccountKeypair: solToKeep.gt(new BN(0))
         ? newStakeAccountKeypair
         : undefined,
-    }
-  }
-
-  /**
-   * Returns a transaction with the instructions to
-   * Liquidate a delegated stake account.
-   * Note that the stake must be fully activated and the validator must be known to Marinade
-   * and that the transaction should be executed immediately after creation.
-   *
-   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
-   * @param {BN} mSolToKeep - Optional amount of mSOL lamports to keep
-   */
-  async liquidateStakeAccount(
-    stakeAccountAddress: web3.PublicKey,
-    mSolToKeep?: BN
-  ): Promise<MarinadeResult.LiquidateStakeAccount> {
-    const stakeAccountInfo = await getParsedStakeAccountInfo(
-      this.provider,
-      stakeAccountAddress
-    )
-    const rent =
-      await this.provider.connection.getMinimumBalanceForRentExemption(
-        web3.StakeProgram.space
-      )
-    const marinadeState = await this.getMarinadeState()
-
-    const {
-      transaction: depositTx,
-      associatedMSolTokenAccountAddress,
-      voterAddress,
-    } = await this.depositStakeAccountByAccount(
-      stakeAccountInfo,
-      rent,
-      marinadeState
-    )
-
-    let mSolAmountToReceive = computeMsolAmount(
-      stakeAccountInfo.stakedLamports ?? new BN(0),
-      marinadeState
-    )
-    // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
-    if (this.isReferralProgram()) {
-      const partnerOperationFee = (
-        await this.marinadeReferralProgram.getReferralStateData()
-      ).operationDepositStakeAccountFee
-      mSolAmountToReceive = mSolAmountToReceive.sub(
-        proportionalBN(
-          mSolAmountToReceive,
-          new BN(partnerOperationFee),
-          new BN(10_000)
-        )
-      )
-    }
-
-    const unstakeAmountMSol = mSolAmountToReceive.sub(mSolToKeep ?? new BN(0))
-    const { transaction: unstakeTx } = await this.liquidUnstake(
-      unstakeAmountMSol,
-      associatedMSolTokenAccountAddress
-    )
-
-    return {
-      transaction: depositTx.add(unstakeTx),
-      associatedMSolTokenAccountAddress,
-      voterAddress,
-    }
-  }
-
-  /**
-   * @beta
-   *
-   * Returns a transaction with the instructions to
-   * Partially liquidate a delegated stake account, while the rest remains staked natively.
-   * Note that the stake must be fully activated and the validator must be known to Marinade
-   * and that the transaction should be executed immediately after creation.
-   *
-   * @param {web3.PublicKey} stakeAccountAddress - The account to be deposited
-   * @param {BN} solToKeep - Amount of SOL lamports to keep
-   */
-  async partiallyLiquidateStakeAccount(
-    stakeAccountAddress: web3.PublicKey,
-    solToKeep: BN
-  ): Promise<MarinadeResult.PartiallyDepositStakeAccount> {
-    const ownerAddress = assertNotNullAndReturn(
-      this.config.publicKey,
-      ErrorMessage.NO_PUBLIC_KEY
-    )
-
-    const stakeAccountInfo = await getParsedStakeAccountInfo(
-      this.provider,
-      stakeAccountAddress
-    )
-
-    const rent =
-      await this.provider.connection.getMinimumBalanceForRentExemption(
-        web3.StakeProgram.space
-      )
-
-    const stakeToLiquidate = stakeAccountInfo.stakedLamports?.sub(solToKeep)
-    if (!stakeToLiquidate || stakeToLiquidate.toNumber() < 1) {
-      throw new Error("Can't liquidate less than 1 SOL")
-    }
-
-    const marinadeState = await this.getMarinadeState()
-    const newStakeAccountKeypair = Keypair.generate()
-
-    const splitStakeInstruction = StakeProgram.split(
-      {
-        stakePubkey: stakeAccountAddress,
-        authorizedPubkey: ownerAddress,
-        splitStakePubkey: newStakeAccountKeypair.publicKey,
-        lamports: solToKeep.toNumber(),
-      },
-      rent
-    )
-
-    const {
-      transaction: depositTx,
-      associatedMSolTokenAccountAddress,
-      voterAddress,
-    } = await this.depositStakeAccountByAccount(
-      stakeAccountInfo,
-      rent,
-      marinadeState
-    )
-
-    depositTx.instructions.unshift(...splitStakeInstruction.instructions)
-
-    let mSolAmountToReceive = computeMsolAmount(stakeToLiquidate, marinadeState)
-    // when working with referral partner the costs of the deposit operation is subtracted from the mSOL amount the user receives
-    if (this.isReferralProgram()) {
-      const partnerOperationFee = (
-        await this.marinadeReferralProgram.getReferralStateData()
-      ).operationDepositStakeAccountFee
-      mSolAmountToReceive = mSolAmountToReceive.sub(
-        proportionalBN(
-          mSolAmountToReceive,
-          new BN(partnerOperationFee),
-          new BN(10_000)
-        )
-      )
-    }
-
-    const { transaction: unstakeTx } = await this.liquidUnstake(
-      mSolAmountToReceive,
-      associatedMSolTokenAccountAddress
-    )
-
-    return {
-      transaction: depositTx.add(unstakeTx),
-      associatedMSolTokenAccountAddress,
-      stakeAccountKeypair: newStakeAccountKeypair,
-      voterAddress,
     }
   }
 

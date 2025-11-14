@@ -7,7 +7,7 @@ import {
   getTicketDateInfo,
   estimateTicketDateInfo,
 } from '../util'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { TicketAccount } from '../marinade-state/borsh/ticket-account'
 import * as mariandeFinance from './idl/types/marinade_finance'
 import bs58 from 'bs58'

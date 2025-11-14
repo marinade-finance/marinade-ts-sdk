@@ -10,7 +10,7 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js'
 import { STAKE_PROGRAM_ID, getParsedStakeAccountInfo } from './anchor'
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token-3.x'
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token'
 import { MarinadeState } from '../marinade-state/marinade-state'
 import { calcLamportsWithdrawAmount, solToLamports } from './conversion'
 
@@ -129,6 +129,7 @@ export function selectSpecificValidator(
     ? validators.has(b.voteAddress.toString())
     : false
   return (
-    (scoredValidatorB ? b.lamports : 0) - (scoredValidatorA ? a.lamports : 0)
+    (scoredValidatorB ? b.lamports.toNumber() : 0) -
+    (scoredValidatorA ? a.lamports.toNumber() : 0)
   )
 }
