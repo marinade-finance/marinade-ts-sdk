@@ -7,6 +7,7 @@ Marinade.finance is a liquid staking protocol built on Solana. People stake thei
 This SDK wraps the staking protocol and allows you to start marinading from your applications.
 
 ![Build](https://github.com/marinade-finance/marinade-ts-sdk/actions/workflows/build-test.yml/badge.svg)
+<a href="https://www.npmjs.com/package/@marinade.finance/marinade-ts-sdk"><img src="https://img.shields.io/npm/v/%40marinade.finance%2Fmarinade-ts-sdk?logo=npm&color=377CC0" /></a>
 
 Contents:
 - [Installation](#installation)
