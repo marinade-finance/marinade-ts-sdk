@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       contents: write
@@ -18,13 +18,13 @@ jobs:
         node-version: [16]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5
         with:
           version: 7
       - name: Install build and pack
@@ -35,7 +35,7 @@ jobs:
           pnpm pack
         env:
           CI: true
-      - uses: ncipollo/release-action@v1
+      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1
         with:
           artifacts: "*.tgz,./dist/*.min.js"
           token: ${{ secrets.GITHUB_TOKEN }}
