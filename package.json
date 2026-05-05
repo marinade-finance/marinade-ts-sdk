@@ -70,7 +70,7 @@
     "webpack-cli": "^5.0.2"
   },
   "engines": {
-    "node": ">=16.0.0",
+    "node": ">=20.0.0",
     "anchor": ">=0.28.0"
   },
   "lint-staged": {
