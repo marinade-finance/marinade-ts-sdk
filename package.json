@@ -39,20 +39,20 @@
     "@marinade.finance/native-staking-sdk": "^1.1.0",
     "@solana/spl-stake-pool": "1.1.8",
     "@solana/spl-token": "0.4.14",
+    "@solana/web3.js": "^1.98.4",
     "borsh": "^0.7.0",
     "bs58": "^5.0.0"
   },
   "devDependencies": {
     "@anza-xyz/solana-rpc-get-stake-activation": "^1.0.1",
     "@jest/globals": "^29.5.0",
-    "@solana/web3.js": "^1.95.5",
     "@types/bn.js": "^5.1.1",
     "@types/bs58": "^4.0.1",
     "@types/jest": "^29.5.1",
     "@types/node": "^18.16.3",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
-    "bn.js": "^5.2.1",
+    "bn.js": "^5.2.3",
     "eslint": "^8.39.0",
     "gts": "^3.1.1",
     "husky": "^8.0.3",
@@ -65,12 +65,12 @@
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.2",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.4",
+    "typescript": "^5.3.3",
     "webpack": "^5.81.0",
     "webpack-cli": "^5.0.2"
   },
   "engines": {
-    "node": ">=16.0.0",
+    "node": ">=20.0.0",
     "anchor": ">=0.28.0"
   },
   "lint-staged": {
