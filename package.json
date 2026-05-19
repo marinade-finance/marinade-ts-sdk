@@ -90,5 +90,11 @@
     "hooks": {
       "commit-msg": "[[ -n $HUSKY_BYPASS ]] || commitlint -E HUSKY_GIT_PARAMS"
     }
+  },
+  "pnpm": {
+    "overrides": {
+      "tmp@<=0.2.3": ">=0.2.4",
+      "yaml@>=2.0.0 <2.8.3": ">=2.8.3"
+    }
   }
 }
