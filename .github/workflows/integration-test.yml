@@ -4,7 +4,7 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
         image: public.ecr.aws/n0y9d4d4/marinade.finance/solana-test-validator:latest
         options: --user root
@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        node-version: [16]
+        node-version: [20]
 
     steps:
       - name: Link AVM, solana .config, check versions
@@ -26,15 +26,17 @@ jobs:
           solana --version
 
 
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Install libatomic (required by pnpm binary)
+        run: apt-get update && apt-get install -y --no-install-recommends libatomic1
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 7
+          version: 10
       - name: Install, build and run integration tests
         timeout-minutes: 5
         run: |

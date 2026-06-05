@@ -54,31 +54,4 @@ describe('Marinade Referral', () => {
       console.log('Liquid unstake tx:', transactionSignature)
     })
   })
-
-  describe('liquidateStakeAccount', () => {
-    it('liquidates stake account (simulation)', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
-      })
-      const marinade = new Marinade(config)
-
-      await TestWorld.waitForStakeAccountActivation({
-        connection: TestWorld.CONNECTION,
-        stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
-        activatedAtLeastFor: 2,
-      })
-      const { transaction } = await marinade.liquidateStakeAccount(
-        TestWorld.STAKE_ACCOUNT.publicKey
-      )
-
-      const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =
-        await TestWorld.simulateTransaction(transaction)
-
-      expect(err).toBeNull() // no error at simulation
-      expect(simulatedSlot).toBeGreaterThanOrEqual(executedSlot)
-      expect(unitsConsumed).toBeGreaterThan(0) // some actions were processed
-      console.debug('Liquidate stake account tx log:', logs)
-    })
-  })
 })

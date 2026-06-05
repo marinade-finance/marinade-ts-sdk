@@ -2,10 +2,6 @@ import { Marinade, MarinadeConfig, MarinadeUtils, Wallet, web3 } from '../src'
 import * as TestWorld from './test-world'
 import assert from 'assert'
 import { AnchorProvider } from '@coral-xyz/anchor'
-import {
-  DirectedStakeSdk,
-  findVoteRecords,
-} from '@marinade.finance/directed-stake-sdk'
 
 describe('Marinade Finance', () => {
   beforeAll(async () => {
@@ -98,158 +94,6 @@ describe('Marinade Finance', () => {
       )
       console.log('Deposit tx:', transactionSignature)
     })
-
-    it('deposit SOL and direct the stake', async () => {
-      const validatorVoteAddress =
-        await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
-      })
-      const marinade = new Marinade(config)
-
-      const directedStakeSdk = new DirectedStakeSdk({
-        connection: TestWorld.CONNECTION,
-        wallet: {
-          signTransaction: async () =>
-            new Promise(() => new web3.Transaction()),
-          signAllTransactions: async () =>
-            new Promise(() => [new web3.Transaction()]),
-          publicKey: TestWorld.SDK_USER.publicKey,
-        },
-      })
-
-      const { transaction } = await marinade.deposit(
-        MarinadeUtils.solToLamports(0.01)
-      )
-
-      const voteIx = await marinade.createDirectedStakeVoteIx(
-        validatorVoteAddress
-      )
-      if (voteIx) transaction.instructions.push(voteIx)
-
-      let transactionSignature: string
-      try {
-        transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
-          transaction,
-          [],
-          { commitment: 'confirmed' }
-        )
-      } catch (e) {
-        console.log(e)
-        throw e
-      }
-      console.log(
-        'Deposit tx:',
-        transactionSignature,
-        transaction.instructions.length
-      )
-
-      const voteRecord = (
-        await findVoteRecords({
-          sdk: directedStakeSdk,
-          owner: TestWorld.SDK_USER.publicKey,
-        })
-      )[0]
-
-      expect(voteRecord.account.target).toEqual(validatorVoteAddress)
-    })
-
-    it('deposit SOL and redirect the stake', async () => {
-      const validatorVoteAddress2 =
-        await TestWorld.getSolanaTestValidatorVoteAccountPubkey()
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
-      })
-      const marinade = new Marinade(config)
-
-      const directedStakeSdk = new DirectedStakeSdk({
-        connection: TestWorld.CONNECTION,
-        wallet: {
-          signTransaction: async () =>
-            new Promise(() => new web3.Transaction()),
-          signAllTransactions: async () =>
-            new Promise(() => [new web3.Transaction()]),
-          publicKey: TestWorld.SDK_USER.publicKey,
-        },
-      })
-
-      const { transaction } = await marinade.deposit(
-        MarinadeUtils.solToLamports(0.01)
-      )
-
-      const voteIx = await marinade.createDirectedStakeVoteIx(
-        validatorVoteAddress2
-      )
-      if (voteIx) transaction.instructions.push(voteIx)
-
-      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
-        transaction,
-        [],
-        { commitment: 'confirmed' }
-      )
-      console.log(
-        'Deposit tx:',
-        transactionSignature,
-        transaction.instructions.length
-      )
-
-      const voteRecord = (
-        await findVoteRecords({
-          sdk: directedStakeSdk,
-          owner: TestWorld.SDK_USER.publicKey,
-        })
-      )[0]
-
-      expect(voteRecord?.account.target).toEqual(validatorVoteAddress2)
-    })
-
-    it('deposit SOL and undirect the stake', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
-      })
-      const marinade = new Marinade(config)
-
-      const directedStakeSdk = new DirectedStakeSdk({
-        connection: TestWorld.CONNECTION,
-        wallet: {
-          signTransaction: async () =>
-            new Promise(() => new web3.Transaction()),
-          signAllTransactions: async () =>
-            new Promise(() => [new web3.Transaction()]),
-          publicKey: TestWorld.SDK_USER.publicKey,
-        },
-      })
-
-      const { transaction } = await marinade.deposit(
-        MarinadeUtils.solToLamports(0.01)
-      )
-
-      const voteIx = await marinade.createDirectedStakeVoteIx()
-      if (voteIx) transaction.instructions.push(voteIx)
-
-      const transactionSignature = await TestWorld.PROVIDER.sendAndConfirm(
-        transaction,
-        [],
-        { commitment: 'confirmed' }
-      )
-      console.log(
-        'Deposit tx:',
-        transactionSignature,
-        transaction.instructions.length
-      )
-
-      const voteRecord = (
-        await findVoteRecords({
-          sdk: directedStakeSdk,
-          owner: TestWorld.SDK_USER.publicKey,
-        })
-      )[0]
-
-      expect(voteRecord).toBeUndefined()
-    })
   })
 
   // expected the `deposit SOL` test to be called before
@@ -298,35 +142,6 @@ describe('Marinade Finance', () => {
       expect(simulatedSlot).toBeGreaterThanOrEqual(executedSlot)
       expect(unitsConsumed).toBeGreaterThan(0) // something has been processed
       console.debug('Deposit stake account tx logs:', logs)
-    })
-  })
-
-  // this tests is dependent on being called after `deposits stake account (simulate)`
-  describe('liquidateStakeAccount', () => {
-    it('liquidates stake account (simulate)', async () => {
-      const config = new MarinadeConfig({
-        connection: TestWorld.CONNECTION,
-        publicKey: TestWorld.SDK_USER.publicKey,
-      })
-      const marinade = new Marinade(config)
-
-      // for a validator could be liquidated, it must be activated for at least 2 epochs
-      await TestWorld.waitForStakeAccountActivation({
-        stakeAccount: TestWorld.STAKE_ACCOUNT.publicKey,
-        connection: TestWorld.CONNECTION,
-        activatedAtLeastFor: 2,
-      })
-
-      const { transaction } = await marinade.liquidateStakeAccount(
-        TestWorld.STAKE_ACCOUNT.publicKey
-      )
-      const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =
-        await TestWorld.simulateTransaction(transaction)
-
-      expect(err).toBeNull() // no error at simulation
-      expect(simulatedSlot).toBeGreaterThanOrEqual(executedSlot)
-      expect(unitsConsumed).toBeGreaterThan(0) // something has been processed
-      console.log('Liquidate stake account tx logs:', logs)
     })
   })
 

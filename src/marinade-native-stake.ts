@@ -47,7 +47,7 @@ export async function getRefNativeStakeSOLTx(
   const result = await response.json()
 
   const txBuffer = Buffer.from(result.serializedTx, 'base64')
-  return VersionedTransaction.deserialize(txBuffer)
+  return VersionedTransaction.deserialize(new Uint8Array(txBuffer))
 }
 
 /**
@@ -85,7 +85,7 @@ export async function getRefNativeStakeAccountTx(
   const result = await response.json()
 
   const txBuffer = Buffer.from(result.serializedTx, 'base64')
-  return VersionedTransaction.deserialize(txBuffer)
+  return VersionedTransaction.deserialize(new Uint8Array(txBuffer))
 }
 
 /**

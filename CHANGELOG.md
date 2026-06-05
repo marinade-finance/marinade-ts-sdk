@@ -1,3 +1,10 @@
+## v5.0.18
+
+### Chore:
+
+    - Bump spl-token dep
+    - Remove directed vote feature as it is not used/supported anymore
+
 ## v5.0.15
 
 ### Feat:
