@@ -49,6 +49,23 @@ export namespace MarinadeStateResponse {
     autoAddValidatorEnabled: number
   }
 
+  // Decoded form of the on-chain DelinquentUpgraderState enum
+  export type DelinquentUpgraderState =
+    | {
+        iteratingStakes: {
+          visitedCount: number
+          totalActiveBalance: BN
+          totalDelinquentBalance: BN
+        }
+      }
+    | {
+        iteratingValidators: {
+          visitedCount: number
+          delinquentBalanceLeft: BN
+        }
+      }
+    | { done: Record<string, never> }
+
   export interface LiqPool {
     lpMint: web3.PublicKey
     lpMintAuthorityBumpSeed: number
@@ -95,4 +112,7 @@ export interface MarinadeStateResponse {
   lastStakeMoveEpoch: BN
   stakeMoved: BN
   maxStakeMovedPerEpoch: MarinadeStateResponse.Fee
+  delinquentUpgrader: MarinadeStateResponse.DelinquentUpgraderState
+  depositSolFee: MarinadeStateResponse.FeeCents
+  depositStakeAccountFee: MarinadeStateResponse.FeeCents
 }

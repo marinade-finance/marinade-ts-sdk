@@ -1,4 +1,12 @@
+allowBuilds:
+  bigint-buffer: true
+  bufferutil: true
+  utf-8-validate: true
 onlyBuiltDependencies:
   - bigint-buffer
   - bufferutil
   - utf-8-validate
+
+overrides:
+  tmp@<=0.2.3: '>=0.2.4'
+  yaml@>=2.0.0 <2.8.3: '>=2.8.3'

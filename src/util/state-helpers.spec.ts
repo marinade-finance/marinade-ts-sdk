@@ -1,12 +1,36 @@
 import { BN } from '@coral-xyz/anchor'
 import { MarinadeConfig } from '../config/marinade-config'
 import { Marinade } from '../marinade'
+import { MarinadeState } from '../marinade-state/marinade-state'
 import * as TestWorld from '../../test/test-world'
 import {
   computeMsolAmount,
+  computeMsolForDepositSol,
+  computeMsolForDepositStakeAccount,
+  feeCentsApply,
   proportionalBN,
   unstakeNowFeeBp,
 } from './state-helpers'
+
+// Minimal MarinadeState stub exposing only the fields the helpers read.
+// total lamports under control = 900_000_000 + 100_000_000 = 1_000_000_000,
+// msolSupply = 500_000_000 -> mSOL/SOL ratio = 0.5 (computeMsolAmount halves).
+const stubState = (
+  depositSolFeeBpCents: number,
+  depositStakeAccountFeeBpCents: number
+): MarinadeState =>
+  ({
+    state: {
+      stakeSystem: { delayedUnstakeCoolingDown: new BN(0) },
+      emergencyCoolingDown: new BN(0),
+      validatorSystem: { totalActiveBalance: new BN('900000000') },
+      availableReserveBalance: new BN('100000000'),
+      circulatingTicketBalance: new BN(0),
+      msolSupply: new BN('500000000'),
+      depositSolFee: { bpCents: depositSolFeeBpCents },
+      depositStakeAccountFee: { bpCents: depositStakeAccountFeeBpCents },
+    },
+  } as unknown as MarinadeState)
 
 describe('state-helpers', () => {
   describe('unstakeNowFeeBp', () => {
@@ -111,6 +135,88 @@ describe('state-helpers', () => {
       )
 
       expect(actualResult.toString()).toBe('9611384974')
+    })
+  })
+
+  describe('feeCentsApply', () => {
+    // eslint-disable-next-line @typescript-eslint/no-extra-semi
+    ;[
+      // 1% of 1e9
+      { amount: 1_000_000_000, bpCents: 10_000, expectedResult: 10_000_000 },
+      // 0% -> no fee
+      { amount: 1_000_000_000, bpCents: 0, expectedResult: 0 },
+      // 100% -> whole amount
+      {
+        amount: 1_000_000_000,
+        bpCents: 1_000_000,
+        expectedResult: 1_000_000_000,
+      },
+      // floors: 999 * 1 / 1e6 = 0.000999 -> 0
+      { amount: 999, bpCents: 1, expectedResult: 0 },
+      // floors: 1_234_567 * 10_000 / 1e6 = 12_345.67 -> 12_345
+      { amount: 1_234_567, bpCents: 10_000, expectedResult: 12_345 },
+    ].forEach(({ amount, bpCents, expectedResult }) =>
+      it(`floors amount * bpCents / 1e6 (${amount} * ${bpCents})`, () => {
+        expect(feeCentsApply(new BN(amount), bpCents).toNumber()).toBe(
+          expectedResult
+        )
+      })
+    )
+  })
+
+  describe('computeMsolForDepositSol', () => {
+    const gross = new BN('1000000000')
+
+    it('takes the SOL fee before converting at the ratio', () => {
+      // 1% fee -> net 990_000_000, ratio 0.5 -> 495_000_000
+      expect(
+        computeMsolForDepositSol(gross, stubState(10_000, 0)).toString()
+      ).toBe('495000000')
+    })
+
+    it('equals computeMsolAmount when the fee is zero', () => {
+      const state = stubState(0, 0)
+      expect(computeMsolForDepositSol(gross, state).toString()).toBe(
+        computeMsolAmount(gross, state).toString()
+      )
+    })
+
+    it('reads depositSolFee, not depositStakeAccountFee', () => {
+      // SOL fee 0, stake-account fee 50% -> must be ignored here
+      expect(
+        computeMsolForDepositSol(gross, stubState(0, 500_000)).toString()
+      ).toBe('500000000')
+    })
+  })
+
+  describe('computeMsolForDepositStakeAccount', () => {
+    const gross = new BN('1000000000')
+
+    it('takes the stake-account fee before converting at the ratio', () => {
+      // 2% fee -> net 980_000_000, ratio 0.5 -> 490_000_000
+      expect(
+        computeMsolForDepositStakeAccount(
+          gross,
+          stubState(0, 20_000)
+        ).toString()
+      ).toBe('490000000')
+    })
+
+    it('equals computeMsolAmount when the fee is zero', () => {
+      const state = stubState(0, 0)
+      expect(computeMsolForDepositStakeAccount(gross, state).toString()).toBe(
+        computeMsolAmount(gross, state).toString()
+      )
+    })
+
+    it('reads depositStakeAccountFee, not depositSolFee', () => {
+      // stake-account fee 0, SOL fee 50% -> must be ignored here
+      expect(
+        computeMsolForDepositStakeAccount(
+          gross,
+          stubState(500_000, 0)
+        ).toString()
+      ).toBe('500000000')
     })
   })
 })

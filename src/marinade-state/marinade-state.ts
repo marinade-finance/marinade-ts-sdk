@@ -77,22 +77,56 @@ export class MarinadeState {
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_WITHDRAW)
 
   canonicalStake = (validator: web3.PublicKey) =>
-    this.findProgramDerivedAddress(undefined, [
-      validator.toBuffer(),
-      Buffer.from(ProgramDerivedAddressSeed.CANONICAL_STAKE),
-    ])
+    MarinadeState.canonicalStakeAddress(
+      this.marinade.config.marinadeStateAddress,
+      validator,
+      this.marinade.config.marinadeFinanceProgramId
+    )
+
+  /**
+   * Derive the canonical stake account address of a validator.
+   * Mirrors the program's State::find_canonical_stake_address:
+   * seeds [state, validator vote address, "canonical_stake"].
+   */
+  static canonicalStakeAddress(
+    marinadeStateAddress: web3.PublicKey,
+    validatorVoteAddress: web3.PublicKey,
+    marinadeFinanceProgramId: web3.PublicKey
+  ): web3.PublicKey {
+    return MarinadeState.deriveAddress(
+      marinadeStateAddress,
+      marinadeFinanceProgramId,
+      [
+        validatorVoteAddress.toBuffer(),
+        ProgramDerivedAddressSeed.CANONICAL_STAKE,
+      ]
+    )
+  }
 
   private findProgramDerivedAddress(
-    seed?: ProgramDerivedAddressSeed,
+    seed: ProgramDerivedAddressSeed,
     extraSeeds: Buffer[] = []
   ): web3.PublicKey {
-    const seeds = [
-      this.marinade.config.marinadeStateAddress.toBuffer(),
-      ...[seed ? Buffer.from(seed) : Buffer.alloc(0), ...extraSeeds],
-    ]
+    return MarinadeState.deriveAddress(
+      this.marinade.config.marinadeStateAddress,
+      this.marinade.config.marinadeFinanceProgramId,
+      [seed, ...extraSeeds]
+    )
+  }
+
+  private static deriveAddress(
+    marinadeStateAddress: web3.PublicKey,
+    marinadeFinanceProgramId: web3.PublicKey,
+    seeds: Array<ProgramDerivedAddressSeed | Buffer>
+  ): web3.PublicKey {
     const [result] = web3.PublicKey.findProgramAddressSync(
-      seeds,
-      this.marinade.config.marinadeFinanceProgramId
+      [
+        marinadeStateAddress.toBuffer(),
+        ...seeds.map(seed =>
+          typeof seed === 'string' ? Buffer.from(seed) : seed
+        ),
+      ],
+      marinadeFinanceProgramId
     )
     return result
   }
@@ -305,4 +339,15 @@ export class MarinadeState {
    */
   withdrawStakeAccountFee: number =
     this.state.withdrawStakeAccountFee.bpCents / 10000 / 100
+
+  /**
+   * % Fee when depositing SOL
+   */
+  depositSolFee: number = this.state.depositSolFee.bpCents / 10000 / 100
+
+  /**
+   * % Fee when depositing stake account
+   */
+  depositStakeAccountFee: number =
+    this.state.depositStakeAccountFee.bpCents / 10000 / 100
 }

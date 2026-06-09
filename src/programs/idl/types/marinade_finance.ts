@@ -876,13 +876,13 @@ export type MarinadeFinance = {
               name: 'tokenProgram'
               isMut: false
               isSigner: false
+            },
+            {
+              name: 'validatorList'
+              isMut: true
+              isSigner: false
             }
           ]
-        },
-        {
-          name: 'validatorList'
-          isMut: true
-          isSigner: false
         }
       ]
       args: [
@@ -961,6 +961,11 @@ export type MarinadeFinance = {
               name: 'tokenProgram'
               isMut: false
               isSigner: false
+            },
+            {
+              name: 'validatorList'
+              isMut: true
+              isSigner: false
             }
           ]
         },
@@ -978,6 +983,10 @@ export type MarinadeFinance = {
       args: [
         {
           name: 'stakeIndex'
+          type: 'u32'
+        },
+        {
+          name: 'validatorIndex'
           type: 'u32'
         }
       ]
@@ -1286,15 +1295,10 @@ export type MarinadeFinance = {
       ]
     },
     {
-      name: 'redelegate'
+      name: 'createCanonicalStake'
       accounts: [
         {
           name: 'state'
-          isMut: true
-          isSigner: false
-        },
-        {
-          name: 'validatorList'
           isMut: true
           isSigner: false
         },
@@ -1304,7 +1308,17 @@ export type MarinadeFinance = {
           isSigner: false
         },
         {
-          name: 'stakeAccount'
+          name: 'validatorList'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'canonicalStake'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'sourceStake'
           isMut: true
           isSigner: false
         },
@@ -1314,29 +1328,14 @@ export type MarinadeFinance = {
           isSigner: false
         },
         {
-          name: 'reservePda'
+          name: 'stakeWithdrawAuthority'
           isMut: false
           isSigner: false
         },
         {
-          name: 'splitStakeAccount'
+          name: 'operationalSolAccount'
           isMut: true
-          isSigner: true
-        },
-        {
-          name: 'splitStakeRentPayer'
-          isMut: true
-          isSigner: true
-        },
-        {
-          name: 'destValidatorAccount'
-          isMut: false
           isSigner: false
-        },
-        {
-          name: 'redelegateStakeAccount'
-          isMut: true
-          isSigner: true
         },
         {
           name: 'clock'
@@ -1349,7 +1348,7 @@ export type MarinadeFinance = {
           isSigner: false
         },
         {
-          name: 'stakeConfig'
+          name: 'stakeProgram'
           isMut: false
           isSigner: false
         },
@@ -1357,24 +1356,15 @@ export type MarinadeFinance = {
           name: 'systemProgram'
           isMut: false
           isSigner: false
-        },
-        {
-          name: 'stakeProgram'
-          isMut: false
-          isSigner: false
         }
       ]
       args: [
         {
-          name: 'stakeIndex'
+          name: 'sourceStakeIndex'
           type: 'u32'
         },
         {
-          name: 'sourceValidatorIndex'
-          type: 'u32'
-        },
-        {
-          name: 'destValidatorIndex'
+          name: 'validatorIndex'
           type: 'u32'
         }
       ]
@@ -1585,6 +1575,27 @@ export type MarinadeFinance = {
           type: 'u32'
         }
       ]
+    },
+    {
+      name: 'finalizeDelinquentUpgrade'
+      accounts: [
+        {
+          name: 'state'
+          isMut: true
+          isSigner: false
+        },
+        {
+          name: 'validatorList'
+          isMut: true
+          isSigner: false
+        }
+      ]
+      args: [
+        {
+          name: 'maxValidators'
+          type: 'u32'
+        }
+      ]
     }
   ]
   accounts: [
@@ -1750,6 +1761,24 @@ export type MarinadeFinance = {
             name: 'maxStakeMovedPerEpoch'
             type: {
               defined: 'Fee'
+            }
+          },
+          {
+            name: 'delinquentUpgrader'
+            type: {
+              defined: 'DelinquentUpgraderState'
+            }
+          },
+          {
+            name: 'depositSolFee'
+            type: {
+              defined: 'FeeCents'
+            }
+          },
+          {
+            name: 'depositStakeAccountFee'
+            type: {
+              defined: 'FeeCents'
             }
           }
         ]
@@ -2031,6 +2060,22 @@ export type MarinadeFinance = {
                 defined: 'Fee'
               }
             }
+          },
+          {
+            name: 'depositSolFee'
+            type: {
+              option: {
+                defined: 'FeeCents'
+              }
+            }
+          },
+          {
+            name: 'depositStakeAccountFee'
+            type: {
+              option: {
+                defined: 'FeeCents'
+              }
+            }
           }
         ]
       }
@@ -2256,7 +2301,13 @@ export type MarinadeFinance = {
           },
           {
             name: 'isEmergencyUnstaking'
-            type: 'u8'
+            type: 'bool'
+          },
+          {
+            name: 'lastUpdateStatus'
+            type: {
+              defined: 'StakeStatus'
+            }
           }
         ]
       }
@@ -2348,6 +2399,10 @@ export type MarinadeFinance = {
           {
             name: 'duplicationFlagBumpSeed'
             type: 'u8'
+          },
+          {
+            name: 'delinquentUpgraderActiveBalance'
+            type: 'u64'
           }
         ]
       }
@@ -2387,6 +2442,64 @@ export type MarinadeFinance = {
             name: 'autoAddValidatorEnabled'
             docs: ['DEPRECATED, no longer used']
             type: 'u8'
+          }
+        ]
+      }
+    },
+    {
+      name: 'DelinquentUpgraderState'
+      type: {
+        kind: 'enum'
+        variants: [
+          {
+            name: 'IteratingStakes'
+            fields: [
+              {
+                name: 'visited_count'
+                type: 'u32'
+              },
+              {
+                name: 'total_active_balance'
+                type: 'u64'
+              },
+              {
+                name: 'total_delinquent_balance'
+                type: 'u64'
+              }
+            ]
+          },
+          {
+            name: 'IteratingValidators'
+            fields: [
+              {
+                name: 'visited_count'
+                type: 'u32'
+              },
+              {
+                name: 'delinquent_balance_left'
+                type: 'u64'
+              }
+            ]
+          },
+          {
+            name: 'Done'
+          }
+        ]
+      }
+    },
+    {
+      name: 'StakeStatus'
+      type: {
+        kind: 'enum'
+        variants: [
+          {
+            name: 'Unknown'
+          },
+          {
+            name: 'Active'
+          },
+          {
+            name: 'Deactivating'
           }
         ]
       }
@@ -2597,6 +2710,24 @@ export type MarinadeFinance = {
           type: {
             option: {
               defined: 'FeeValueChange'
+            }
+          }
+          index: false
+        },
+        {
+          name: 'depositSolFeeChange'
+          type: {
+            option: {
+              defined: 'FeeCentsValueChange'
+            }
+          }
+          index: false
+        },
+        {
+          name: 'depositStakeAccountFeeChange'
+          type: {
+            option: {
+              defined: 'FeeCentsValueChange'
             }
           }
           index: false
@@ -2860,6 +2991,66 @@ export type MarinadeFinance = {
         {
           name: 'returnedStakeRent'
           type: 'u64'
+          index: false
+        },
+        {
+          name: 'validatorActiveBalance'
+          type: 'u64'
+          index: false
+        },
+        {
+          name: 'totalActiveBalance'
+          type: 'u64'
+          index: false
+        },
+        {
+          name: 'operationalSolBalance'
+          type: 'u64'
+          index: false
+        }
+      ]
+    },
+    {
+      name: 'CreateCanonicalStakeEvent'
+      fields: [
+        {
+          name: 'state'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'epoch'
+          type: 'u64'
+          index: false
+        },
+        {
+          name: 'canonicalStakeAccount'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'sourceStakeIndex'
+          type: 'u32'
+          index: false
+        },
+        {
+          name: 'sourceStakeAccount'
+          type: 'publicKey'
+          index: false
+        },
+        {
+          name: 'lastUpdateSourceStakeDelegation'
+          type: 'u64'
+          index: false
+        },
+        {
+          name: 'validatorIndex'
+          type: 'u32'
+          index: false
+        },
+        {
+          name: 'validatorVote'
+          type: 'publicKey'
           index: false
         },
         {
@@ -3676,6 +3867,11 @@ export type MarinadeFinance = {
           name: 'msolSupply'
           type: 'u64'
           index: false
+        },
+        {
+          name: 'solFees'
+          type: 'u64'
+          index: false
         }
       ]
     },
@@ -3744,6 +3940,11 @@ export type MarinadeFinance = {
         },
         {
           name: 'msolSupply'
+          type: 'u64'
+          index: false
+        },
+        {
+          name: 'solFees'
           type: 'u64'
           index: false
         }
@@ -4274,6 +4475,36 @@ export type MarinadeFinance = {
       code: 6086
       name: 'ShrinkingListWithDeletingContents'
       msg: "Capacity of the list must be not less than it's current size"
+    },
+    {
+      code: 6087
+      name: 'UpgradingInvariantViolation'
+      msg: 'Upgrading invariant violation'
+    },
+    {
+      code: 6088
+      name: 'DelinquentUpgraderIsNotDone'
+      msg: 'Delinquent upgrader is not done'
+    },
+    {
+      code: 6089
+      name: 'CanonicalStakeAccountAlreadyCreated'
+      msg: 'Canonical stake account for this validator already exists'
+    },
+    {
+      code: 6090
+      name: 'InvalidCanonicalStakeAccountAddress'
+      msg: 'Invalid canonical stake account address'
+    },
+    {
+      code: 6091
+      name: 'DepositStakeAccountFeeIsTooHigh'
+      msg: 'Deposit stake account fee is too high'
+    },
+    {
+      code: 6092
+      name: 'DepositSolFeeIsTooHigh'
+      msg: 'Deposit SOL fee is too high'
     }
   ]
 }
@@ -5157,12 +5388,12 @@ export const IDL: MarinadeFinance = {
               isMut: false,
               isSigner: false,
             },
+            {
+              name: 'validatorList',
+              isMut: true,
+              isSigner: false,
+            },
           ],
-        },
-        {
-          name: 'validatorList',
-          isMut: true,
-          isSigner: false,
         },
       ],
       args: [
@@ -5242,6 +5473,11 @@ export const IDL: MarinadeFinance = {
               isMut: false,
               isSigner: false,
             },
+            {
+              name: 'validatorList',
+              isMut: true,
+              isSigner: false,
+            },
           ],
         },
         {
@@ -5258,6 +5494,10 @@ export const IDL: MarinadeFinance = {
       args: [
         {
           name: 'stakeIndex',
+          type: 'u32',
+        },
+        {
+          name: 'validatorIndex',
           type: 'u32',
         },
       ],
@@ -5566,15 +5806,10 @@ export const IDL: MarinadeFinance = {
       ],
     },
     {
-      name: 'redelegate',
+      name: 'createCanonicalStake',
       accounts: [
         {
           name: 'state',
-          isMut: true,
-          isSigner: false,
-        },
-        {
-          name: 'validatorList',
           isMut: true,
           isSigner: false,
         },
@@ -5584,7 +5819,17 @@ export const IDL: MarinadeFinance = {
           isSigner: false,
         },
         {
-          name: 'stakeAccount',
+          name: 'validatorList',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'canonicalStake',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'sourceStake',
           isMut: true,
           isSigner: false,
         },
@@ -5594,29 +5839,14 @@ export const IDL: MarinadeFinance = {
           isSigner: false,
         },
         {
-          name: 'reservePda',
+          name: 'stakeWithdrawAuthority',
           isMut: false,
           isSigner: false,
         },
         {
-          name: 'splitStakeAccount',
+          name: 'operationalSolAccount',
           isMut: true,
-          isSigner: true,
-        },
-        {
-          name: 'splitStakeRentPayer',
-          isMut: true,
-          isSigner: true,
-        },
-        {
-          name: 'destValidatorAccount',
-          isMut: false,
           isSigner: false,
-        },
-        {
-          name: 'redelegateStakeAccount',
-          isMut: true,
-          isSigner: true,
         },
         {
           name: 'clock',
@@ -5629,7 +5859,7 @@ export const IDL: MarinadeFinance = {
           isSigner: false,
         },
         {
-          name: 'stakeConfig',
+          name: 'stakeProgram',
           isMut: false,
           isSigner: false,
         },
@@ -5638,23 +5868,14 @@ export const IDL: MarinadeFinance = {
           isMut: false,
           isSigner: false,
         },
-        {
-          name: 'stakeProgram',
-          isMut: false,
-          isSigner: false,
-        },
       ],
       args: [
         {
-          name: 'stakeIndex',
+          name: 'sourceStakeIndex',
           type: 'u32',
         },
         {
-          name: 'sourceValidatorIndex',
-          type: 'u32',
-        },
-        {
-          name: 'destValidatorIndex',
+          name: 'validatorIndex',
           type: 'u32',
         },
       ],
@@ -5866,6 +6087,27 @@ export const IDL: MarinadeFinance = {
         },
       ],
     },
+    {
+      name: 'finalizeDelinquentUpgrade',
+      accounts: [
+        {
+          name: 'state',
+          isMut: true,
+          isSigner: false,
+        },
+        {
+          name: 'validatorList',
+          isMut: true,
+          isSigner: false,
+        },
+      ],
+      args: [
+        {
+          name: 'maxValidators',
+          type: 'u32',
+        },
+      ],
+    },
   ],
   accounts: [
     {
@@ -6030,6 +6272,24 @@ export const IDL: MarinadeFinance = {
             name: 'maxStakeMovedPerEpoch',
             type: {
               defined: 'Fee',
+            },
+          },
+          {
+            name: 'delinquentUpgrader',
+            type: {
+              defined: 'DelinquentUpgraderState',
+            },
+          },
+          {
+            name: 'depositSolFee',
+            type: {
+              defined: 'FeeCents',
+            },
+          },
+          {
+            name: 'depositStakeAccountFee',
+            type: {
+              defined: 'FeeCents',
             },
           },
         ],
@@ -6312,6 +6572,22 @@ export const IDL: MarinadeFinance = {
               },
             },
           },
+          {
+            name: 'depositSolFee',
+            type: {
+              option: {
+                defined: 'FeeCents',
+              },
+            },
+          },
+          {
+            name: 'depositStakeAccountFee',
+            type: {
+              option: {
+                defined: 'FeeCents',
+              },
+            },
+          },
         ],
       },
     },
@@ -6536,7 +6812,13 @@ export const IDL: MarinadeFinance = {
           },
           {
             name: 'isEmergencyUnstaking',
-            type: 'u8',
+            type: 'bool',
+          },
+          {
+            name: 'lastUpdateStatus',
+            type: {
+              defined: 'StakeStatus',
+            },
           },
         ],
       },
@@ -6629,6 +6911,10 @@ export const IDL: MarinadeFinance = {
             name: 'duplicationFlagBumpSeed',
             type: 'u8',
           },
+          {
+            name: 'delinquentUpgraderActiveBalance',
+            type: 'u64',
+          },
         ],
       },
     },
@@ -6667,6 +6953,64 @@ export const IDL: MarinadeFinance = {
             name: 'autoAddValidatorEnabled',
             docs: ['DEPRECATED, no longer used'],
             type: 'u8',
+          },
+        ],
+      },
+    },
+    {
+      name: 'DelinquentUpgraderState',
+      type: {
+        kind: 'enum',
+        variants: [
+          {
+            name: 'IteratingStakes',
+            fields: [
+              {
+                name: 'visited_count',
+                type: 'u32',
+              },
+              {
+                name: 'total_active_balance',
+                type: 'u64',
+              },
+              {
+                name: 'total_delinquent_balance',
+                type: 'u64',
+              },
+            ],
+          },
+          {
+            name: 'IteratingValidators',
+            fields: [
+              {
+                name: 'visited_count',
+                type: 'u32',
+              },
+              {
+                name: 'delinquent_balance_left',
+                type: 'u64',
+              },
+            ],
+          },
+          {
+            name: 'Done',
+          },
+        ],
+      },
+    },
+    {
+      name: 'StakeStatus',
+      type: {
+        kind: 'enum',
+        variants: [
+          {
+            name: 'Unknown',
+          },
+          {
+            name: 'Active',
+          },
+          {
+            name: 'Deactivating',
           },
         ],
       },
@@ -6877,6 +7221,24 @@ export const IDL: MarinadeFinance = {
           type: {
             option: {
               defined: 'FeeValueChange',
+            },
+          },
+          index: false,
+        },
+        {
+          name: 'depositSolFeeChange',
+          type: {
+            option: {
+              defined: 'FeeCentsValueChange',
+            },
+          },
+          index: false,
+        },
+        {
+          name: 'depositStakeAccountFeeChange',
+          type: {
+            option: {
+              defined: 'FeeCentsValueChange',
             },
           },
           index: false,
@@ -7140,6 +7502,66 @@ export const IDL: MarinadeFinance = {
         {
           name: 'returnedStakeRent',
           type: 'u64',
+          index: false,
+        },
+        {
+          name: 'validatorActiveBalance',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'totalActiveBalance',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'operationalSolBalance',
+          type: 'u64',
+          index: false,
+        },
+      ],
+    },
+    {
+      name: 'CreateCanonicalStakeEvent',
+      fields: [
+        {
+          name: 'state',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'epoch',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'canonicalStakeAccount',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'sourceStakeIndex',
+          type: 'u32',
+          index: false,
+        },
+        {
+          name: 'sourceStakeAccount',
+          type: 'publicKey',
+          index: false,
+        },
+        {
+          name: 'lastUpdateSourceStakeDelegation',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'validatorIndex',
+          type: 'u32',
+          index: false,
+        },
+        {
+          name: 'validatorVote',
+          type: 'publicKey',
           index: false,
         },
         {
@@ -7957,6 +8379,11 @@ export const IDL: MarinadeFinance = {
           type: 'u64',
           index: false,
         },
+        {
+          name: 'solFees',
+          type: 'u64',
+          index: false,
+        },
       ],
     },
     {
@@ -8024,6 +8451,11 @@ export const IDL: MarinadeFinance = {
         },
         {
           name: 'msolSupply',
+          type: 'u64',
+          index: false,
+        },
+        {
+          name: 'solFees',
           type: 'u64',
           index: false,
         },
@@ -8554,6 +8986,36 @@ export const IDL: MarinadeFinance = {
       code: 6086,
       name: 'ShrinkingListWithDeletingContents',
       msg: "Capacity of the list must be not less than it's current size",
+    },
+    {
+      code: 6087,
+      name: 'UpgradingInvariantViolation',
+      msg: 'Upgrading invariant violation',
+    },
+    {
+      code: 6088,
+      name: 'DelinquentUpgraderIsNotDone',
+      msg: 'Delinquent upgrader is not done',
+    },
+    {
+      code: 6089,
+      name: 'CanonicalStakeAccountAlreadyCreated',
+      msg: 'Canonical stake account for this validator already exists',
+    },
+    {
+      code: 6090,
+      name: 'InvalidCanonicalStakeAccountAddress',
+      msg: 'Invalid canonical stake account address',
+    },
+    {
+      code: 6091,
+      name: 'DepositStakeAccountFeeIsTooHigh',
+      msg: 'Deposit stake account fee is too high',
+    },
+    {
+      code: 6092,
+      name: 'DepositSolFeeIsTooHigh',
+      msg: 'Deposit SOL fee is too high',
     },
   ],
 }
