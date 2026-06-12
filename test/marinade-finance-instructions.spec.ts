@@ -136,12 +136,12 @@ describe('Marinade Finance', () => {
       )
 
       const { executedSlot, simulatedSlot, err, logs, unitsConsumed } =
-        await TestWorld.simulateTransaction(transaction)
+        await TestWorld.simulateTransactionWithRetryOnEpochRewards(transaction)
 
       expect(err).toBeNull() // no error at simulation
       expect(simulatedSlot).toBeGreaterThanOrEqual(executedSlot)
       expect(unitsConsumed).toBeGreaterThan(0) // something has been processed
-      console.debug('Deposit stake account tx logs:', logs)
+      console.log('Deposit stake account tx logs:', logs)
     })
   })
 
