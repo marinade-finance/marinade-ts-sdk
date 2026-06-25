@@ -142,6 +142,44 @@ export async function simulateTransaction(transaction: web3.Transaction) {
   }
 }
 
+// StakeError::EpochRewardsActive (Custom 0x10): the runtime blocks stake-program
+// instructions while epoch rewards are distributed (first slots of an epoch).
+function isEpochRewardsActiveError(
+  err: unknown,
+  logs: string[] | null
+): boolean {
+  const instructionError =
+    err && typeof err === 'object'
+      ? (err as { InstructionError?: [number, unknown] }).InstructionError
+      : undefined
+  const isCustom16 =
+    Array.isArray(instructionError) &&
+    (instructionError[1] as { Custom?: number } | undefined)?.Custom === 16
+  const stakeProgramFailed = (logs ?? []).some(
+    l => l.includes('Stake11111') && l.includes('custom program error: 0x10')
+  )
+  return isCustom16 && stakeProgramFailed
+}
+
+export async function simulateTransactionWithRetryOnEpochRewards(
+  transaction: web3.Transaction,
+  { retries = 5, delayMs = 500 } = {}
+) {
+  for (let attempt = 1; ; attempt++) {
+    const result = await simulateTransaction(transaction)
+    if (
+      attempt > retries ||
+      !isEpochRewardsActiveError(result.err, result.logs)
+    ) {
+      return result
+    }
+    console.log(
+      `Simulation blocked by epoch reward distribution (EpochRewardsActive); retrying in ${delayMs}ms (attempt ${attempt}/${retries})`
+    )
+    await sleep(delayMs)
+  }
+}
+
 export async function executeTransaction(
   transaction: web3.Transaction,
   signers?: Signer[]
@@ -265,7 +303,7 @@ export async function waitForStakeAccountActivation({
       currentEpoch <
       stakeAccountActivationEpoch.toNumber() + activatedAtLeastFor
     ) {
-      console.debug(
+      console.log(
         `Waiting for the stake account ${stakeAccount.toBase58()} to be active at least for ${activatedAtLeastFor} epochs ` +
           `currently active for ${
             currentEpoch - stakeAccountActivationEpoch.toNumber()

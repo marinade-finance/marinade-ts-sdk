@@ -42,18 +42,18 @@ export class MarinadeState {
     )
   }
 
-  reserveAddress = async () =>
+  reserveAddress = () =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.RESERVE_ACCOUNT)
 
   mSolPrice: number = this.state.msolPrice.toNumber() / 0x1_0000_0000
 
   mSolMintAddress: web3.PublicKey = this.state.msolMint
   mSolMint = MarinadeMint.build(this.anchorProvider, this.mSolMintAddress)
-  mSolMintAuthority = async () =>
+  mSolMintAuthority = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_MSOL_MINT_AUTHORITY
     )
-  mSolLegAuthority = async () =>
+  mSolLegAuthority = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_MSOL_AUTHORITY
     )
@@ -61,38 +61,77 @@ export class MarinadeState {
 
   lpMintAddress: web3.PublicKey = this.state.liqPool.lpMint
   lpMint = MarinadeMint.build(this.anchorProvider, this.lpMintAddress)
-  lpMintAuthority = async () =>
+  lpMintAuthority = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_MINT_AUTHORITY
     )
 
-  solLeg = async () =>
+  solLeg = () =>
     this.findProgramDerivedAddress(
       ProgramDerivedAddressSeed.LIQ_POOL_SOL_ACCOUNT
     )
 
-  stakeDepositAuthority = async () =>
+  stakeDepositAuthority = () =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_DEPOSIT)
-  stakeWithdrawAuthority = async () =>
+  stakeWithdrawAuthority = () =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.STAKE_WITHDRAW)
 
-  private async findProgramDerivedAddress(
+  canonicalStake = (validator: web3.PublicKey) =>
+    MarinadeState.canonicalStakeAddress(
+      this.marinade.config.marinadeStateAddress,
+      validator,
+      this.marinade.config.marinadeFinanceProgramId
+    )
+
+  /**
+   * Derive the canonical stake account address of a validator.
+   * Mirrors the program's State::find_canonical_stake_address:
+   * seeds [state, validator vote address, "canonical_stake"].
+   */
+  static canonicalStakeAddress(
+    marinadeStateAddress: web3.PublicKey,
+    validatorVoteAddress: web3.PublicKey,
+    marinadeFinanceProgramId: web3.PublicKey
+  ): web3.PublicKey {
+    return MarinadeState.deriveAddress(
+      marinadeStateAddress,
+      marinadeFinanceProgramId,
+      [
+        validatorVoteAddress.toBuffer(),
+        ProgramDerivedAddressSeed.CANONICAL_STAKE,
+      ]
+    )
+  }
+
+  private findProgramDerivedAddress(
     seed: ProgramDerivedAddressSeed,
     extraSeeds: Buffer[] = []
-  ): Promise<web3.PublicKey> {
-    const seeds = [
-      this.marinade.config.marinadeStateAddress.toBuffer(),
-      Buffer.from(seed),
-      ...extraSeeds,
-    ]
-    const [result] = await web3.PublicKey.findProgramAddress(
-      seeds,
-      this.marinade.config.marinadeFinanceProgramId
+  ): web3.PublicKey {
+    return MarinadeState.deriveAddress(
+      this.marinade.config.marinadeStateAddress,
+      this.marinade.config.marinadeFinanceProgramId,
+      [seed, ...extraSeeds]
+    )
+  }
+
+  private static deriveAddress(
+    marinadeStateAddress: web3.PublicKey,
+    marinadeFinanceProgramId: web3.PublicKey,
+    seeds: Array<ProgramDerivedAddressSeed | Buffer>
+  ): web3.PublicKey {
+    const [result] = web3.PublicKey.findProgramAddressSync(
+      [
+        marinadeStateAddress.toBuffer(),
+        ...seeds.map(seed =>
+          typeof seed === 'string' ? Buffer.from(seed) : seed
+        ),
+      ],
+      marinadeFinanceProgramId
     )
     return result
   }
 
-  validatorDuplicationFlag = async (validatorAddress: web3.PublicKey) =>
+  validatorDuplicationFlag = (validatorAddress: web3.PublicKey) =>
     this.findProgramDerivedAddress(ProgramDerivedAddressSeed.UNIQUE_VALIDATOR, [
       validatorAddress.toBuffer(),
     ])
@@ -300,4 +339,15 @@ export class MarinadeState {
    */
   withdrawStakeAccountFee: number =
     this.state.withdrawStakeAccountFee.bpCents / 10000 / 100
+
+  /**
+   * % Fee when depositing SOL
+   */
+  depositSolFee: number = this.state.depositSolFee.bpCents / 10000 / 100
+
+  /**
+   * % Fee when depositing stake account
+   */
+  depositStakeAccountFee: number =
+    this.state.depositStakeAccountFee.bpCents / 10000 / 100
 }

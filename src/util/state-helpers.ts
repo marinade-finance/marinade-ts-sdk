@@ -84,3 +84,37 @@ export function computeMsolAmount(
     total_virtual_staked_lamports
   )
 }
+
+/**
+ * Fee charged on `amount`: floor(amount * bpCents / 1_000_000).
+ * bpCents scale: 1_000_000 = 100%, 10_000 = 1%, 1 = 0.0001%.
+ */
+export function feeCentsApply(amount: BN, bpCents: number): BN {
+  return proportionalBN(amount, new BN(bpCents), new BN(1_000_000))
+}
+
+/**
+ * mSOL received when depositing `solAmount` lamports of SOL
+ */
+export function computeMsolForDepositSol(
+  solAmount: BN,
+  marinadeState: MarinadeState
+): BN {
+  const net = solAmount.sub(
+    feeCentsApply(solAmount, marinadeState.state.depositSolFee.bpCents)
+  )
+  return computeMsolAmount(net, marinadeState)
+}
+
+/**
+ * mSOL received when depositing a stake account worth `solAmount` lamports
+ */
+export function computeMsolForDepositStakeAccount(
+  solAmount: BN,
+  marinadeState: MarinadeState
+): BN {
+  const net = solAmount.sub(
+    feeCentsApply(solAmount, marinadeState.state.depositStakeAccountFee.bpCents)
+  )
+  return computeMsolAmount(net, marinadeState)
+}

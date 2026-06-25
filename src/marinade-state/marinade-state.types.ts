@@ -10,6 +10,7 @@ export const enum ProgramDerivedAddressSeed {
   UNIQUE_VALIDATOR = 'unique_validator',
   STAKE_WITHDRAW = 'withdraw',
   STAKE_DEPOSIT = 'deposit',
+  CANONICAL_STAKE = 'canonical_stake',
 }
 
 export namespace MarinadeStateResponse {
@@ -47,6 +48,23 @@ export namespace MarinadeStateResponse {
     totalActiveBalance: BN
     autoAddValidatorEnabled: number
   }
+
+  // Decoded form of the on-chain DelinquentUpgraderState enum
+  export type DelinquentUpgraderState =
+    | {
+        iteratingStakes: {
+          visitedCount: number
+          totalActiveBalance: BN
+          totalDelinquentBalance: BN
+        }
+      }
+    | {
+        iteratingValidators: {
+          visitedCount: number
+          delinquentBalanceLeft: BN
+        }
+      }
+    | { done: Record<string, never> }
 
   export interface LiqPool {
     lpMint: web3.PublicKey
@@ -94,4 +112,7 @@ export interface MarinadeStateResponse {
   lastStakeMoveEpoch: BN
   stakeMoved: BN
   maxStakeMovedPerEpoch: MarinadeStateResponse.Fee
+  delinquentUpgrader: MarinadeStateResponse.DelinquentUpgraderState
+  depositSolFee: MarinadeStateResponse.FeeCents
+  depositStakeAccountFee: MarinadeStateResponse.FeeCents
 }

@@ -23,7 +23,7 @@ import {
   TicketAccount,
 } from './marinade-state/borsh/ticket-account'
 import {
-  computeMsolAmount,
+  computeMsolForDepositStakeAccount,
   ParsedStakeAccountInfo,
   proportionalBN,
 } from './util'
@@ -1060,7 +1060,7 @@ export class Marinade {
       throw new Error("Can't convert less than equivalent of 1 SOL")
     }
 
-    let mSolAmountToReceive = computeMsolAmount(
+    let mSolAmountToReceive = computeMsolForDepositStakeAccount(
       new BN(expectedSOL),
       marinadeState
     )

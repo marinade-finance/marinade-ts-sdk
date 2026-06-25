@@ -6,6 +6,7 @@ export class ValidatorRecord {
   score!: number
   lastStakeDeltaEpoch!: BN
   duplicationFlagBumpSeed!: number
+  delinquentUpgraderActiveBalance!: BN
 
   constructor(args: ValidatorRecord) {
     Object.assign(this, args)
