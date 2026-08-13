@@ -24,17 +24,29 @@ export type StateRecordAnchorType =
 const TICKET_ACCOUNT_DISCRIMINATOR = [133, 77, 18, 98, 211, 1, 231, 3]
 
 export class MarinadeFinanceProgram {
+  private cachedProgram: MarinadeFinanceProgramType | undefined
+
   constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider
   ) {}
 
+  // Memoized: constructing an anchor Program rebuilds the entire IDL coder,
+  // which runs thousands of camelCase -> String.prototype.toLocaleUpperCase
+  // calls. Hot paths such as getValidatorRecords/getStakeRecords read this
+  // getter once per decoded record, and on WebKit (which re-parses the ICU
+  // locale on every toLocaleUpperCase call) the un-memoized getter froze the
+  // main thread for ~10s per page load. programAddress and anchorProvider are
+  // readonly, so the instance can never go stale.
   get program(): MarinadeFinanceProgramType {
-    return new Program<MarinadeFinance>(
-      MarinadeFinanceIDL,
-      this.programAddress,
-      this.anchorProvider
-    )
+    if (!this.cachedProgram) {
+      this.cachedProgram = new Program<MarinadeFinance>(
+        MarinadeFinanceIDL,
+        this.programAddress,
+        this.anchorProvider
+      )
+    }
+    return this.cachedProgram
   }
 
   async getDelayedUnstakeTickets(
