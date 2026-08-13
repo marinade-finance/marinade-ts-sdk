@@ -14,6 +14,8 @@ export type MarinadeReferralProgramType = Program<MarinadeReferral>
 export class MarinadeReferralProgram {
   referralStateData: MarinadeReferralStateResponse.ReferralState | null = null
 
+  private cachedProgram: MarinadeReferralProgramType | undefined
+
   constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider,
@@ -21,12 +23,17 @@ export class MarinadeReferralProgram {
     readonly marinade: Marinade
   ) {}
 
+  // Memoized — see MarinadeFinanceProgram.program: rebuilding the IDL coder
+  // per access froze WebKit for seconds on record-decoding hot paths.
   get program(): MarinadeReferralProgramType {
-    return new Program<MarinadeReferral>(
-      MarinadeReferralIDL,
-      this.programAddress,
-      this.anchorProvider
-    )
+    if (!this.cachedProgram) {
+      this.cachedProgram = new Program<MarinadeReferral>(
+        MarinadeReferralIDL,
+        this.programAddress,
+        this.anchorProvider
+      )
+    }
+    return this.cachedProgram
   }
 
   liquidUnstakeInstructionBuilder = async ({

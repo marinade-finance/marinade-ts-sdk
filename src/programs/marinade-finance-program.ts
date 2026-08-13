@@ -24,17 +24,26 @@ export type StateRecordAnchorType =
 const TICKET_ACCOUNT_DISCRIMINATOR = [133, 77, 18, 98, 211, 1, 231, 3]
 
 export class MarinadeFinanceProgram {
+  private cachedProgram: MarinadeFinanceProgramType | undefined
+
   constructor(
     public readonly programAddress: web3.PublicKey,
     public readonly anchorProvider: Provider
   ) {}
 
+  // Memoized: constructing a Program rebuilds the whole IDL coder, and hot
+  // paths (getValidatorRecords/getStakeRecords) read this getter once per
+  // decoded record — un-memoized it froze WebKit for ~10s. Inputs are
+  // readonly, so the instance cannot go stale.
   get program(): MarinadeFinanceProgramType {
-    return new Program<MarinadeFinance>(
-      MarinadeFinanceIDL,
-      this.programAddress,
-      this.anchorProvider
-    )
+    if (!this.cachedProgram) {
+      this.cachedProgram = new Program<MarinadeFinance>(
+        MarinadeFinanceIDL,
+        this.programAddress,
+        this.anchorProvider
+      )
+    }
+    return this.cachedProgram
   }
 
   async getDelayedUnstakeTickets(
