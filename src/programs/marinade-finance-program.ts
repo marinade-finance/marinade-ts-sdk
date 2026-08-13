@@ -31,13 +31,10 @@ export class MarinadeFinanceProgram {
     public readonly anchorProvider: Provider
   ) {}
 
-  // Memoized: constructing an anchor Program rebuilds the entire IDL coder,
-  // which runs thousands of camelCase -> String.prototype.toLocaleUpperCase
-  // calls. Hot paths such as getValidatorRecords/getStakeRecords read this
-  // getter once per decoded record, and on WebKit (which re-parses the ICU
-  // locale on every toLocaleUpperCase call) the un-memoized getter froze the
-  // main thread for ~10s per page load. programAddress and anchorProvider are
-  // readonly, so the instance can never go stale.
+  // Memoized: constructing a Program rebuilds the whole IDL coder, and hot
+  // paths (getValidatorRecords/getStakeRecords) read this getter once per
+  // decoded record — un-memoized it froze WebKit for ~10s. Inputs are
+  // readonly, so the instance cannot go stale.
   get program(): MarinadeFinanceProgramType {
     if (!this.cachedProgram) {
       this.cachedProgram = new Program<MarinadeFinance>(
