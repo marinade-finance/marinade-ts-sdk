@@ -157,6 +157,67 @@ const signature = await provider.send(transaction)
 
 For more examples have a look at [Marinade TS CLI](https://github.com/marinade-finance/marinade-ts-cli)
 
+## Depositing stake accounts
+
+The liquid staking program requires a deposited stake account to satisfy
+`lamports == delegation.stake + meta.rent_exempt_reserve`.
+
+The [SIMD-0437](https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0437-incremental-rent-reduction.md)
+rent reduction lowered the rent, while the stake program keeps freezing `meta.rent_exempt_reserve`
+of every new account at the pre-reduction `2_282_880` lamports. Every stake account delegated or
+split after the reduction therefore holds less than the program expects, and the deposit is
+rejected with `WrongStakeBalance` (6048).
+
+The SDK deposit methods handle it. They align the stake account balance with a plain SOL transfer
+before the deposit instruction. Build the `deposit_stake_account` instruction yourself and you have
+to do the same:
+
+```ts
+const stakeAccountInfo = await MarinadeUtils.getParsedStakeAccountInfo(
+  connection,
+  stakeAccountAddress
+)
+const rent = await connection.getMinimumBalanceForRentExemption(
+  web3.StakeProgram.space
+)
+const { epoch } = await connection.getEpochInfo()
+
+instructions.push(
+  ...MarinadeUtils.stakeAccountBalanceAlignmentInstructions(
+    stakeAccountInfo,
+    ownerAddress,
+    epoch,
+    rent
+  ),
+  depositStakeAccountInstruction
+)
+```
+
+Append the returned instructions **after** any `StakeProgram.delegate` of your own. A cooled-down
+account is re-delegated first, and the top-up is derived from what re-delegation restakes. The
+`rent` argument must be the live `getMinimumBalanceForRentExemption(web3.StakeProgram.space)`.
+
+A stake account created within the same transaction cannot be read yet, so pass the lamports that
+will stay non-delegated to `MarinadeUtils.newStakeAccountBalanceAlignmentInstructions` instead —
+the pre-funding of a stake pool split destination, or the live rent when your own
+`StakeProgram.delegate` restakes everything above it:
+
+```ts
+const alignment = MarinadeUtils.newStakeAccountBalanceAlignmentInstructions(
+  stakeAccountAddress,
+  ownerAddress,
+  await connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
+)
+```
+
+For such a freshly delegated account the gap is
+`2_282_880 - getMinimumBalanceForRentExemption(web3.StakeProgram.space)` — 205,656 lamports at
+SIMD-0437 step 1, 2,054,592 at the final step. That formula holds only for a new account. An
+existing one goes through `stakeAccountBalanceAlignmentInstructions`, which reads
+`meta.rentExemptReserve` against the current balance and often returns nothing at all. Never
+hardcode either value. The topped-up lamports stay in the stake account as non-delegated balance
+and no mSOL is minted for them.
+
 ## Learn more
 - [Marinade web](https://marinade.finance)
 - [Marinade docs](https://docs.marinade.finance/)

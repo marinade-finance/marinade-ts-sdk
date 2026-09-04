@@ -121,6 +121,9 @@ export async function getParsedStakeAccountInfo(
   const stakedLamports = BNOrNull(
     parsedData?.info?.stake?.delegation.stake ?? null
   )
+  const rentExemptReserveLamports = BNOrNull(
+    parsedData?.info?.meta?.rentExemptReserve ?? null
+  )
   const { epoch: currentEpoch } = await connection.getEpochInfo()
   const currentUnixTimestamp = Date.now() / 1000
 
@@ -146,6 +149,7 @@ export async function getParsedStakeAccountInfo(
         lockup?.unixTimestamp > currentUnixTimestamp),
     balanceLamports,
     stakedLamports,
+    rentExemptReserveLamports,
   }
 }
 

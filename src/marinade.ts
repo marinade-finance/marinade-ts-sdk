@@ -35,6 +35,10 @@ import {
   selectSpecificValidator,
 } from './util/stake-pool-helpers'
 import {
+  newStakeAccountBalanceAlignmentInstructions,
+  stakeAccountBalanceAlignmentInstructions,
+} from './util/stake-account-helpers'
+import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -384,6 +388,12 @@ export class Marinade {
     }
 
     const marinadeState = await this.getMarinadeState()
+    const { epoch: currentEpoch } =
+      await this.provider.connection.getEpochInfo()
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
     const delegateTransaction = StakeProgram.delegate({
       stakePubkey: stakeAccountAddress,
@@ -430,7 +440,15 @@ export class Marinade {
         }
       )
 
-    delegateTransaction.instructions.push(depositInstruction)
+    delegateTransaction.instructions.push(
+      ...stakeAccountBalanceAlignmentInstructions(
+        stakeAccountInfo,
+        ownerAddress,
+        currentEpoch,
+        rent
+      ),
+      depositInstruction
+    )
 
     return {
       transaction: delegateTransaction,
@@ -444,7 +462,7 @@ export class Marinade {
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
    * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
-   * @param {number} rent - Rent needed for a stake account
+   * @param {number} rent - Live rent of a stake account, used to predict what re-delegation restakes
    * @param {MarinadeState} marinadeState - Marinade State needed for retrieving validator info
    */
   async depositStakeAccountByAccount(
@@ -465,8 +483,6 @@ export class Marinade {
       activationEpoch,
       isCoolingDown,
       isLockedUp,
-      stakedLamports,
-      balanceLamports,
     } = stakeAccountInfo
 
     if (!authorizedWithdrawerAddress) {
@@ -491,19 +507,14 @@ export class Marinade {
       )
     }
 
-    if (stakedLamports && balanceLamports?.gt(stakedLamports)) {
-      const lamportsToWithdraw =
-        balanceLamports.sub(stakedLamports).toNumber() - rent
-      if (lamportsToWithdraw > 0)
-        transaction.add(
-          web3.StakeProgram.withdraw({
-            stakePubkey: stakeAccountInfo.address,
-            authorizedPubkey: ownerAddress,
-            toPubkey: ownerAddress,
-            lamports: lamportsToWithdraw,
-          })
-        )
-    }
+    transaction.instructions.push(
+      ...stakeAccountBalanceAlignmentInstructions(
+        stakeAccountInfo,
+        ownerAddress,
+        currentEpoch.epoch,
+        rent
+      )
+    )
 
     const waitEpochs = 2
     const earliestDepositEpoch = activationEpoch.addn(waitEpochs)
@@ -591,7 +602,9 @@ export class Marinade {
 
     if (
       stakeAccountInfo.balanceLamports &&
-      stakeAccountInfo.balanceLamports?.sub(solToKeep).toNumber() < 1
+      stakeAccountInfo.balanceLamports
+        ?.sub(solToKeep)
+        .lt(new BN(LAMPORTS_PER_SOL))
     ) {
       throw new Error("Can't deposit less than 1 SOL")
     }
@@ -931,6 +944,11 @@ export class Marinade {
     }
 
     const instructions: web3.TransactionInstruction[] = []
+    // the stake pool pre-funds the stake account it splits into with the same rent
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
     const validatorSet = new Set(
       validators.filter(v => v.score).map(v => v.vote_account)
@@ -968,6 +986,7 @@ export class Marinade {
       marinadeState
     )
 
+    const stakeAccountAddress = withdrawTx.signers[1].publicKey
     const depositInstruction =
       await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
         {
@@ -975,13 +994,20 @@ export class Marinade {
           marinadeState,
           duplicationFlag,
           ownerAddress,
-          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          stakeAccountAddress,
           authorizedWithdrawerAddress: ownerAddress,
           associatedMSolTokenAccountAddress,
         }
       )
 
-    instructions.push(depositInstruction)
+    instructions.push(
+      ...newStakeAccountBalanceAlignmentInstructions(
+        stakeAccountAddress,
+        ownerAddress,
+        rent
+      ),
+      depositInstruction
+    )
 
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')
@@ -1033,6 +1059,11 @@ export class Marinade {
     }
 
     const instructions: web3.TransactionInstruction[] = []
+    // the stake pool pre-funds the stake account it splits into with the same rent
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
     const validatorSet = new Set(
       validators.filter(v => v.score).map(v => v.vote_account)
@@ -1099,6 +1130,7 @@ export class Marinade {
       marinadeState
     )
 
+    const stakeAccountAddress = withdrawTx.signers[1].publicKey
     const depositInstruction =
       await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
         {
@@ -1106,7 +1138,7 @@ export class Marinade {
           marinadeState,
           duplicationFlag,
           ownerAddress,
-          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          stakeAccountAddress,
           authorizedWithdrawerAddress: ownerAddress,
           associatedMSolTokenAccountAddress,
         }
@@ -1119,8 +1151,15 @@ export class Marinade {
         ownerAddress,
         associatedMSolTokenAccountAddress,
       })
-    instructions.push(depositInstruction)
-    instructions.push(liquidUnstakeInstruction)
+    instructions.push(
+      ...newStakeAccountBalanceAlignmentInstructions(
+        stakeAccountAddress,
+        ownerAddress,
+        rent
+      ),
+      depositInstruction,
+      liquidUnstakeInstruction
+    )
 
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')
