@@ -1,3 +1,16 @@
+## v6.1.0
+
+### Fix:
+
+    - Top up the stake account balance to the rent exempt reserve frozen by SIMD-0437
+      before depositing it (deposit stake account and stake pool token flows)
+    - Expose stake account meta.rentExemptReserve in the parsed stake account info
+
+### Feat:
+
+    - Expose the stake account balance alignment helpers in MarinadeUtils for clients
+      that build the deposit stake account instruction themselves
+
 ## v5.0.18
 
 ### Chore:

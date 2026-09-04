@@ -35,6 +35,10 @@ import {
   selectSpecificValidator,
 } from './util/stake-pool-helpers'
 import {
+  newStakeAccountBalanceAlignmentInstructions,
+  stakeAccountBalanceAlignmentInstructions,
+} from './util/stake-account-helpers'
+import {
   Keypair,
   LAMPORTS_PER_SOL,
   PublicKey,
@@ -384,6 +388,12 @@ export class Marinade {
     }
 
     const marinadeState = await this.getMarinadeState()
+    const { epoch: currentEpoch } =
+      await this.provider.connection.getEpochInfo()
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
     const delegateTransaction = StakeProgram.delegate({
       stakePubkey: stakeAccountAddress,
@@ -430,7 +440,15 @@ export class Marinade {
         }
       )
 
-    delegateTransaction.instructions.push(depositInstruction)
+    delegateTransaction.instructions.push(
+      ...stakeAccountBalanceAlignmentInstructions(
+        stakeAccountInfo,
+        ownerAddress,
+        currentEpoch,
+        rent
+      ),
+      depositInstruction
+    )
 
     return {
       transaction: delegateTransaction,
@@ -465,8 +483,6 @@ export class Marinade {
       activationEpoch,
       isCoolingDown,
       isLockedUp,
-      stakedLamports,
-      balanceLamports,
     } = stakeAccountInfo
 
     if (!authorizedWithdrawerAddress) {
@@ -491,19 +507,14 @@ export class Marinade {
       )
     }
 
-    if (stakedLamports && balanceLamports?.gt(stakedLamports)) {
-      const lamportsToWithdraw =
-        balanceLamports.sub(stakedLamports).toNumber() - rent
-      if (lamportsToWithdraw > 0)
-        transaction.add(
-          web3.StakeProgram.withdraw({
-            stakePubkey: stakeAccountInfo.address,
-            authorizedPubkey: ownerAddress,
-            toPubkey: ownerAddress,
-            lamports: lamportsToWithdraw,
-          })
-        )
-    }
+    transaction.instructions.push(
+      ...stakeAccountBalanceAlignmentInstructions(
+        stakeAccountInfo,
+        ownerAddress,
+        currentEpoch.epoch,
+        rent
+      )
+    )
 
     const waitEpochs = 2
     const earliestDepositEpoch = activationEpoch.addn(waitEpochs)
@@ -968,6 +979,7 @@ export class Marinade {
       marinadeState
     )
 
+    const stakeAccountAddress = withdrawTx.signers[1].publicKey
     const depositInstruction =
       await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
         {
@@ -975,13 +987,20 @@ export class Marinade {
           marinadeState,
           duplicationFlag,
           ownerAddress,
-          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          stakeAccountAddress,
           authorizedWithdrawerAddress: ownerAddress,
           associatedMSolTokenAccountAddress,
         }
       )
 
-    instructions.push(depositInstruction)
+    instructions.push(
+      ...newStakeAccountBalanceAlignmentInstructions(
+        withdrawTx.instructions,
+        stakeAccountAddress,
+        ownerAddress
+      ),
+      depositInstruction
+    )
 
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')
@@ -1099,6 +1118,7 @@ export class Marinade {
       marinadeState
     )
 
+    const stakeAccountAddress = withdrawTx.signers[1].publicKey
     const depositInstruction =
       await this.provideReferralOrMainProgram().depositStakeAccountInstructionBuilder(
         {
@@ -1106,7 +1126,7 @@ export class Marinade {
           marinadeState,
           duplicationFlag,
           ownerAddress,
-          stakeAccountAddress: withdrawTx.signers[1].publicKey,
+          stakeAccountAddress,
           authorizedWithdrawerAddress: ownerAddress,
           associatedMSolTokenAccountAddress,
         }
@@ -1119,8 +1139,15 @@ export class Marinade {
         ownerAddress,
         associatedMSolTokenAccountAddress,
       })
-    instructions.push(depositInstruction)
-    instructions.push(liquidUnstakeInstruction)
+    instructions.push(
+      ...newStakeAccountBalanceAlignmentInstructions(
+        withdrawTx.instructions,
+        stakeAccountAddress,
+        ownerAddress
+      ),
+      depositInstruction,
+      liquidUnstakeInstruction
+    )
 
     const { blockhash: recentBlockhash } =
       await this.config.connection.getLatestBlockhash('finalized')

@@ -157,6 +157,50 @@ const signature = await provider.send(transaction)
 
 For more examples have a look at [Marinade TS CLI](https://github.com/marinade-finance/marinade-ts-cli)
 
+## Depositing stake accounts
+
+The liquid staking program requires a deposited stake account to satisfy
+`lamports == delegation.stake + meta.rent_exempt_reserve`.
+
+The [SIMD-0437](https://github.com/solana-foundation/solana-improvement-documents/blob/main/proposals/0437-incremental-rent-reduction.md)
+rent reduction lowered the rent, while the stake program keeps freezing `meta.rent_exempt_reserve`
+of every new account at the pre-reduction `2_282_880` lamports. Every stake account delegated or
+split after the reduction therefore holds less than the program expects, and the deposit is
+rejected with `WrongStakeBalance` (6048).
+
+The SDK deposit methods handle it. They align the stake account balance with a plain SOL transfer
+before the deposit instruction. Build the `deposit_stake_account` instruction yourself and you have
+to do the same:
+
+```ts
+const stakeAccountInfo = await MarinadeUtils.getParsedStakeAccountInfo(
+  connection,
+  stakeAccountAddress
+)
+const rent = await connection.getMinimumBalanceForRentExemption(
+  web3.StakeProgram.space
+)
+const { epoch } = await connection.getEpochInfo()
+
+instructions.push(
+  ...MarinadeUtils.stakeAccountBalanceAlignmentInstructions(
+    stakeAccountInfo,
+    ownerAddress,
+    epoch,
+    rent
+  ),
+  depositStakeAccountInstruction
+)
+```
+
+For a stake account created within the same transaction, for example one split out of a stake pool,
+use `MarinadeUtils.newStakeAccountBalanceAlignmentInstructions` instead. It takes the pre-funding
+from the `SystemProgram.createAccount` instruction that creates the account.
+
+The top-up is `2_282_880 - getMinimumBalanceForRentExemption(200)`, which is 205,656 lamports at
+SIMD-0437 step 1 and 2,054,592 lamports at the final step. Always compute it, never hardcode it.
+The lamports stay in the stake account as non-delegated balance and no mSOL is minted for them.
+
 ## Learn more
 - [Marinade web](https://marinade.finance)
 - [Marinade docs](https://docs.marinade.finance/)

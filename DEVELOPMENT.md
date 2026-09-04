@@ -43,3 +43,20 @@ The integration tests are located at `./test/**`.
 Integration tests are expected to be run within the Github actions.
 A Docker image containing the pre-installed solana toolchain and anchor
 is pushed into Marinade docker repository at `public.ecr.aws/n0y9d4d4/marinade.finance/solana-test-validator:latest`.
+
+### Manual testing
+
+Manual test scripts are located at `./test/manual/`. They are not part of any test suite
+and they are executed against a [surfpool](https://surfpool.run) fork of the mainnet.
+
+```
+surfpool start -u https://api.mainnet-beta.solana.com --ci --no-deploy
+pnpm exec ts-node test/manual/simd-0437-deposit-top-up.ts
+```
+
+`simd-0437-deposit-top-up.ts` verifies the stake account balance top-up that the deposit flows
+need since the SIMD-0437 rent reduction. It copies the mainnet rent sysvar into the fork, then
+runs `depositStakeAccount` on synthesized stake accounts of both the pre-reduction and the
+post-reduction balance shape, plus `depositStakePoolToken` and `liquidateStakePoolToken` on a
+stake pool token. Every case expects `WrongStakeBalance` for the pre-fix instructions and a
+confirmed transaction for the SDK ones.
