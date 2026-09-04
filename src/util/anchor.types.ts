@@ -12,7 +12,7 @@ export interface ParsedStakeAccountInfo {
   isLockedUp: boolean
   balanceLamports: BN | null
   stakedLamports: BN | null
-  rentExemptReserveLamports: BN | null
+  rentExemptReserveLamports?: BN | null
 }
 
 export interface ProcessedEpochInfo {

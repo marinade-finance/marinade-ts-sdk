@@ -14,12 +14,14 @@ const STAKE_POOL_ADDRESS = new web3.PublicKey(
   process.env.STAKE_POOL ?? 'Jito4APyf642JPZPx3hGc6WWJ8zPKtRbRs4P815Awbb'
 )
 const POOL_TOKENS_TO_DEPOSIT = 10
+const WRONG_STAKE_BALANCE = 6048
 
 const OFFSET_RENT_EXEMPT_RESERVE = 4
 const OFFSET_STAKER = 12
 const OFFSET_WITHDRAWER = 44
 const OFFSET_VOTER = 124
 const OFFSET_STAKE = 156
+const OFFSET_DEACTIVATION_EPOCH = 172
 
 async function surfnetRpc(method: string, params: unknown[]): Promise<unknown> {
   const response = await fetch(SURFPOOL_URL, {
@@ -71,6 +73,67 @@ function logsOfInterest(logs: string[] | null): string {
     .join('\n')
 }
 
+function assertWrongStakeBalance(
+  err: web3.SimulatedTransactionResponse['err'],
+  logs: string[] | null
+): void {
+  const custom = (
+    err as { InstructionError?: [number, { Custom?: number }] } | null
+  )?.InstructionError?.[1]?.Custom
+  if (custom !== WRONG_STAKE_BALANCE) {
+    throw new Error(
+      `Expected the pre-fix instructions to fail with WrongStakeBalance (${WRONG_STAKE_BALANCE}), got ${JSON.stringify(
+        err
+      )}`
+    )
+  }
+  console.log('pre-fix simulation failed as expected:')
+  console.log(logsOfInterest(logs))
+}
+
+async function assertPreFixFails(
+  connection: web3.Connection,
+  user: web3.Keypair,
+  stakeAccountInfo: ParsedStakeAccountInfo,
+  transaction: web3.Transaction,
+  stakeAccountAddress: web3.PublicKey,
+  rent: number
+): Promise<void> {
+  const preFixTransaction = new web3.Transaction().add(
+    ...preFixAlignmentInstructions(stakeAccountInfo, user.publicKey, rent),
+    ...transaction.instructions.filter(
+      instruction => !isTopUp(instruction, stakeAccountAddress)
+    )
+  )
+  const preFix = await connection.simulateTransaction(preFixTransaction, [user])
+  assertWrongStakeBalance(preFix.value.err, preFix.value.logs)
+}
+
+async function assertDepositedUnderMarinade(
+  connection: web3.Connection,
+  marinadeState: MarinadeState,
+  user: web3.PublicKey,
+  stakeAccountAddress: web3.PublicKey
+): Promise<void> {
+  const deposited = await getParsedStakeAccountInfo(
+    connection,
+    stakeAccountAddress
+  )
+  const stakeWithdrawAuthority = await marinadeState.stakeWithdrawAuthority()
+  if (!deposited.authorizedWithdrawerAddress!.equals(stakeWithdrawAuthority)) {
+    throw new Error(
+      `Stake account withdrawer is ${deposited.authorizedWithdrawerAddress}, expected ${stakeWithdrawAuthority}`
+    )
+  }
+  console.log(
+    `stake account under Marinade withdraw authority, user mSOL: ${await mSolBalance(
+      connection,
+      marinadeState,
+      user
+    )}`
+  )
+}
+
 function isTopUp(
   instruction: web3.TransactionInstruction,
   stakeAccountAddress: web3.PublicKey
@@ -106,17 +169,22 @@ async function synthesizeStakeAccount(
   template: Uint8Array,
   balanceLamports: BN,
   voteAccount: web3.PublicKey,
-  user: web3.PublicKey
+  user: web3.PublicKey,
+  deactivationEpoch?: number
 ): Promise<web3.PublicKey> {
   const data = Uint8Array.from(template)
   data.set(user.toBytes(), OFFSET_STAKER)
   data.set(user.toBytes(), OFFSET_WITHDRAWER)
   data.set(voteAccount.toBytes(), OFFSET_VOTER)
-  new DataView(data.buffer).setBigUint64(
-    OFFSET_STAKE,
-    BigInt(STAKED_LAMPORTS.toString()),
-    true
-  )
+  const view = new DataView(data.buffer)
+  view.setBigUint64(OFFSET_STAKE, BigInt(STAKED_LAMPORTS.toString()), true)
+  if (deactivationEpoch !== undefined) {
+    view.setBigUint64(
+      OFFSET_DEACTIVATION_EPOCH,
+      BigInt(deactivationEpoch),
+      true
+    )
+  }
 
   const address = web3.Keypair.generate().publicKey
   await setAccount(address, {
@@ -231,11 +299,7 @@ async function stakePoolTokenCase(
     new web3.VersionedTransaction(preFixMessage),
     { sigVerify: false, replaceRecentBlockhash: true }
   )
-  if (!preFix.value.err) {
-    throw new Error('The pre-fix instructions were expected to fail')
-  }
-  console.log('pre-fix simulation failed as expected:')
-  console.log(logsOfInterest(preFix.value.logs))
+  assertWrongStakeBalance(preFix.value.err, preFix.value.logs)
 
   transaction.sign([user])
   const signature = await connection.sendTransaction(transaction)
@@ -245,22 +309,11 @@ async function stakePoolTokenCase(
   )
   console.log(`${name} confirmed: ${signature}`)
 
-  const deposited = await getParsedStakeAccountInfo(
+  await assertDepositedUnderMarinade(
     connection,
+    marinadeState,
+    user.publicKey,
     stakeAccountAddress
-  )
-  const stakeWithdrawAuthority = await marinadeState.stakeWithdrawAuthority()
-  if (!deposited.authorizedWithdrawerAddress!.equals(stakeWithdrawAuthority)) {
-    throw new Error(
-      `Stake account withdrawer is ${deposited.authorizedWithdrawerAddress}, expected ${stakeWithdrawAuthority}`
-    )
-  }
-  console.log(
-    `stake account under Marinade withdraw authority, user mSOL: ${await mSolBalance(
-      connection,
-      marinadeState,
-      user.publicKey
-    )}`
   )
 }
 
@@ -314,6 +367,7 @@ async function main() {
     )
   }
 
+  const { epoch: currentEpoch } = await connection.getEpochInfo()
   const cases = [
     {
       name: 'stake account delegated after the rent reduction',
@@ -325,15 +379,27 @@ async function main() {
       balanceLamports: STAKED_LAMPORTS.add(frozenReserve),
       expectedTopUp: new BN(0),
     },
+    {
+      name: 'cooled down stake account that the SDK re-delegates',
+      balanceLamports: STAKED_LAMPORTS.add(frozenReserve),
+      expectedTopUp: rentGap,
+      deactivationEpoch: currentEpoch - 1,
+    },
   ]
 
-  for (const { name, balanceLamports, expectedTopUp } of cases) {
+  for (const {
+    name,
+    balanceLamports,
+    expectedTopUp,
+    deactivationEpoch,
+  } of cases) {
     console.log(`\n=== ${name} ===`)
     const stakeAccountAddress = await synthesizeStakeAccount(
       Uint8Array.from(template.data),
       balanceLamports,
       voteAccount,
-      user.publicKey
+      user.publicKey,
+      deactivationEpoch
     )
     const stakeAccountInfo = await getParsedStakeAccountInfo(
       connection,
@@ -365,24 +431,16 @@ async function main() {
     }
     console.log(`SDK top-up: ${toppedUp} lamports`)
 
-    const preFixTransaction = new web3.Transaction().add(
-      ...preFixAlignmentInstructions(
+    if (deactivationEpoch === undefined) {
+      await assertPreFixFails(
+        connection,
+        user,
         stakeAccountInfo,
-        user.publicKey,
+        transaction,
+        stakeAccountAddress,
         liveRent
-      ),
-      ...transaction.instructions.filter(
-        instruction => !isTopUp(instruction, stakeAccountAddress)
       )
-    )
-    const preFix = await connection.simulateTransaction(preFixTransaction, [
-      user,
-    ])
-    if (!preFix.value.err) {
-      throw new Error('The pre-fix instructions were expected to fail')
     }
-    console.log('pre-fix simulation failed as expected:')
-    console.log(logsOfInterest(preFix.value.logs))
 
     const signature = await web3.sendAndConfirmTransaction(
       connection,
@@ -395,26 +453,17 @@ async function main() {
       connection,
       stakeAccountAddress
     )
-    const expectedBalance = STAKED_LAMPORTS.add(frozenReserve)
+    const expectedBalance = balanceLamports.add(expectedTopUp)
     if (!deposited.balanceLamports!.eq(expectedBalance)) {
       throw new Error(
         `Expected balance ${expectedBalance}, got ${deposited.balanceLamports}`
       )
     }
-    const stakeWithdrawAuthority = await marinadeState.stakeWithdrawAuthority()
-    if (
-      !deposited.authorizedWithdrawerAddress!.equals(stakeWithdrawAuthority)
-    ) {
-      throw new Error(
-        `Stake account withdrawer is ${deposited.authorizedWithdrawerAddress}, expected ${stakeWithdrawAuthority}`
-      )
-    }
-    console.log(
-      `stake account under Marinade withdraw authority, user mSOL: ${await mSolBalance(
-        connection,
-        marinadeState,
-        user.publicKey
-      )}`
+    await assertDepositedUnderMarinade(
+      connection,
+      marinadeState,
+      user.publicKey,
+      stakeAccountAddress
     )
   }
 

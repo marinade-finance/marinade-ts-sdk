@@ -134,46 +134,24 @@ describe('stakeAccountBalanceAlignmentInstructions', () => {
 })
 
 describe('newStakeAccountBalanceAlignmentInstructions', () => {
-  function creationInstructions(lamports: number) {
-    return [
-      web3.SystemProgram.createAccount({
-        fromPubkey: OWNER,
-        newAccountPubkey: STAKE_ACCOUNT,
-        lamports,
-        space: web3.StakeProgram.space,
-        programId: web3.StakeProgram.programId,
-      }),
-    ]
-  }
-
-  it('tops up an account pre-funded with the reduced rent', () => {
+  it('tops up an account whose non-delegated balance is the reduced rent', () => {
     const instructions = newStakeAccountBalanceAlignmentInstructions(
-      creationInstructions(LIVE_RENT),
       STAKE_ACCOUNT,
-      OWNER
+      OWNER,
+      LIVE_RENT
     )
 
     expect(instructions).toHaveLength(1)
     expect(transferredLamports(instructions[0])).toEqual(RENT_GAP)
   })
 
-  it('does nothing for an account pre-funded with the frozen reserve', () => {
+  it('does nothing when the non-delegated balance already is the frozen reserve', () => {
     const instructions = newStakeAccountBalanceAlignmentInstructions(
-      creationInstructions(FROZEN_RENT_EXEMPT_RESERVE.toNumber()),
       STAKE_ACCOUNT,
-      OWNER
+      OWNER,
+      FROZEN_RENT_EXEMPT_RESERVE.toNumber()
     )
 
     expect(instructions).toHaveLength(0)
-  })
-
-  it('fails when the stake account is not created by the given instructions', () => {
-    expect(() =>
-      newStakeAccountBalanceAlignmentInstructions(
-        creationInstructions(LIVE_RENT),
-        web3.Keypair.generate().publicKey,
-        OWNER
-      )
-    ).toThrow('Failed to find the creation of the stake account')
   })
 })

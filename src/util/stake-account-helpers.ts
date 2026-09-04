@@ -4,8 +4,7 @@ import { ParsedStakeAccountInfo } from './anchor.types'
 // the stake program freezes meta.rent_exempt_reserve of every new account at this pre-SIMD-0437 value
 const FROZEN_RENT_EXEMPT_RESERVE = 2_282_880
 
-// SIMD-0437 lowered the rent while the stake program keeps writing the pre-reduction value into
-// meta.rent_exempt_reserve, which is the value deposit_stake_account compares the balance against
+// deposit_stake_account compares the balance against meta.rent_exempt_reserve, which the stake program keeps writing at the pre-SIMD-0437 rent
 export function stakeAccountBalanceAlignmentInstructions(
   stakeAccountInfo: ParsedStakeAccountInfo,
   ownerAddress: web3.PublicKey,
@@ -32,7 +31,7 @@ export function stakeAccountBalanceAlignmentInstructions(
     )
   }
 
-  // a cooled down account gets re-delegated by the caller, which restakes everything above the live rent
+  // the caller re-delegates a cooled down account before these instructions, which restakes everything above the live rent
   const isRedelegated = isCoolingDown && deactivationEpoch.ltn(currentEpoch)
   const balanceDelta = isRedelegated
     ? rentExemptReserveLamports.subn(rent)
@@ -60,30 +59,13 @@ export function stakeAccountBalanceAlignmentInstructions(
   ]
 }
 
-// the stake account is created within the same transaction, so the reserve the split freezes
-// into it is not readable anywhere yet
+// the stake account does not exist yet, so its frozen reserve can only come from the constant
 export function newStakeAccountBalanceAlignmentInstructions(
-  instructions: web3.TransactionInstruction[],
   stakeAccountAddress: web3.PublicKey,
-  ownerAddress: web3.PublicKey
+  ownerAddress: web3.PublicKey,
+  nonDelegatedLamports: number
 ): web3.TransactionInstruction[] {
-  const creation = instructions.find(
-    instruction =>
-      instruction.programId.equals(web3.SystemProgram.programId) &&
-      web3.SystemInstruction.decodeInstructionType(instruction) === 'Create' &&
-      web3.SystemInstruction.decodeCreateAccount(
-        instruction
-      ).newAccountPubkey.equals(stakeAccountAddress)
-  )
-  if (!creation) {
-    throw new Error(
-      `Failed to find the creation of the stake account ${stakeAccountAddress.toBase58()}`
-    )
-  }
-
-  const balanceDelta =
-    FROZEN_RENT_EXEMPT_RESERVE -
-    web3.SystemInstruction.decodeCreateAccount(creation).lamports
+  const balanceDelta = FROZEN_RENT_EXEMPT_RESERVE - nonDelegatedLamports
   if (balanceDelta <= 0) {
     return []
   }

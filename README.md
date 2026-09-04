@@ -193,13 +193,30 @@ instructions.push(
 )
 ```
 
-For a stake account created within the same transaction, for example one split out of a stake pool,
-use `MarinadeUtils.newStakeAccountBalanceAlignmentInstructions` instead. It takes the pre-funding
-from the `SystemProgram.createAccount` instruction that creates the account.
+Append the returned instructions **after** any `StakeProgram.delegate` of your own. A cooled-down
+account is re-delegated first, and the top-up is derived from what re-delegation restakes. The
+`rent` argument must be the live `getMinimumBalanceForRentExemption(web3.StakeProgram.space)`.
 
-The top-up is `2_282_880 - getMinimumBalanceForRentExemption(200)`, which is 205,656 lamports at
-SIMD-0437 step 1 and 2,054,592 lamports at the final step. Always compute it, never hardcode it.
-The lamports stay in the stake account as non-delegated balance and no mSOL is minted for them.
+A stake account created within the same transaction cannot be read yet, so pass the lamports that
+will stay non-delegated to `MarinadeUtils.newStakeAccountBalanceAlignmentInstructions` instead —
+the pre-funding of a stake pool split destination, or the live rent when your own
+`StakeProgram.delegate` restakes everything above it:
+
+```ts
+const alignment = MarinadeUtils.newStakeAccountBalanceAlignmentInstructions(
+  stakeAccountAddress,
+  ownerAddress,
+  await connection.getMinimumBalanceForRentExemption(web3.StakeProgram.space)
+)
+```
+
+For such a freshly delegated account the gap is
+`2_282_880 - getMinimumBalanceForRentExemption(web3.StakeProgram.space)` — 205,656 lamports at
+SIMD-0437 step 1, 2,054,592 at the final step. That formula holds only for a new account. An
+existing one goes through `stakeAccountBalanceAlignmentInstructions`, which reads
+`meta.rentExemptReserve` against the current balance and often returns nothing at all. Never
+hardcode either value. The topped-up lamports stay in the stake account as non-delegated balance
+and no mSOL is minted for them.
 
 ## Learn more
 - [Marinade web](https://marinade.finance)

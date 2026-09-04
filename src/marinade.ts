@@ -462,7 +462,7 @@ export class Marinade {
    * Note that the stake must be fully activated and the validator must be known to Marinade
    *
    * @param {ParsedStakeAccountInfo} stakeAccountInfo - Parsed Stake Account info
-   * @param {number} rent - Rent needed for a stake account
+   * @param {number} rent - Live rent of a stake account, used to predict what re-delegation restakes
    * @param {MarinadeState} marinadeState - Marinade State needed for retrieving validator info
    */
   async depositStakeAccountByAccount(
@@ -602,7 +602,9 @@ export class Marinade {
 
     if (
       stakeAccountInfo.balanceLamports &&
-      stakeAccountInfo.balanceLamports?.sub(solToKeep).toNumber() < 1
+      stakeAccountInfo.balanceLamports
+        ?.sub(solToKeep)
+        .lt(new BN(LAMPORTS_PER_SOL))
     ) {
       throw new Error("Can't deposit less than 1 SOL")
     }
@@ -942,6 +944,11 @@ export class Marinade {
     }
 
     const instructions: web3.TransactionInstruction[] = []
+    // the stake pool pre-funds the stake account it splits into with the same rent
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
     const validatorSet = new Set(
       validators.filter(v => v.score).map(v => v.vote_account)
@@ -995,9 +1002,9 @@ export class Marinade {
 
     instructions.push(
       ...newStakeAccountBalanceAlignmentInstructions(
-        withdrawTx.instructions,
         stakeAccountAddress,
-        ownerAddress
+        ownerAddress,
+        rent
       ),
       depositInstruction
     )
@@ -1052,6 +1059,11 @@ export class Marinade {
     }
 
     const instructions: web3.TransactionInstruction[] = []
+    // the stake pool pre-funds the stake account it splits into with the same rent
+    const rent =
+      await this.provider.connection.getMinimumBalanceForRentExemption(
+        web3.StakeProgram.space
+      )
 
     const validatorSet = new Set(
       validators.filter(v => v.score).map(v => v.vote_account)
@@ -1141,9 +1153,9 @@ export class Marinade {
       })
     instructions.push(
       ...newStakeAccountBalanceAlignmentInstructions(
-        withdrawTx.instructions,
         stakeAccountAddress,
-        ownerAddress
+        ownerAddress,
+        rent
       ),
       depositInstruction,
       liquidUnstakeInstruction
