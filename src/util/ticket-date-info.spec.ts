@@ -40,6 +40,24 @@ describe('ticket-date-info', () => {
       })
     })
   })
+  describe('without a measured slot duration', () => {
+    const unmeasuredEpoch: ProcessedEpochInfo = {
+      ...currentEpoch,
+      avgSlotDuration: null,
+      msElapsed: null,
+      msUntilEpochEnd: null,
+    }
+
+    it('gives no due date for an existing ticket', () => {
+      expect(getTicketDateInfo(unmeasuredEpoch, 317, 1655201767918)).toEqual({})
+    })
+
+    it('gives no estimated due date', () => {
+      expect(
+        estimateTicketDateInfo(unmeasuredEpoch, 1655201767918, 18000)
+      ).toEqual({})
+    })
+  })
   describe('estimate due dates', () => {
     it('estimated date info created before delta should be claimable next epoch', () => {
       const actualResult = estimateTicketDateInfo(

@@ -18,6 +18,12 @@ export function getTicketDateInfo(
   createdEpochNumber: number,
   currentTime: number = Date.now()
 ): TicketDateInfo {
+  if (
+    currentEpoch.avgSlotDuration === null ||
+    currentEpoch.msElapsed === null
+  ) {
+    return {}
+  }
   const currentEpochStart = currentTime - currentEpoch.msElapsed
   const estimatedEpochDuration =
     currentEpoch.avgSlotDuration * currentEpoch.slotsInEpoch
@@ -35,6 +41,12 @@ export function estimateTicketDateInfo(
   currentTime: number = Date.now(),
   slotsForStakeDelta: number
 ): TicketDateInfo {
+  if (
+    currentEpoch.avgSlotDuration === null ||
+    currentEpoch.msUntilEpochEnd === null
+  ) {
+    return {}
+  }
   const currentEpochEnd = currentTime + currentEpoch.msUntilEpochEnd
   const estimatedEpochDuration =
     currentEpoch.avgSlotDuration * currentEpoch.slotsInEpoch

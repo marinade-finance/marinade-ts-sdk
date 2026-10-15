@@ -1,3 +1,16 @@
+## v7.0.0
+
+### Breaking:
+
+    - `ProcessedEpochInfo.avgSlotDuration`, `msUntilEpochEnd` and `msElapsed` are `number | null`;
+      null when the RPC performance samples give no plausible slot rate (was NaN or a skewed value)
+    - `getTicketDateInfo` and `estimateTicketDateInfo` return no due date when the slot duration is null
+
+### Feat:
+
+    - `slotDurationMsFromSamples` measures ms per slot from `getRecentPerformanceSamples`,
+      skipping empty or malformed windows and rejecting rates outside 50 ms - 2 s
+
 ## v6.1.0
 
 ### Fix:

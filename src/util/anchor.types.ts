@@ -22,9 +22,9 @@ export interface ProcessedEpochInfo {
   absoluteSlot: number
   blockHeight?: number
   transactionCount?: number
-  msUntilEpochEnd: number
-  msElapsed: number
+  msUntilEpochEnd: number | null
+  msElapsed: number | null
   epochProgress: number
-  avgSlotDuration: number
+  avgSlotDuration: number | null
   slotsRemainingInEpoch: number
 }
