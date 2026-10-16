@@ -4,7 +4,8 @@
 
     - `ProcessedEpochInfo.avgSlotDuration`, `msUntilEpochEnd` and `msElapsed` are `number | null`;
       null when the RPC performance samples give no plausible slot rate (was NaN or a skewed value)
-    - `getTicketDateInfo` and `estimateTicketDateInfo` return no due date when the slot duration is null
+    - `getTicketDateInfo` and `estimateTicketDateInfo` return no `ticketDueDate` when the slot duration is null;
+      `ticketDue` is kept only where the epoch number decides it
 
 ### Feat:
 

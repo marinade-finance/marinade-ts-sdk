@@ -49,13 +49,23 @@ describe('ticket-date-info', () => {
     }
 
     it('gives no due date for an existing ticket', () => {
+      expect(getTicketDateInfo(unmeasuredEpoch, 318, 1655201767918)).toEqual({})
       expect(getTicketDateInfo(unmeasuredEpoch, 317, 1655201767918)).toEqual({})
     })
 
-    it('gives no estimated due date', () => {
+    it('marks a ticket two epochs old as due', () => {
+      expect(getTicketDateInfo(unmeasuredEpoch, 316, 1655201767918)).toEqual({
+        ticketDue: true,
+      })
+      expect(getTicketDateInfo(unmeasuredEpoch, 315, 1655201767918)).toEqual({
+        ticketDue: true,
+      })
+    })
+
+    it('gives no estimated due date for a ticket that is not due', () => {
       expect(
         estimateTicketDateInfo(unmeasuredEpoch, 1655201767918, 18000)
-      ).toEqual({})
+      ).toEqual({ ticketDue: false })
     })
   })
   describe('estimate due dates', () => {

@@ -9,11 +9,7 @@ export const SLOT_DURATION_SAMPLE_COUNT = 60
 const MIN_SLOT_DURATION_MS = 50
 const MAX_SLOT_DURATION_MS = 2000
 
-/**
- * Measured wall-clock milliseconds per slot from `getRecentPerformanceSamples`,
- * pooled as total seconds over total slots. Samples without slots or seconds are
- * skipped. Returns null when nothing usable remains or the rate is implausible.
- */
+// Pooled ms per slot from getRecentPerformanceSamples; null when no plausible rate.
 export function slotDurationMsFromSamples(
   samples: SlotDurationSample[]
 ): number | null {
