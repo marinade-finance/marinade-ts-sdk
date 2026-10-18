@@ -5,10 +5,12 @@ on:
     paths:
       - 'src/programs/idl/json/marinade_referral.json'
       - 'src/programs/idl/json/marinade_finance.json'
+      - 'src/config/marinade-config.ts'
   pull_request:
     paths:
       - 'src/programs/idl/json/marinade_referral.json'
       - 'src/programs/idl/json/marinade_finance.json'
+      - 'src/config/marinade-config.ts'
 
 jobs:
   idl-drift:
@@ -34,3 +36,32 @@ jobs:
           rpc-url: https://api.mainnet-beta.solana.com
           fail-on-drift: 'true'
           fail-on-missing: 'true'
+      - name: source-side program id consistency (marinade-config.ts vs committed IDL addresses)
+        # Follow-up offered in the PR discussion: the TypeScript SDK has no
+        # Anchor.toml/declare_id! leg for auroraxo/declare-id-drift to read, so
+        # the source declaration lives in MarinadeConfig's PublicKey constants.
+        # This step fails when the committed IDL `address` fields and those
+        # constants disagree.
+        run: |
+          set -euo pipefail
+          config='src/config/marinade-config.ts'
+          check() {
+            local idl="$1" name="$2"
+            local idl_addr config_addr
+            if ! idl_addr=$(jq -er '.address' "$idl" 2>/dev/null); then
+              echo "::error::$idl has no address field — committed IDL does not declare its program id" >&2
+              exit 1
+            fi
+            config_addr=$(grep -A2 "$name" "$config" | grep -oE "'[1-9A-HJ-NP-Za-km-z]{32,44}'" | head -1 | tr -d "'")
+            if [ -z "$config_addr" ]; then
+              echo "::error::$name not found in $config" >&2
+              exit 1
+            fi
+            if [ "$idl_addr" != "$config_addr" ]; then
+              echo "::error::$name mismatch: IDL address $idl_addr vs MarinadeConfig $config_addr" >&2
+              exit 1
+            fi
+            echo "ok: $name = $idl_addr"
+          }
+          check 'src/programs/idl/json/marinade_finance.json' 'marinadeFinanceProgramId'
+          check 'src/programs/idl/json/marinade_referral.json' 'marinadeReferralProgramId'
