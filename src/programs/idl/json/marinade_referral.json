@@ -1,6 +1,7 @@
 {
   "version": "0.2.0",
   "name": "marinade_referral",
+  "address": "MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv",
   "instructions": [
     {
       "name": "deposit",

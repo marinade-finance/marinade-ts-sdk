@@ -1,0 +1,34 @@
+name: idl-consistency
+
+on:
+  push:
+    paths:
+      - 'src/programs/idl/json/marinade_referral.json'
+      - 'src/programs/idl/json/marinade_finance.json'
+  pull_request:
+    paths:
+      - 'src/programs/idl/json/marinade_referral.json'
+      - 'src/programs/idl/json/marinade_finance.json'
+
+jobs:
+  idl-drift:
+    name: idl-drift (committed vs on-chain)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: idl-drift — marinade_referral
+        uses: auroraxo/idl-drift@v1
+        with:
+          program: MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv
+          idl: src/programs/idl/json/marinade_referral.json
+          rpc-url: https://api.mainnet-beta.solana.com
+          fail-on-drift: 'true'
+          fail-on-missing: 'false'
+      - name: idl-drift — marinade_finance
+        uses: auroraxo/idl-drift@v1
+        with:
+          program: MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
+          idl: src/programs/idl/json/marinade_finance.json
+          rpc-url: https://api.mainnet-beta.solana.com
+          fail-on-drift: 'true'
+          fail-on-missing: 'false'
