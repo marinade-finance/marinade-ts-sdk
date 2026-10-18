@@ -17,18 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: idl-drift — marinade_referral
-        uses: auroraxo/idl-drift@v1
+        uses: auroraxo/idl-drift@3d233ab730b96114a86b9db19281ba299acc4450 # v1
         with:
           program: MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv
           idl: src/programs/idl/json/marinade_referral.json
           rpc-url: https://api.mainnet-beta.solana.com
           fail-on-drift: 'true'
+          # marinade_referral has no on-chain IDL account (PDA absent), so
+          # missing on-chain IDL is expected; drift against it is not.
           fail-on-missing: 'false'
       - name: idl-drift — marinade_finance
-        uses: auroraxo/idl-drift@v1
+        uses: auroraxo/idl-drift@3d233ab730b96114a86b9db19281ba299acc4450 # v1
         with:
           program: MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
           idl: src/programs/idl/json/marinade_finance.json
           rpc-url: https://api.mainnet-beta.solana.com
           fail-on-drift: 'true'
-          fail-on-missing: 'false'
+          fail-on-missing: 'true'
