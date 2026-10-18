@@ -1,5 +1,12 @@
 name: idl-consistency
 
+# Single source of truth for both program ids: the idl-drift `program` inputs
+# and the source-side check below all read these, so the workflow, the IDL
+# files, and MarinadeConfig cannot drift apart silently.
+env:
+  FINANCE_PROGRAM: MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
+  REFERRAL_PROGRAM: MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv
+
 on:
   push:
     paths:
@@ -21,32 +28,71 @@ jobs:
       - name: idl-drift — marinade_referral
         uses: auroraxo/idl-drift@3d233ab730b96114a86b9db19281ba299acc4450 # v1
         with:
-          program: MR2LqxoSbw831bNy68utpu5n4YqBH3AzDmddkgk9LQv
+          program: ${{ env.REFERRAL_PROGRAM }}
           idl: src/programs/idl/json/marinade_referral.json
           rpc-url: https://api.mainnet-beta.solana.com
           fail-on-drift: 'true'
           # marinade_referral has no on-chain IDL account (PDA absent), so
           # missing on-chain IDL is expected; drift against it is not.
           fail-on-missing: 'false'
+      - name: gate — marinade_referral report
+        # idl-drift exits 0 on RPC failures and undecodable IDLs (schedule-safe
+        # default). For referral, the only acceptable non-`ok` diff is a
+        # genuinely `missing` on-chain account; anything else must fail.
+        run: |
+          set -euo pipefail
+          report='idl-drift-report.json'
+          [ -f "$report" ] || { echo "::error::$report not found — action produced no report" >&2; exit 1; }
+          diff_status=$(jq -r '.checks.diff.status // "pending"' "$report")
+          onchain_status=$(jq -r '.checks.onChainIdlAccount.status // "pending"' "$report")
+          if [ "$diff_status" = "ok" ]; then
+            echo "ok: referral diff.status=ok (on-chain status=$onchain_status)"
+          elif [ "$onchain_status" = "missing" ]; then
+            echo "ok: referral on-chain IDL absent, as expected"
+          else
+            echo "::error::referral unresolved: diff.status=$diff_status onchain=$onchain_status" >&2
+            exit 1
+          fi
+          mv "$report" referral-drift-report.json
       - name: idl-drift — marinade_finance
         uses: auroraxo/idl-drift@3d233ab730b96114a86b9db19281ba299acc4450 # v1
         with:
-          program: MarBmsSgKXdrN1egZf5sqe1TMai9K1rChYNDJgjq7aD
+          program: ${{ env.FINANCE_PROGRAM }}
           idl: src/programs/idl/json/marinade_finance.json
           rpc-url: https://api.mainnet-beta.solana.com
           fail-on-drift: 'true'
           fail-on-missing: 'true'
+      - name: gate — marinade_finance report
+        # finance publishes its on-chain IDL, so only diff.status=ok counts.
+        # fail-on-missing covers absence, but not RPC failure or an
+        # undecodable account — this gate does.
+        run: |
+          set -euo pipefail
+          report='idl-drift-report.json'
+          [ -f "$report" ] || { echo "::error::$report not found — action produced no report" >&2; exit 1; }
+          diff_status=$(jq -r '.checks.diff.status // "pending"' "$report")
+          if [ "$diff_status" = "ok" ]; then
+            echo "ok: finance diff.status=ok"
+          else
+            onchain_status=$(jq -r '.checks.onChainIdlAccount.status // "pending"' "$report")
+            echo "::error::finance unresolved: diff.status=$diff_status onchain=$onchain_status" >&2
+            exit 1
+          fi
+          mv "$report" finance-drift-report.json
       - name: source-side program id consistency (marinade-config.ts vs committed IDL addresses)
         # Follow-up offered in the PR discussion: the TypeScript SDK has no
         # Anchor.toml/declare_id! leg for auroraxo/declare-id-drift to read, so
         # the source declaration lives in MarinadeConfig's PublicKey constants.
         # This step fails when the committed IDL `address` fields and those
-        # constants disagree.
+        # constants disagree. It also ties the IDL address to the workflow
+        # program input (env.*) so all three — workflow input, IDL address,
+        # MarinadeConfig constant — are checked together and cannot drift in
+        # pairs while one stays pinned.
         run: |
           set -euo pipefail
           config='src/config/marinade-config.ts'
           check() {
-            local idl="$1" name="$2"
+            local idl="$1" name="$2" wf_prog="$3"
             local idl_addr config_addr
             if ! idl_addr=$(jq -er '.address' "$idl" 2>/dev/null); then
               echo "::error::$idl has no address field — committed IDL does not declare its program id" >&2
@@ -61,7 +107,12 @@ jobs:
               echo "::error::$name mismatch: IDL address $idl_addr vs MarinadeConfig $config_addr" >&2
               exit 1
             fi
-            echo "ok: $name = $idl_addr"
+            if [ "$idl_addr" != "$wf_prog" ]; then
+              echo "::error::$name mismatch: IDL address $idl_addr vs workflow program input $wf_prog" >&2
+              exit 1
+            fi
+            echo "ok: $name = $idl_addr (workflow, IDL, MarinadeConfig all agree)"
           }
-          check 'src/programs/idl/json/marinade_finance.json' 'marinadeFinanceProgramId'
-          check 'src/programs/idl/json/marinade_referral.json' 'marinadeReferralProgramId'
+          check 'src/programs/idl/json/marinade_finance.json' 'marinadeFinanceProgramId' "$FINANCE_PROGRAM"
+          check 'src/programs/idl/json/marinade_referral.json' 'marinadeReferralProgramId' "$REFERRAL_PROGRAM"
+
