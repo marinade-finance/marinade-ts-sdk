@@ -5,6 +5,10 @@ import {
   TokenError,
 } from '@solana/spl-token'
 import { ParsedStakeAccountInfo, ProcessedEpochInfo } from './anchor.types'
+import {
+  SLOT_DURATION_SAMPLE_COUNT,
+  slotDurationMsFromSamples,
+} from './slot-duration'
 import { Connection } from '@solana/web3.js'
 
 export const SYSTEM_PROGRAM_ID = web3.SystemProgram.programId
@@ -157,22 +161,17 @@ export async function getEpochInfo(
   connection: web3.Connection
 ): Promise<ProcessedEpochInfo> {
   const epochInfo = await connection.getEpochInfo()
-  const samples = await connection.getRecentPerformanceSamples(64)
-
-  const sampleSlots = samples.reduce(
-    (slots, sample) => sample.numSlots + slots,
-    0
-  )
-  const sampleSeconds = samples.reduce(
-    (seconds, sample) => sample.samplePeriodSecs + seconds,
-    0
+  const samples = await connection.getRecentPerformanceSamples(
+    SLOT_DURATION_SAMPLE_COUNT
   )
 
-  const avgSlotDuration = (sampleSeconds / sampleSlots) * 1000
+  const avgSlotDuration = slotDurationMsFromSamples(samples)
 
   const slotsRemainingInEpoch = epochInfo.slotsInEpoch - epochInfo.slotIndex
-  const msUntilEpochEnd = avgSlotDuration * slotsRemainingInEpoch
-  const msElapsed = epochInfo.slotIndex * avgSlotDuration
+  const msUntilEpochEnd =
+    avgSlotDuration === null ? null : avgSlotDuration * slotsRemainingInEpoch
+  const msElapsed =
+    avgSlotDuration === null ? null : epochInfo.slotIndex * avgSlotDuration
 
   const epochProgress = (100 * epochInfo.slotIndex) / epochInfo.slotsInEpoch
 
