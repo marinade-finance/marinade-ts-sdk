@@ -65,8 +65,10 @@ Then:
 
 - **Environment `npm`** (Settings → Environments): under *Deployment branches and
   tags*, allow only tags matching `v*`.
-- **Tag ruleset for `v*`**: restrict creations to the release maintainers. Restrict
-  updates and deletions. Allow no bypass.
+- **Two tag rulesets for `v*`**. A ruleset's bypass list both grants creation and
+  skips its other rules, so these need separate rulesets:
+  - *Restrict creations*, with only the release maintainers on the bypass list.
+  - *Restrict updates* and *Restrict deletions*, with an empty bypass list.
 - **Branch ruleset for `main`**: require a PR with an approving review. Add a
   `CODEOWNERS` entry for `/.github/` and require Code Owner review. The release workflow
   reads the verifier and the signer list from `main`, so this review protects both.
