@@ -1,41 +1,188 @@
 name: Release
 
+# Pushing a signed vX.Y.Z tag *stages* the package on npm. Nothing becomes public until a
+# maintainer approves the staged version with their YubiKey (npm 2FA). See README.md, Releases.
+#
+#   verify-tag  tag signed on a YubiKey (FIDO2 SSH key, touch + PIN) by a key listed in
+#               .github/release-signers on main; tag on main; tag == package.json version
+#   build       pnpm install / lint / test / pack; no secrets, no OIDC token
+#   stage       `npm stage publish` of that exact tarball via npm trusted publishing (OIDC)
+#   release     draft GitHub release with the tarball and the browser bundle taken from it;
+#               publish it after approving the npm version
+
 on:
   push:
     tags:
-    - '*'
+      - 'v*'
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build:
+  verify-tag:
     runs-on: ubuntu-24.04
-
+    timeout-minutes: 5
     permissions:
-      contents: write
-
-    strategy:
-      fail-fast: true
-      matrix:
-        node-version: [20]
-
+      contents: read
+    outputs:
+      version: ${{ steps.verify.outputs.version }}
+      commit: ${{ steps.verify.outputs.commit }}
     steps:
+      # The verifier and the signer list are taken from main (protected, reviewed), not
+      # from the tagged commit, so a tag cannot bring its own signer.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Use Node.js ${{ matrix.node-version }}
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Use Node.js 24
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 24
+      - name: Verify the hardware signature on the tag
+        id: verify
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          # Fetch the annotated tag object itself (it carries the signature).
+          git fetch --no-tags --force origin "+refs/tags/${TAG}:refs/tags/${TAG}"
+          node .github/scripts/verify-release-tag.mjs \
+            --tag "$TAG" --signers .github/release-signers --branch origin/main
+
+  build:
+    needs: verify-tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      tarball: ${{ steps.pack.outputs.tarball }}
+      sha256: ${{ steps.pack.outputs.sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.verify-tag.outputs.commit }}
+          persist-credentials: false
+      - name: Use Node.js 20
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
           version: 10
-      - name: Install build and pack
-        timeout-minutes: 5
+      - name: Install, test and pack
+        timeout-minutes: 10
         run: |
-          pnpm install
-          pnpm build
-          pnpm pack
+          pnpm install --frozen-lockfile
+          pnpm pack --pack-destination pack # prepack runs lint, unit tests and build
         env:
           CI: true
+      - name: Record the tarball digest
+        id: pack
+        run: |
+          set -- pack/*.tgz
+          [ "$#" -eq 1 ] || { echo "::error::expected one tarball, got: $*"; exit 1; }
+          echo "tarball=$(basename "$1")" >> "$GITHUB_OUTPUT"
+          echo "sha256=$(sha256sum "$1" | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package
+          path: pack/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  stage:
+    needs: [verify-tag, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # npm trusted publisher is bound to this workflow + environment; the environment only
+    # accepts v* tags. This job installs no project dependencies.
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # npm trusted publishing (OIDC); there is no NPM_TOKEN
+    env:
+      TARBALL: artifact/${{ needs.build.outputs.tarball }}
+      SHA256: ${{ needs.build.outputs.sha256 }}
+      VERSION: ${{ needs.verify-tag.outputs.version }}
+    steps:
+      - name: Use Node.js 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Install npm with staged publishing support (>= 11.15)
+        env:
+          # sha512 of npm-11.21.3.tgz from the registry; this job can mint an npm token,
+          # so the CLI it runs is pinned by content, not only by version
+          NPM_TGZ_SHA512: 5Cf+jE+XctbhH/zjOOqXC+ity7eec/Tkk4Ql38tf6w+1htp2wYPHmE4c1R1Es3DY227Ac14+SLrlYJwkBicbTg==
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/npm.tgz" https://registry.npmjs.org/npm/-/npm-11.21.3.tgz
+          actual=$(openssl dgst -sha512 -binary "$RUNNER_TEMP/npm.tgz" | base64 -w0)
+          [ "$actual" = "$NPM_TGZ_SHA512" ] || { echo "::error::npm tarball integrity mismatch"; exit 1; }
+          npm install --global "$RUNNER_TEMP/npm.tgz"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+          path: artifact
+      - name: Check the tarball is the one built from the signed tag
+        run: |
+          echo "${SHA256}  ${TARBALL}" | sha256sum --check --strict
+          manifest=$(tar -xzOf "$TARBALL" package/package.json)
+          test "$(jq -r .name <<<"$manifest")" = '@marinade.finance/marinade-ts-sdk'
+          test "$(jq -r .version <<<"$manifest")" = "$VERSION"
+      - name: Stage on npm (public only after 2FA approval)
+        run: |
+          set -o pipefail
+          case "$VERSION" in *-*) dist_tag=next ;; *) dist_tag=latest ;; esac
+          npm stage publish "$TARBALL" --tag "$dist_tag" --provenance 2>&1 | tee "$RUNNER_TEMP/stage.log"
+          stage_id=$(sed -n 's/.*staged with id \([^ )]*\).*/\1/p' "$RUNNER_TEMP/stage.log" | head -n 1)
+          # shellcheck disable=SC2016 # backticks below are Markdown, not command substitution
+          {
+            echo "### Staged \`@marinade.finance/marinade-ts-sdk@${VERSION}\` (dist-tag \`${dist_tag}\`)"
+            echo
+            echo "Stage ID: \`${stage_id:-see npm stage list}\`. Not public yet. Before approving:"
+            echo
+            echo "1. Check that you pushed \`${GITHUB_REF_NAME}\` and that this run's verify-tag summary names you."
+            echo '2. Run `npm stage download <stage-id>` and compare its sha256 with the table below.'
+            echo '3. Approve with your YubiKey on npmjs.com (**Staged Packages** tab) or `npm stage approve <stage-id>`.'
+            echo '4. Publish the draft GitHub release of this tag.'
+            echo
+            echo 'A staged version nobody released, or this job failing because the version is'
+            echo 'already staged: reject it with `npm stage reject <stage-id>` and treat it as a security incident.'
+            echo
+            echo '| | |'
+            echo '|---|---|'
+            echo "| shasum | \`$(sha1sum "$TARBALL" | cut -d' ' -f1)\` |"
+            echo "| integrity | \`sha512-$(openssl dgst -sha512 -binary "$TARBALL" | base64 -w0)\` |"
+            echo "| sha256 | \`${SHA256}\` |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  github-release:
+    needs: [verify-tag, build, stage]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      TARBALL: artifact/${{ needs.build.outputs.tarball }}
+      SHA256: ${{ needs.build.outputs.sha256 }}
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package
+          path: artifact
+      - name: Take the browser bundle from the checked tarball
+        run: |
+          echo "${SHA256}  ${TARBALL}" | sha256sum --check --strict
+          mkdir -p bundle
+          tar -xzf "$TARBALL" -C bundle --strip-components=2 --wildcards 'package/dist/*.min.js'
+      # A draft, so nothing is published here before the npm version is approved
       - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
         with:
-          artifacts: "*.tgz,./dist/*.min.js"
+          artifacts: '${{ env.TARBALL }},bundle/*.min.js'
+          draft: true
           token: ${{ secrets.GITHUB_TOKEN }}

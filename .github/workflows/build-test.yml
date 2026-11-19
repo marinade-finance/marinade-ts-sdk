@@ -29,3 +29,5 @@ jobs:
           pnpm test
         env:
           CI: true
+      - name: Test the release tag verifier
+        run: node --test .github/scripts/*.test.mjs
