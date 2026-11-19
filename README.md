@@ -218,6 +218,21 @@ existing one goes through `stakeAccountBalanceAlignmentInstructions`, which read
 hardcode either value. The topped-up lamports stay in the stake account as non-delegated balance
 and no mSOL is minted for them.
 
+## Releases
+
+Releases are made by the [Release workflow](.github/workflows/release.yml) when a maintainer
+pushes a version tag (`vX.Y.Z`):
+
+1. The tag must be signed with a maintainer's hardware security key listed in
+   [`.github/release-signers`](.github/release-signers). The workflow verifies the signature,
+   including that the key was touched and its PIN entered, and that the tag matches
+   `package.json` and points to a commit on `main`.
+2. The package is built and tested, then *staged* on npm through trusted publishing; no npm
+   token is involved. A staged version can't be installed yet.
+3. A maintainer checks the staged tarball against the workflow run and approves it on npm with
+   two-factor authentication. Only then is the version published. The workflow's draft GitHub
+   release is published after that approval.
+
 ## Learn more
 - [Marinade web](https://marinade.finance)
 - [Marinade docs](https://docs.marinade.finance/)

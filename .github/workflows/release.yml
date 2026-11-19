@@ -1,7 +1,7 @@
 name: Release
 
 # Pushing a signed vX.Y.Z tag *stages* the package on npm. Nothing becomes public until a
-# maintainer approves the staged version with their YubiKey (npm 2FA). See RELEASING.md.
+# maintainer approves the staged version with their YubiKey (npm 2FA). See README.md, Releases.
 #
 #   verify-tag  tag signed on a YubiKey (FIDO2 SSH key, touch + PIN) by a key listed in
 #               .github/release-signers on main; tag on main; tag == package.json version

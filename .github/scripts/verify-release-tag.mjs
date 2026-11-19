@@ -7,7 +7,7 @@
 //
 // A signature can't prove which authenticator made it: software that emulates a FIDO
 // key could produce the same signature. That a listed key really lives on a YubiKey is
-// checked once, when the key is added to the signer list (see RELEASING.md).
+// checked once, when the key is added to the signer list.
 //
 // `git verify-tag` / `ssh-keygen -Y verify` alone are not enough: for an sk-* key they
 // report a good signature even when the authenticator says nobody touched it and no PIN

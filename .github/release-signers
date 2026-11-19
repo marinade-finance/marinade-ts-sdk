@@ -3,7 +3,7 @@
 # Only FIDO2 security keys (sk-ssh-ed25519@openssh.com) are accepted, and the release
 # workflow also requires that the tag was signed with touch + PIN. A signature can't
 # prove which device made it, so a key is added only after the PR reviewer has checked
-# it lives on the maintainer's YubiKey. See RELEASING.md.
+# it lives on the maintainer's YubiKey.
 #
 # The release workflow reads this file from main, so adding a key needs a reviewed PR.
 # While the list below is empty, every release fails at the verify-tag step.
