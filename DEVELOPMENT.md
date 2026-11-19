@@ -60,3 +60,8 @@ runs `depositStakeAccount` on synthesized stake accounts of both the pre-reducti
 post-reduction balance shape, plus `depositStakePoolToken` and `liquidateStakePoolToken` on a
 stake pool token. Every case expects `WrongStakeBalance` for the pre-fix instructions and a
 confirmed transaction for the SDK ones.
+
+## Releasing
+
+Releases are signed with a YubiKey and staged on npm for a 2FA approval,
+see [RELEASING.md](./RELEASING.md).

@@ -1,0 +1,10 @@
+# Keys allowed to sign release tags (vX.Y.Z), in ssh-keygen(1) "ALLOWED SIGNERS" format.
+#
+# Only YubiKey-resident FIDO2 keys (sk-ssh-ed25519@openssh.com) are accepted, and the
+# release workflow also requires that the tag was signed with touch + PIN.
+# See RELEASING.md for how to create a key and add it here.
+#
+# The release workflow reads this file from main, so adding a key needs a reviewed PR.
+# While the list below is empty, every release fails at the verify-tag step.
+#
+# <email> namespaces="git" sk-ssh-ed25519@openssh.com AAAA...
