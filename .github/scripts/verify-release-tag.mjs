@@ -1,9 +1,13 @@
 #!/usr/bin/env node
-// Verifies that a release tag was signed on a hardware security key (YubiKey, FIDO2)
-// by one of the keys listed in the allowed signers file.
+// Verifies that a release tag was signed with a FIDO2 security-key SSH key (sk-*) listed
+// in the allowed signers file, with the touch and PIN flags set.
 //
 // usage: node verify-release-tag.mjs --tag v6.2.0 --signers <allowed_signers>
-//                                    [--branch origin/main] [--allow-no-pin]
+//                                    [--branch origin/main]
+//
+// A signature can't prove which authenticator made it: software that emulates a FIDO
+// key could produce the same signature. That a listed key really lives on a YubiKey is
+// checked once, when the key is added to the signer list (see RELEASING.md).
 //
 // `git verify-tag` / `ssh-keygen -Y verify` alone are not enough: for an sk-* key they
 // report a good signature even when the authenticator says nobody touched it and no PIN
@@ -88,17 +92,18 @@ export function parseSshSig(armored) {
 
 // Splits a raw tag object into the signed payload and the armored SSH signature,
 // the same way git does (the signature is appended after the tag message).
+// The payload stays a Buffer: the tag text need not be valid UTF-8, and the signature
+// covers its exact bytes.
 export function splitTagObject(raw) {
-  const text = raw.toString('utf8')
-  if (text.includes('-----BEGIN PGP SIGNATURE-----')) {
+  if (raw.includes('-----BEGIN PGP SIGNATURE-----')) {
     fail(
       'tag has a PGP signature; release tags must be signed with an SSH FIDO2 key'
     )
   }
-  const at = text.lastIndexOf(`\n${SIG_BEGIN}\n`)
+  const at = raw.lastIndexOf(`\n${SIG_BEGIN}\n`)
   if (at < 0) fail('tag is not signed (no SSH signature found)')
-  const payload = text.slice(0, at + 1)
-  const signature = text.slice(at + 1)
+  const payload = raw.subarray(0, at + 1)
+  const signature = raw.subarray(at + 1).toString('latin1')
   if (
     !new RegExp(`^${SIG_BEGIN}\n[A-Za-z0-9+/=\n]+${SIG_END}\n?$`).test(
       signature
@@ -107,7 +112,7 @@ export function splitTagObject(raw) {
     fail('malformed SSH signature block in tag')
   }
   const headers = {}
-  for (const line of payload.split('\n\n')[0].split('\n')) {
+  for (const line of payload.toString('utf8').split('\n\n')[0].split('\n')) {
     const sp = line.indexOf(' ')
     headers[line.slice(0, sp)] = line.slice(sp + 1)
   }
@@ -259,7 +264,6 @@ function main() {
       tag: { type: 'string' },
       signers: { type: 'string' },
       branch: { type: 'string' },
-      'allow-no-pin': { type: 'boolean', default: false },
     },
   })
   if (!values.tag || !values.signers) {
@@ -273,7 +277,6 @@ function main() {
       tag: values.tag,
       signers: values.signers,
       branch: values.branch,
-      requirePin: !values['allow-no-pin'],
     })
     console.log(r.message)
     console.log(

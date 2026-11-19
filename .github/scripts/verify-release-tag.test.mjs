@@ -180,6 +180,26 @@ describe('verify-release-tag', () => {
     assert.equal(r.flags, TOUCH | PIN)
   })
 
+  test('accepts a tag whose message is not valid UTF-8', () => {
+    // Latin-1 "é" followed by a newline: the signature covers these exact bytes
+    const payload = Buffer.concat([
+      Buffer.from(
+        `object ${mainCommit}\ntype commit\ntag v6.2.0\n` +
+          'tagger Rel <rel@example.com> 1763500000 +0000\n\nv6.2.0 caf'
+      ),
+      Buffer.from([0xe9, 0x0a]),
+    ])
+    const body = Buffer.concat([
+      payload,
+      Buffer.from(yubikey.sign(payload, TOUCH | PIN)),
+    ])
+    const sha1 = run('git', ['hash-object', '-t', 'tag', '-w', '--stdin'], {
+      input: body,
+    })
+    run('git', ['update-ref', 'refs/tags/v6.2.0', sha1])
+    assert.equal(verify('v6.2.0').flags, TOUCH | PIN)
+  })
+
   test('rejects a signature made without touching the key', () => {
     makeTag({ ref: 'v6.2.0', sign: p => yubikey.sign(p, PIN) })
     assert.throws(() => verify('v6.2.0'), /without touching the security key/)
